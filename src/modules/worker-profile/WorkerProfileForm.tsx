@@ -36,13 +36,21 @@ export const WorkerProfileForm: React.FC<WorkerProfileFormProps> = ({ worker, on
       return;
     }
 
+    // Tariff bounds check (Code 405)
+    const rateNum = Number(hourlyRate);
+    if (isNaN(rateNum) || rateNum < 100 || rateNum > 2000) {
+      showError(ERROR_CODES.INVALID_TARIFF_AMOUNT, 'Cooperative tariff must be between ₹100 and ₹2,000 / hour');
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const updated = await db.updateWorker(worker.id, {
         name: name.trim(),
         cooperative_id: cooperativeId.trim(),
         skill: skill.trim(),
         area: area.trim(),
-        hourly_rate: Number(hourlyRate),
+        hourly_rate: rateNum,
       });
 
       await logger.log({

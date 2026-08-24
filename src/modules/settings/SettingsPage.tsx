@@ -6,6 +6,7 @@ import { SavedAddress, AddressType } from '../../shared/types';
 import { isFeatureEnabled } from '../../shared/config/features.config';
 import { useTheme } from '../../shared/context/ThemeContext';
 import { ThemeId } from '../../shared/config/theme';
+import { ERROR_CODES } from '../../shared/constants/error-codes';
 import {
   Globe,
   User,
@@ -105,12 +106,17 @@ export const SettingsPage: React.FC = () => {
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordVerification) {
-      showError(401, 'Please enter your account password to confirm sensitive changes.');
+      showError(ERROR_CODES.UNAUTHORIZED, 'Please enter your account password to confirm sensitive changes.');
       return;
     }
-    // Verify against stored password
+    // Verify against stored password (Error 101)
     if (currentUser?.password_hash && passwordVerification !== currentUser.password_hash) {
-      showError(401, 'Incorrect password. Please try again.');
+      showError(ERROR_CODES.INVALID_CREDENTIALS, 'Incorrect password. Please try again.');
+      return;
+    }
+    // Validate email if provided (Error 104)
+    if (userEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail.trim())) {
+      showError(ERROR_CODES.INVALID_EMAIL_FORMAT, 'Please enter a valid email address');
       return;
     }
     showSuccess('User settings updated successfully!');
@@ -161,7 +167,16 @@ export const SettingsPage: React.FC = () => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addrFullName || !addrMobile || !addrPincode || !addrFlat || !addrArea || !addrCity || !addrState) return;
+    if (!addrFullName || !addrMobile || !addrPincode || !addrFlat || !addrArea || !addrCity || !addrState) {
+      showError(ERROR_CODES.BAD_REQUEST, 'Please fill all mandatory address fields.');
+      return;
+    }
+
+    // Pincode validation (Error 304)
+    if (!/^\d{6}$/.test(addrPincode.trim())) {
+      showError(ERROR_CODES.INVALID_PINCODE, 'Pincode must be exactly 6 digits [0-9]');
+      return;
+    }
 
     try {
       if (editingAddressId) {
@@ -213,7 +228,7 @@ export const SettingsPage: React.FC = () => {
       setIsFormOpen(false);
       resetAddressForm();
     } catch (err: any) {
-      showError(500, 'Failed to save address.');
+      showError(err.code || ERROR_CODES.SERVER_ERROR, err.message || 'Failed to save address.');
     }
   };
 
@@ -222,8 +237,8 @@ export const SettingsPage: React.FC = () => {
       await db.deleteAddress(id);
       await loadAddresses();
       showSuccess('Address removed.');
-    } catch {
-      showError(500, 'Failed to remove address.');
+    } catch (err: any) {
+      showError(err.code || ERROR_CODES.SERVER_ERROR, 'Failed to remove address.');
     }
   };
 
@@ -232,8 +247,8 @@ export const SettingsPage: React.FC = () => {
       await db.setDefaultAddress(id);
       await loadAddresses();
       showSuccess('Default address updated!');
-    } catch {
-      showError(500, 'Failed to update default address.');
+    } catch (err: any) {
+      showError(err.code || ERROR_CODES.SERVER_ERROR, 'Failed to update default address.');
     }
   };
 
@@ -246,13 +261,13 @@ export const SettingsPage: React.FC = () => {
           setIsLocating(false);
         },
         (error) => {
-          showError(400, `Location access denied: ${error.message}`);
+          showError(ERROR_CODES.GEOLOCATION_DENIED, `Location access denied: ${error.message}`);
           setIsLocating(false);
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
     } else {
-      showError(400, 'Geolocation is not supported by your browser.');
+      showError(ERROR_CODES.BAD_REQUEST, 'Geolocation is not supported by your browser.');
       setIsLocating(false);
     }
   };
@@ -977,7 +992,14 @@ export const SettingsPage: React.FC = () => {
                       id="screenshot-upload"
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
-                          setUploadedFileName(e.target.files[0].name);
+                          const file = e.target.files[0];
+                          if (file.size > 10 * 1024 * 1024) {
+                            showError(ERROR_CODES.ATTACHMENT_TOO_LARGE, 'Screenshot or log file exceeds 10MB limit');
+                            e.target.value = '';
+                            return;
+                          }
+                          setUploadedFileName(file.name);
+                          showSuccess(`File attached: ${file.name}`);
                         }
                       }}
                     />

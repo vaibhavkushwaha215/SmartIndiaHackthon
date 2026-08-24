@@ -96,10 +96,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw createAppError(ERROR_CODES.BAD_REQUEST, 'Password must be at least 6 characters');
     }
 
-    // Check if phone already exists
+    // Check if phone already exists (Error 103)
     const existing = await db.getUserByPhone(cleanPhone);
     if (existing) {
-      throw createAppError(ERROR_CODES.CONFLICT, 'An account with this phone number already exists. Please sign in instead.');
+      throw createAppError(ERROR_CODES.PHONE_ALREADY_REGISTERED, 'An account with this phone number already exists. Please sign in instead.');
     }
 
     const activeLang = (localStorage.getItem('sahyog_lang') as LanguagePreference) || 'en';

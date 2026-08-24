@@ -176,6 +176,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                 type="date"
                 required
                 min={new Date().toISOString().split('T')[0]}
+                max={new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"

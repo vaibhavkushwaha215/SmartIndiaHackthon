@@ -347,7 +347,19 @@ export const db = {
       throw createAppError(ERROR_CODES.BAD_REQUEST, 'Please provide worker, date, time slot, and full service address');
     }
 
-    // 2. Conflict check (Error 409 - Double booked slot)
+    // 2. Date window validation: Not in past & within 14 days (Error 302)
+    const bookingDate = new Date(bookingData.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + 14);
+    maxDate.setHours(23, 59, 59, 999);
+
+    if (bookingDate < today || bookingDate > maxDate) {
+      throw createAppError(ERROR_CODES.INVALID_SERVICE_DATE, 'Service booking date must be between today and the next 14 days');
+    }
+
+    // 3. Conflict check (Error 301 / 409 - Double booked slot)
     const existingBookings = await this.getBookings();
     const conflict = existingBookings.find(
       (b) =>
@@ -359,8 +371,8 @@ export const db = {
 
     if (conflict) {
       throw createAppError(
-        ERROR_CODES.CONFLICT,
-        `Electrician already has a scheduled slot on ${bookingData.date} during ${bookingData.time_slot}`
+        ERROR_CODES.SLOT_ALREADY_BOOKED,
+        `Technician already has a scheduled slot on ${bookingData.date} during ${bookingData.time_slot}`
       );
     }
 
@@ -385,21 +397,31 @@ export const db = {
   },
 
   async updateBookingStatus(id: string, status: BookingStatus): Promise<Booking> {
+    const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
+    const index = bookings.findIndex((b) => b.id === id);
+    if (index === -1) throw createAppError(ERROR_CODES.NOT_FOUND, `Booking #${id} not found`);
+
+    const prevStatus = bookings[index].status;
+
+    // State machine check (Error 305: Invalid status transition)
+    if (prevStatus === 'completed' && status !== 'completed') {
+      throw createAppError(ERROR_CODES.INVALID_STATUS_TRANSITION, 'Completed booking status cannot be reverted.');
+    }
+    if (prevStatus === 'cancelled' && status === 'completed') {
+      throw createAppError(ERROR_CODES.INVALID_STATUS_TRANSITION, 'Cancelled booking cannot be marked completed.');
+    }
+
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('bookings').update({ status }).eq('id', id).select().single();
       if (error) throw createAppError(ERROR_CODES.SERVER_ERROR, error.message);
       return data;
     }
 
-    const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
-    const index = bookings.findIndex((b) => b.id === id);
-    if (index === -1) throw createAppError(ERROR_CODES.NOT_FOUND, `Booking #${id} not found`);
-
     bookings[index].status = status;
     setLocalItem(STORAGE_KEYS.BOOKINGS, bookings);
 
-    // If marked completed, increment worker's completed jobs count
-    if (status === 'completed') {
+    // If newly marked completed, increment worker's completed jobs count only once!
+    if (status === 'completed' && prevStatus !== 'completed') {
       const workerId = bookings[index].worker_id;
       const workers = getLocalItem<Worker[]>(STORAGE_KEYS.WORKERS, SEED_WORKERS);
       const wIdx = workers.findIndex((w) => w.id === workerId);
@@ -437,6 +459,12 @@ export const db = {
     }
     if (reviewData.rating < 1 || reviewData.rating > 5) {
       throw createAppError(ERROR_CODES.BAD_REQUEST, 'Rating must be between 1 and 5 stars');
+    }
+
+    // Check duplicate review submission (Error 306)
+    const existing = await this.getReviews(reviewData.booking_id);
+    if (existing && existing.length > 0) {
+      throw createAppError(ERROR_CODES.DUPLICATE_REVIEW, 'A customer review has already been submitted for this booking.');
     }
 
     const newReview: Review = {
@@ -539,6 +567,10 @@ export const db = {
   },
 
   async saveAddress(newAddrData: Omit<SavedAddress, 'id'>): Promise<SavedAddress> {
+    if (newAddrData.pincode && !/^\d{6}$/.test(newAddrData.pincode.trim())) {
+      throw createAppError(ERROR_CODES.INVALID_PINCODE, 'Pincode must be exactly 6 digits [0-9]');
+    }
+
     const addresses = getLocalItem<SavedAddress[]>(STORAGE_KEYS.ADDRESSES, SEED_ADDRESSES);
     const newAddr: SavedAddress = {
       ...newAddrData,
@@ -556,6 +588,10 @@ export const db = {
   },
 
   async updateAddress(updatedAddr: SavedAddress): Promise<SavedAddress> {
+    if (updatedAddr.pincode && !/^\d{6}$/.test(updatedAddr.pincode.trim())) {
+      throw createAppError(ERROR_CODES.INVALID_PINCODE, 'Pincode must be exactly 6 digits [0-9]');
+    }
+
     const addresses = getLocalItem<SavedAddress[]>(STORAGE_KEYS.ADDRESSES, SEED_ADDRESSES);
     let updated = addresses.map((a) => {
       if (a.id === updatedAddr.id) {
