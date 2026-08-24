@@ -6,7 +6,10 @@ import { VerifiedBadge } from '../../shared/components/Badge';
 import { WorkerDetailModal } from './WorkerDetailModal';
 import { BookingWizard } from './BookingWizard';
 import { PaymentConfirmModal } from './PaymentConfirmModal';
-import { Search, MapPin, Wrench, Calendar, ShieldCheck, Sparkles, Filter, CheckCircle2 } from 'lucide-react';
+import { HeroSection } from './HeroSection';
+import { EmergencySOSBanner } from './EmergencySOSBanner';
+import { HowItWorksSection } from './HowItWorksSection';
+import { Search, MapPin, Wrench, Calendar, Filter } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface WorkerListProps {
@@ -41,7 +44,6 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
     }
   };
 
-  // Get unique areas for filter
   const areas = Array.from(new Set(workers.map((w) => w.area))).filter(Boolean);
 
   const filteredWorkers = workers.filter((worker) => {
@@ -58,30 +60,25 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
-      {/* Hero Banner with Cooperative Mission */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-teal-950 text-white p-6 sm:p-8 shadow-xl border border-emerald-700/50">
-        <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-700/60 border border-emerald-500/40 text-[11px] font-bold text-emerald-200">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-            <span>Cooperative Gig Workers Federation of India</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-            {t('booking.browse_title', 'Verified Cooperative Electricians')}
-          </h1>
-          <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
-            {t('booking.browse_subtitle', 'Zero intermediary commissions, standard cooperative fair-pricing, and escrow-backed guarantees for electrical repairs and wiring.')}
-          </p>
-        </div>
+      
+      {/* 1. Hero Banner with Namaste Greeting */}
+      <HeroSection
+        selectedArea={selectedArea}
+        onExploreClick={() => {
+          document.getElementById('services-grid')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onTrackClick={onNavigateToBookings}
+      />
 
-        {/* Decorative Graphic Background */}
-        <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 opacity-10 pointer-events-none hidden md:block">
-          <Wrench className="w-64 h-64 text-emerald-300" />
-        </div>
-      </div>
+      {/* 2. Urgent Emergency SOS Banner */}
+      <EmergencySOSBanner
+        onBookEmergency={() => {
+          if (workers.length > 0) setSelectedWorkerForBooking(workers[0]);
+        }}
+      />
 
-      {/* Search and Filters Bar */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row gap-3 items-center justify-between">
-        {/* Search Input */}
+      {/* 3. Search and Filters Bar */}
+      <div id="services-grid" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="relative w-full sm:max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
@@ -93,7 +90,6 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
           />
         </div>
 
-        {/* Area Filter */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Filter className="w-4 h-4 text-slate-400 hidden sm:block" />
           <select
@@ -101,7 +97,7 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
             onChange={(e) => setSelectedArea(e.target.value)}
             className="w-full sm:w-auto px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
-            <option value="ALL">{t('booking.filter_area', 'All Areas (National Network)')}</option>
+            <option value="ALL">{t('booking.filter_area', 'All Neighborhoods')}</option>
             {areas.map((area) => (
               <option key={area} value={area}>
                 {area}
@@ -111,7 +107,7 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
         </div>
       </div>
 
-      {/* Workers Grid */}
+      {/* 4. Verified Workers Grid */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -133,17 +129,8 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
           <Wrench className="w-10 h-10 text-slate-300 mx-auto" />
           <h3 className="text-base font-bold text-slate-800">No Electricians Found</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Try adjusting your search keywords or select "All Areas" from the dropdown.
+            Try adjusting your search keywords or select "All Neighborhoods".
           </p>
-          <button
-            onClick={() => {
-              setSearchTerm('');
-              setSelectedArea('ALL');
-            }}
-            className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition"
-          >
-            Reset Filters
-          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -153,7 +140,6 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
               className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group hover:border-emerald-200"
             >
               <div className="p-5 space-y-3.5">
-                {/* Header with Photo, Name & Verified Badge */}
                 <div className="flex items-start gap-3.5">
                   <div className="relative">
                     <img
@@ -184,18 +170,15 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
                   </div>
                 </div>
 
-                {/* Cooperative Affiliation Tag */}
                 <div className="px-2.5 py-1.5 bg-slate-50 rounded-xl border border-slate-100 text-[11px] font-mono text-slate-600 truncate">
                   <span className="font-bold text-emerald-800">Affiliation:</span> {worker.cooperative_id}
                 </div>
 
-                {/* Skills Snippet */}
                 <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed font-medium">
                   {worker.skill}
                 </p>
               </div>
 
-              {/* Card Footer with Fair Price & Action Buttons */}
               <div className="px-5 py-3.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-2">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold block uppercase">Tariff</span>
@@ -228,7 +211,10 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
         </div>
       )}
 
-      {/* Worker Detail Modal */}
+      {/* 5. How It Works & Trust Proposition */}
+      <HowItWorksSection />
+
+      {/* Modals */}
       <WorkerDetailModal
         worker={selectedWorkerForDetail}
         isOpen={Boolean(selectedWorkerForDetail)}
@@ -239,7 +225,6 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
         }}
       />
 
-      {/* Booking Wizard Modal */}
       <BookingWizard
         worker={selectedWorkerForBooking}
         isOpen={Boolean(selectedWorkerForBooking)}
@@ -250,7 +235,6 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
         }}
       />
 
-      {/* Payment Confirmation Modal */}
       <PaymentConfirmModal
         booking={confirmedBooking}
         isOpen={Boolean(confirmedBooking)}
