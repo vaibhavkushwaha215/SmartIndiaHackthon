@@ -10,19 +10,14 @@ import {
   CalendarDays,
   Shield,
   Activity,
-  FileText,
   Globe,
-  LogIn,
   LogOut,
-  ChevronDown,
   ChevronRight,
   Users,
   Menu,
-  X,
   MapPin,
   Settings,
   PhoneCall,
-  UserPlus,
   CheckCircle2,
   Sparkles,
   Send,
@@ -36,7 +31,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const { t, i18n } = useTranslation();
-  const { currentUser, currentRole, isAuthenticated, logout, switchRole, updateLanguage } = useAuth();
+  const { currentUser, currentRole, logout, switchRole, updateLanguage } = useAuth();
   const { showSuccess } = useToast();
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -44,9 +39,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const [isSwitchHovered, setIsSwitchHovered] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isApplyWorkerModalOpen, setIsApplyWorkerModalOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Worker Application Form state
+  // Application form state
   const [applicantName, setApplicantName] = useState('');
   const [applicantPhone, setApplicantPhone] = useState('');
   const [applicantSkill, setApplicantSkill] = useState('Electrician & Wireman');
@@ -120,13 +114,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             
-            {/* Logo: Horizontal Banner on Desktop, Square on Mobile */}
+            {/* Clean Logo without "Community" Tag */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => onTabChange('booking')}
                 className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none"
               >
-                {/* Desktop: Horizontal Logo with Tagline */}
+                {/* Desktop: Horizontal Logo */}
                 <img
                   src={isHindi ? "/assets/logos/logo-hi.png" : "/assets/logos/logo-en.png"}
                   alt="SahyogSeva"
@@ -136,19 +130,15 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                   }}
                 />
 
-                {/* Mobile: Square Icon */}
+                {/* Mobile: Square Emblem */}
                 <img
                   src="/assets/logos/logo-square.png"
                   alt="SahyogSeva"
-                  className="sm:hidden w-9 h-9 object-contain rounded-lg"
+                  className="sm:hidden w-10 h-10 object-contain rounded-lg"
                   onError={(e) => {
                     (e.target as HTMLElement).style.display = 'none';
                   }}
                 />
-
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded-full uppercase">
-                  Community
-                </span>
               </button>
 
               {/* Neighborhood Selector */}
@@ -214,7 +204,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                       {currentUser?.name || 'Account'}
                     </div>
                     <div className="text-[10px] text-emerald-700 font-bold leading-none">
-                      {currentUser?.role || 'Guest'}
+                      {currentUser?.role || 'Customer'}
                     </div>
                   </div>
                   <Menu className="w-4 h-4 text-slate-600 ml-1" />
@@ -312,7 +302,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                   currentRole === 'Customer' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
                                 }`}
                               >
-                                <span>👤 User (Customer)</span>
+                                <span>👤 Customer (User)</span>
                                 {currentRole === 'Customer' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                               </button>
 
@@ -353,7 +343,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                           )}
                         </div>
 
-                        {/* 4. Apply Now CTA (if not currently a worker) */}
+                        {/* 4. Apply Now CTA (if not a worker) */}
                         {currentRole !== 'Worker' && (
                           <div className="p-2 border-t border-slate-100">
                             <button
@@ -413,7 +403,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
           <div className="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
             <div><strong>Email Support:</strong> help@sahyogseva.coop</div>
-            <div><strong>WhatsApp Grievance Bot:</strong> +91 98765 00000</div>
+            <div><strong>WhatsApp Helpline:</strong> +91 98765 00000</div>
             <div><strong>Operating Hours:</strong> 24 Hours Emergency Dispatch • 9:00 AM - 10:00 PM General Help</div>
           </div>
 

@@ -9,7 +9,7 @@ import { PaymentConfirmModal } from './PaymentConfirmModal';
 import { HeroSection } from './HeroSection';
 import { EmergencySOSBanner } from './EmergencySOSBanner';
 import { HowItWorksSection } from './HowItWorksSection';
-import { Search, MapPin, Wrench, Calendar, Filter } from 'lucide-react';
+import { Search, MapPin, Wrench, Calendar, Filter, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface WorkerListProps {
@@ -58,6 +58,8 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
     return matchesSearch && matchesArea;
   });
 
+  const isFilterActive = searchTerm.trim().length > 0 || selectedArea !== 'ALL';
+
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
       
@@ -77,34 +79,77 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
         }}
       />
 
-      {/* 3. Search and Filters Bar */}
-      <div id="services-grid" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative w-full sm:max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={t('booking.search_placeholder', 'Search by area, specialty, or cooperative...')}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-slate-50/50"
-          />
+      {/* 3. Search & Interactive Filter Bar (Dynamic on typing) */}
+      <div id="services-grid" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+          
+          {/* Search Input */}
+          <div className="relative w-full sm:max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={t('booking.search_placeholder', 'Search by area, specialty, or cooperative...')}
+              className="w-full pl-10 pr-8 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-slate-50/50"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Area Filter Dropdown (Default right, docks neatly) */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Filter className="w-4 h-4 text-slate-400 hidden sm:block" />
+            <select
+              value={selectedArea}
+              onChange={(e) => setSelectedArea(e.target.value)}
+              className="w-full sm:w-auto px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+            >
+              <option value="ALL">{t('booking.filter_area', 'All Neighborhoods')}</option>
+              {areas.map((area) => (
+                <option key={area} value={area}>
+                  {area}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-slate-400 hidden sm:block" />
-          <select
-            value={selectedArea}
-            onChange={(e) => setSelectedArea(e.target.value)}
-            className="w-full sm:w-auto px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            <option value="ALL">{t('booking.filter_area', 'All Neighborhoods')}</option>
-            {areas.map((area) => (
-              <option key={area} value={area}>
-                {area}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Dynamic Filter Indicator (Appears when typing or filtering) */}
+        {isFilterActive && (
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500 animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-slate-700">Filters Active:</span>
+              {searchTerm && (
+                <span className="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-md font-medium border border-emerald-200">
+                  Search: "{searchTerm}"
+                </span>
+              )}
+              {selectedArea !== 'ALL' && (
+                <span className="bg-indigo-50 text-indigo-800 px-2 py-0.5 rounded-md font-medium border border-indigo-200">
+                  Area: {selectedArea}
+                </span>
+              )}
+              <span className="text-slate-400 font-mono">({filteredWorkers.length} found)</span>
+            </div>
+
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedArea('ALL');
+              }}
+              className="text-xs text-rose-600 hover:text-rose-700 font-bold hover:underline"
+            >
+              Clear Filters
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 4. Verified Workers Grid */}
@@ -129,8 +174,17 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
           <Wrench className="w-10 h-10 text-slate-300 mx-auto" />
           <h3 className="text-base font-bold text-slate-800">No Electricians Found</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Try adjusting your search keywords or select "All Neighborhoods".
+            Try adjusting your search keywords or reset filters.
           </p>
+          <button
+            onClick={() => {
+              setSearchTerm('');
+              setSelectedArea('ALL');
+            }}
+            className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs"
+          >
+            Reset Filters
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
