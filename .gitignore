@@ -26,6 +26,7 @@ jspm_packages/
 # Build outputs
 dist/
 dist-ssr/
+dev-dist/
 build/
 *.local
 

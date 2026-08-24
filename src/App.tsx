@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ToastProvider } from './shared/components/Toast';
 import { AuthProvider } from './modules/auth';
-import { Navbar, BottomNav } from './shared/components';
+import { Navbar, BottomNav, PWAInstallBanner } from './shared/components';
 import { Footer } from './shared/components/Footer';
 import { isFeatureEnabled } from './shared/config/features.config';
 
@@ -58,6 +58,7 @@ const MainLayout: React.FC = () => {
 
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       <Footer />
+      <PWAInstallBanner />
     </div>
   );
 };
