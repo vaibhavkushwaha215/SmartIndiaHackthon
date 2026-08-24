@@ -10,6 +10,7 @@ import { WorkerDashboard } from './modules/worker-profile';
 import { AdminDashboard } from './modules/admin-dashboard';
 import { DemandForecast } from './modules/demand-forecast';
 import { LogsViewer } from './modules/logging';
+import { SettingsPage } from './modules/settings';
 
 const MainLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('booking');
@@ -33,6 +34,8 @@ const MainLayout: React.FC = () => {
         return <DemandForecast />;
       case 'logs':
         return <LogsViewer />;
+      case 'settings':
+        return <SettingsPage />;
       default:
         return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
     }
@@ -40,18 +43,13 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-emerald-200">
-      {/* Top Navigation */}
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
         {renderActiveModule()}
       </main>
 
-      {/* Mobile Bottom Navigation */}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {/* Rich Dark Footer */}
       <Footer />
     </div>
   );
