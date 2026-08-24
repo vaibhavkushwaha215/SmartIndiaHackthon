@@ -3,6 +3,7 @@ import { ToastProvider } from './shared/components/Toast';
 import { AuthProvider } from './modules/auth';
 import { Navbar, BottomNav } from './shared/components';
 import { Footer } from './shared/components/Footer';
+import { isFeatureEnabled } from './shared/config/features.config';
 
 // Module Imports
 import { WorkerList, MyBookings } from './modules/booking';
@@ -18,12 +19,16 @@ const MainLayout: React.FC = () => {
   const renderActiveModule = () => {
     switch (activeTab) {
       case 'booking':
+        if (!isFeatureEnabled('BOOKING_SYSTEM')) return <div className="p-8 text-center text-slate-500 font-medium">Booking module is currently disabled.</div>;
         return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
       case 'my-bookings':
+        if (!isFeatureEnabled('MY_BOOKINGS')) return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
         return <MyBookings />;
       case 'worker-dashboard':
+        if (!isFeatureEnabled('WORKER_DASHBOARD')) return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
         return <WorkerDashboard />;
       case 'admin-dashboard':
+        if (!isFeatureEnabled('ADMIN_PORTAL')) return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
         return (
           <AdminDashboard
             onNavigateToForecast={() => setActiveTab('demand-forecast')}
@@ -31,8 +36,10 @@ const MainLayout: React.FC = () => {
           />
         );
       case 'demand-forecast':
+        if (!isFeatureEnabled('DEMAND_FORECAST')) return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
         return <DemandForecast />;
       case 'logs':
+        if (!isFeatureEnabled('AUDIT_LOGS')) return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
         return <LogsViewer />;
       case 'settings':
         return <SettingsPage />;
@@ -55,13 +62,17 @@ const MainLayout: React.FC = () => {
   );
 };
 
+import { ThemeProvider } from './shared/context/ThemeContext';
+
 export function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <MainLayout />
-      </AuthProvider>
-    </ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <MainLayout />
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

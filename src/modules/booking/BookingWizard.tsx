@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Worker, Booking } from '../../shared/types';
+import React, { useState, useEffect } from 'react';
+import { Worker, Booking, SavedAddress } from '../../shared/types';
 import { useAuth } from '../auth';
 import { useToast } from '../../shared/components/Toast';
 import { Modal } from '../../shared/components/Modal';
 import { db } from '../../shared/services/database';
 import { logger } from '../../shared/services/logger';
 import { ERROR_CODES, createAppError } from '../../shared/constants/error-codes';
-import { Calendar, Clock, MapPin, Wrench, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Wrench, ShieldCheck, ArrowRight, Home, Building2, Briefcase, Plus, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface BookingWizardProps {
@@ -31,7 +31,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
   onBookingSuccess,
 }) => {
   const { t } = useTranslation();
-  const { currentUser, currentRole } = useAuth();
+  const { currentUser } = useAuth();
   const { showError } = useToast();
 
   // Tomorrow as default date string YYYY-MM-DD
@@ -41,9 +41,39 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
 
   const [date, setDate] = useState(defaultDateStr);
   const [timeSlot, setTimeSlot] = useState(AVAILABLE_SLOTS[0]);
-  const [address, setAddress] = useState('Flat 204, Green Apartments, Main Road');
-  const [problemDescription, setProblemDescription] = useState('Short circuit check and circuit breaker trip issue');
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('custom');
+  const [address, setAddress] = useState('');
+  const [problemDescription, setProblemDescription] = useState('Standard inspection, diagnostic check and repair');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadSavedAddresses();
+    }
+  }, [isOpen]);
+
+  const loadSavedAddresses = async () => {
+    try {
+      const addrs = await db.getSavedAddresses(currentUser?.id);
+      setSavedAddresses(addrs);
+      const defaultAddr = addrs.find((a) => a.isDefault) || addrs[0];
+      if (defaultAddr) {
+        setSelectedAddressId(defaultAddr.id);
+        setAddress(`${defaultAddr.flat}, ${defaultAddr.area}, ${defaultAddr.city}, ${defaultAddr.state} - ${defaultAddr.pincode}`);
+      } else {
+        setSelectedAddressId('custom');
+        setAddress('Flat 402, Block B, Green Park Apartments, Lajpat Nagar, Delhi');
+      }
+    } catch {
+      setSelectedAddressId('custom');
+    }
+  };
+
+  const handleSelectSavedAddress = (addr: SavedAddress) => {
+    setSelectedAddressId(addr.id);
+    setAddress(`${addr.flat}, ${addr.area}, ${addr.city}, ${addr.state} - ${addr.pincode}`);
+  };
 
   if (!worker) return null;
 
@@ -62,7 +92,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
     }
 
     try {
-      // 2. Database create booking (handles Conflict 409 if slot already occupied)
+      // 2. Database create booking
       const newBooking = await db.createBooking({
         customer_id: customerId,
         worker_id: worker.id,
@@ -109,16 +139,17 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Worker Summary Banner */}
-        <div className="flex items-center justify-between p-3.5 bg-emerald-50 rounded-xl border border-emerald-200">
+        <div className="flex items-center justify-between p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200">
           <div className="flex items-center gap-3">
             <img
               src={worker.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'}
               alt={worker.name}
-              className="w-10 h-10 rounded-xl object-cover border border-emerald-300"
+              className="w-11 h-11 rounded-2xl object-cover border border-emerald-300"
             />
             <div>
               <div className="text-xs font-bold text-slate-900">{worker.name}</div>
-              <div className="text-[11px] text-emerald-800 font-medium">{worker.area}</div>
+              <div className="text-[11px] text-emerald-800 font-medium">{worker.skill}</div>
+              <div className="text-[10px] text-slate-500">{worker.area}</div>
             </div>
           </div>
           <div className="text-right">
@@ -188,21 +219,73 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
           </div>
         </div>
 
-        {/* Step 2: Address & Problem Description */}
+        {/* Step 2: Saved Address Picker & Problem Description */}
         <div className="space-y-3">
-          <label className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 text-emerald-600" />
-            {t('booking.step_address', '2. Service Address & Details')}
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              {t('booking.step_address', '2. Service Address')}
+            </label>
+            <span className="text-[11px] text-emerald-700 font-semibold">Choose or enter custom</span>
+          </div>
 
+          {/* Saved Address Quick Selector Cards */}
+          {savedAddresses.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {savedAddresses.map((addr) => {
+                const isSelected = selectedAddressId === addr.id;
+                return (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    onClick={() => handleSelectSavedAddress(addr)}
+                    className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex items-start gap-2 ${
+                      isSelected
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-950 shadow-xs'
+                        : 'border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      {isSelected ? (
+                        <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                          <Check className="w-3 h-3" />
+                        </div>
+                      ) : (
+                        <div className="w-4 h-4 rounded-full border border-slate-300" />
+                      )}
+                    </div>
+                    <div className="text-xs min-w-0">
+                      <div className="font-bold flex items-center gap-1">
+                        <span>{addr.tag}</span>
+                        {addr.isDefault && (
+                          <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-semibold">
+                            Default
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-600 truncate">{addr.flat}, {addr.area}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Address Input Field */}
           <div>
+            <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+              Full Delivery / Service Address
+            </label>
             <input
               type="text"
               required
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder={t('booking.address_placeholder', 'Enter full street address...')}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              onChange={(e) => {
+                setAddress(e.target.value);
+                setSelectedAddressId('custom');
+              }}
+              placeholder={t('booking.address_placeholder', 'Enter complete street address...')}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
             />
           </div>
 
@@ -224,7 +307,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
         <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200/80 flex items-start gap-2.5 text-xs text-amber-900">
           <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold">Cooperative Escrow Guarantee:</span> Next step simulates instant escrow confirmation.
+            <span className="font-bold">Cooperative Escrow Guarantee:</span> Instant escrow confirmation.
             Workers receive fair guaranteed payout upon successful service completion.
           </div>
         </div>

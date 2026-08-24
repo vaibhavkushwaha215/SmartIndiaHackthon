@@ -21,17 +21,28 @@ import {
   CheckCircle2,
   Sparkles,
   Send,
+  LogIn,
 } from 'lucide-react';
 import { UserRole } from '../types';
+import { isFeatureEnabled, FeatureKey } from '../config/features.config';
 
 interface NavbarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
+interface NavItemConfig {
+  id: string;
+  label: string;
+  icon: any;
+  roles: UserRole[];
+  featureKey?: FeatureKey;
+  isAllServices?: boolean;
+}
+
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const { t, i18n } = useTranslation();
-  const { currentUser, currentRole, logout, switchRole, updateLanguage } = useAuth();
+  const { currentUser, currentRole, logout, quickSwitchUser, switchRole, updateLanguage } = useAuth();
   const { showSuccess } = useToast();
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -71,17 +82,21 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
     setIsApplyWorkerModalOpen(false);
   };
 
-  const navItems = [
-    { id: 'booking', label: isHindi ? 'सभी सेवाएं' : 'All Services', icon: Wrench, roles: ['Customer', 'Worker', 'Admin'], isAllServices: true },
-    { id: 'my-bookings', label: t('nav.my_bookings', 'My Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin'] },
-    { id: 'worker-dashboard', label: t('nav.worker_dashboard', 'Worker Dashboard'), icon: Wrench, roles: ['Worker', 'Admin'] },
-    { id: 'admin-dashboard', label: t('nav.admin_dashboard', 'Admin Portal'), icon: Shield, roles: ['Admin'] },
-    { id: 'demand-forecast', label: t('nav.demand_forecast', 'Demand Forecast'), icon: Activity, roles: ['Admin', 'Worker', 'Customer'] },
+  const navItems: NavItemConfig[] = [
+    { id: 'booking', label: isHindi ? 'सभी सेवाएं' : 'All Services', icon: Wrench, roles: ['Customer', 'Worker', 'Admin'], featureKey: 'BOOKING_SYSTEM', isAllServices: true },
+    { id: 'my-bookings', label: t('nav.my_bookings', 'My Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin'], featureKey: 'MY_BOOKINGS' },
+    { id: 'worker-dashboard', label: t('nav.worker_dashboard', 'Worker Dashboard'), icon: Wrench, roles: ['Worker', 'Admin'], featureKey: 'WORKER_DASHBOARD' },
+    { id: 'admin-dashboard', label: t('nav.admin_dashboard', 'Admin Portal'), icon: Shield, roles: ['Admin'], featureKey: 'ADMIN_PORTAL' },
+    { id: 'demand-forecast', label: t('nav.demand_forecast', 'Demand Forecast'), icon: Activity, roles: ['Admin', 'Worker', 'Customer'], featureKey: 'DEMAND_FORECAST' },
+    { id: 'settings', label: isHindi ? 'सेटिंग्स' : 'Settings', icon: Settings, roles: ['Customer', 'Worker', 'Admin'] },
   ];
 
-  const visibleNavItems = navItems.filter((item) =>
-    currentRole === 'Admin' ? true : item.roles.includes(currentRole)
-  );
+  const visibleNavItems = navItems.filter((item) => {
+    // Feature flag check
+    if (item.featureKey && !isFeatureEnabled(item.featureKey)) return false;
+    // Role check
+    return currentRole === 'Admin' ? true : item.roles.includes(currentRole);
+  });
 
   return (
     <>
@@ -183,200 +198,217 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
             <div className="flex items-center gap-3">
               
               {/* Quick Role Switcher Pill */}
-              <div className="hidden sm:block">
-                <RoleBadge role={currentRole} />
-              </div>
+              {currentUser && (
+                <div className="hidden sm:block">
+                  <RoleBadge role={currentRole} />
+                </div>
+              )}
 
-              {/* User Profile / Hamburger Menu Dropdown Trigger */}
-              <div className="relative">
+              {/* User Profile / Login Button */}
+              {!currentUser ? (
                 <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition cursor-pointer"
-                  aria-label="User Account Menu"
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer"
                 >
-                  <img
-                    src={currentUser?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
-                    alt={currentUser?.name || 'User'}
-                    className="w-7 h-7 rounded-full border border-emerald-400 object-cover"
-                  />
-                  <div className="hidden md:block text-left">
-                    <div className="text-xs font-bold text-slate-900 leading-tight">
-                      {currentUser?.name || 'Account'}
-                    </div>
-                    <div className="text-[10px] text-emerald-700 font-bold leading-none">
-                      {currentUser?.role || 'Customer'}
-                    </div>
-                  </div>
-                  <Menu className="w-4 h-4 text-slate-600 ml-1" />
+                  <LogIn className="w-4 h-4" />
+                  <span>{isHindi ? 'साइन इन करें' : 'Sign In'}</span>
                 </button>
-
-                {/* Hamburger / User Dropdown Menu */}
-                {isUserMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-20"
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        setIsSwitchHovered(false);
-                      }}
+              ) : (
+                <div className="relative">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition cursor-pointer"
+                    aria-label="User Account Menu"
+                  >
+                    <img
+                      src={currentUser?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                      alt={currentUser?.name || 'User'}
+                      className="w-7 h-7 rounded-full border border-emerald-400 object-cover"
                     />
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-30 animate-in fade-in zoom-in-95 duration-150">
-                      
-                      {/* User Header */}
-                      <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                        <img
-                          src={currentUser?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
-                          alt={currentUser?.name || 'User'}
-                          className="w-10 h-10 rounded-full border-2 border-emerald-500 object-cover"
-                        />
-                        <div>
-                          <div className="text-xs font-bold text-slate-900">{currentUser?.name || 'Ramesh Kumar'}</div>
-                          <div className="text-[10px] text-slate-500 font-mono">+91 {currentUser?.phone || '9876543210'}</div>
-                          <RoleBadge role={currentRole} className="mt-1 inline-block text-[9px] py-0" />
-                        </div>
+                    <div className="hidden md:block text-left">
+                      <div className="text-xs font-bold text-slate-900 leading-tight">
+                        {currentUser?.name || 'Account'}
                       </div>
+                      <div className="text-[10px] text-emerald-700 font-bold leading-none">
+                        {currentUser?.role || 'Customer'}
+                      </div>
+                    </div>
+                    <Menu className="w-4 h-4 text-slate-600 ml-1" />
+                  </button>
 
-                      <div className="py-1">
-                        {/* 1. Settings */}
-                        <button
-                          onClick={() => {
-                            setIsUserMenuOpen(false);
-                            toggleLanguage();
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center justify-between transition cursor-pointer"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Settings className="w-4 h-4 text-slate-400" />
-                            <span>Settings & Language</span>
+                  {/* Hamburger / User Dropdown Menu */}
+                  {isUserMenuOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-20"
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          setIsSwitchHovered(false);
+                        }}
+                      />
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-30 animate-in fade-in zoom-in-95 duration-150">
+                        
+                        {/* User Header */}
+                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                          <img
+                            src={currentUser?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                            alt={currentUser?.name || 'User'}
+                            className="w-10 h-10 rounded-full border-2 border-emerald-500 object-cover"
+                          />
+                          <div>
+                            <div className="text-xs font-bold text-slate-900">{currentUser?.name || 'User'}</div>
+                            <div className="text-[10px] text-slate-500 font-mono">+91 {currentUser?.phone || '9876543210'}</div>
+                            <RoleBadge role={currentRole} className="mt-1 inline-block text-[9px] py-0" />
                           </div>
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                            {isHindi ? 'HI' : 'EN'}
-                          </span>
-                        </button>
-
-                        {/* 2. Contact Us */}
-                        <button
-                          onClick={() => {
-                            setIsUserMenuOpen(false);
-                            setIsContactModalOpen(true);
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition cursor-pointer"
-                        >
-                          <PhoneCall className="w-4 h-4 text-slate-400" />
-                          <span>Contact Us & Helpline</span>
-                        </button>
-
-                        {/* 3. Switch Account (Hover Flyout) */}
-                        <div
-                          className="relative"
-                          onMouseEnter={() => setIsSwitchHovered(true)}
-                          onMouseLeave={() => setIsSwitchHovered(false)}
-                        >
-                          <button
-                            onClick={() => setIsSwitchHovered(!isSwitchHovered)}
-                            className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center justify-between transition cursor-pointer font-semibold"
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <Users className="w-4 h-4 text-indigo-600" />
-                              <span>Switch Account</span>
-                            </div>
-                            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                          </button>
-
-                          {/* Flyout Submenu */}
-                          {isSwitchHovered && (
-                            <div className="absolute right-full top-0 mr-1 w-52 bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 z-40 animate-in fade-in slide-in-from-right-2">
-                              <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                Switch Account Role
-                              </div>
-
-                              {/* Option 1: Customer */}
-                              <button
-                                onClick={() => {
-                                  switchRole('Customer');
-                                  onTabChange('booking');
-                                  setIsUserMenuOpen(false);
-                                  setIsSwitchHovered(false);
-                                }}
-                                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                                  currentRole === 'Customer' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
-                                }`}
-                              >
-                                <span>👤 Customer (User)</span>
-                                {currentRole === 'Customer' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                              </button>
-
-                              {/* Option 2: Worker */}
-                              <button
-                                onClick={() => {
-                                  switchRole('Worker');
-                                  onTabChange('worker-dashboard');
-                                  setIsUserMenuOpen(false);
-                                  setIsSwitchHovered(false);
-                                }}
-                                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                                  currentRole === 'Worker' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
-                                }`}
-                              >
-                                <span className="flex items-center gap-1">
-                                  ⚡ Worker <span className="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-1 rounded">Verified</span>
-                                </span>
-                                {currentRole === 'Worker' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                              </button>
-
-                              {/* Option 3: Admin */}
-                              <button
-                                onClick={() => {
-                                  switchRole('Admin');
-                                  onTabChange('admin-dashboard');
-                                  setIsUserMenuOpen(false);
-                                  setIsSwitchHovered(false);
-                                }}
-                                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                                  currentRole === 'Admin' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
-                                }`}
-                              >
-                                <span>🛡️ Admin Portal</span>
-                                {currentRole === 'Admin' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                              </button>
-                            </div>
-                          )}
                         </div>
 
-                        {/* 4. Apply Now CTA (if not a worker) */}
-                        {currentRole !== 'Worker' && (
-                          <div className="p-2 border-t border-slate-100">
-                            <button
-                              onClick={() => {
-                                setIsUserMenuOpen(false);
-                                setIsApplyWorkerModalOpen(true);
-                              }}
-                              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
-                            >
-                              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                              <span>Not a worker? Apply Now!</span>
-                            </button>
-                          </div>
-                        )}
-
-                        {/* 5. Log Out */}
-                        <div className="border-t border-slate-100 pt-1">
+                        <div className="py-1">
+                          {/* 1. Settings (Navigates to Settings Page) */}
                           <button
                             onClick={() => {
                               setIsUserMenuOpen(false);
-                              logout();
+                              onTabChange('settings');
                             }}
-                            className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition cursor-pointer font-semibold"
+                            className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center justify-between transition cursor-pointer font-medium"
                           >
-                            <LogOut className="w-3.5 h-3.5" />
-                            <span>Log Out</span>
+                            <div className="flex items-center gap-2.5">
+                              <Settings className="w-4 h-4 text-slate-400" />
+                              <span>{isHindi ? 'सेटिंग्स और भाषा' : 'Settings & Language'}</span>
+                            </div>
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                              {isHindi ? 'HI' : 'EN'}
+                            </span>
                           </button>
+
+                          {/* 2. Contact Us */}
+                          <button
+                            onClick={() => {
+                              setIsUserMenuOpen(false);
+                              setIsContactModalOpen(true);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition cursor-pointer"
+                          >
+                            <PhoneCall className="w-4 h-4 text-slate-400" />
+                            <span>{isHindi ? 'संपर्क और हेल्पलाइन' : 'Contact Us & Helpline'}</span>
+                          </button>
+
+                          {/* 3. Switch Account (Hover Flyout) */}
+                          <div
+                            className="relative"
+                            onMouseEnter={() => setIsSwitchHovered(true)}
+                            onMouseLeave={() => setIsSwitchHovered(false)}
+                          >
+                            <button
+                              onClick={() => setIsSwitchHovered(!isSwitchHovered)}
+                              className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center justify-between transition cursor-pointer font-semibold"
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <Users className="w-4 h-4 text-indigo-600" />
+                                <span>{isHindi ? 'खाता बदलें' : 'Switch Account'}</span>
+                              </div>
+                              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                            </button>
+
+                            {/* Flyout Submenu */}
+                            {isSwitchHovered && (
+                              <div className="absolute right-full top-0 mr-1 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 z-40 animate-in fade-in slide-in-from-right-2">
+                                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                  {isHindi ? 'प्रोफ़ाइल चुनें' : 'Switch Account Profile'}
+                                </div>
+
+                                {/* Option 1: Customer (Ramesh Kumar) */}
+                                <button
+                                  onClick={async () => {
+                                    await quickSwitchUser('user-cust-1');
+                                    onTabChange('booking');
+                                    setIsUserMenuOpen(false);
+                                    setIsSwitchHovered(false);
+                                    showSuccess('Switched to Customer: Ramesh Kumar');
+                                  }}
+                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
+                                    currentRole === 'Customer' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
+                                  }`}
+                                >
+                                  <span>👤 Customer (Ramesh)</span>
+                                  {currentRole === 'Customer' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                                </button>
+
+                                {/* Option 2: Worker (Rajesh Sharma) */}
+                                <button
+                                  onClick={async () => {
+                                    await quickSwitchUser('user-work-1');
+                                    onTabChange('worker-dashboard');
+                                    setIsUserMenuOpen(false);
+                                    setIsSwitchHovered(false);
+                                    showSuccess('Switched to Worker: Rajesh Sharma');
+                                  }}
+                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
+                                    currentRole === 'Worker' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-1">
+                                    ⚡ Worker (Rajesh) <span className="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-1 rounded">Verified</span>
+                                  </span>
+                                  {currentRole === 'Worker' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                                </button>
+
+                                {/* Option 3: Admin */}
+                                <button
+                                  onClick={async () => {
+                                    await quickSwitchUser('user-admin-1');
+                                    onTabChange('admin-dashboard');
+                                    setIsUserMenuOpen(false);
+                                    setIsSwitchHovered(false);
+                                    showSuccess('Switched to Admin Portal');
+                                  }}
+                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
+                                    currentRole === 'Admin' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
+                                  }`}
+                                >
+                                  <span>🛡️ Admin Portal</span>
+                                  {currentRole === 'Admin' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 4. Apply Now CTA (if not a worker) */}
+                          {currentRole !== 'Worker' && (
+                            <div className="p-2 border-t border-slate-100">
+                              <button
+                                onClick={() => {
+                                  setIsUserMenuOpen(false);
+                                  setIsApplyWorkerModalOpen(true);
+                                }}
+                                className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                                <span>{isHindi ? 'कारीगर बनें? आवेदन करें!' : 'Not a worker? Apply Now!'}</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {/* 5. Log Out */}
+                          <div className="border-t border-slate-100 pt-1">
+                            <button
+                              onClick={async () => {
+                                setIsUserMenuOpen(false);
+                                await logout();
+                                showSuccess(isHindi ? 'सफलतापूर्वक लॉग आउट किया गया।' : 'Logged out successfully.');
+                                onTabChange('booking');
+                              }}
+                              className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition cursor-pointer font-semibold"
+                            >
+                              <LogOut className="w-3.5 h-3.5" />
+                              <span>{isHindi ? 'लॉग आउट' : 'Log Out'}</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

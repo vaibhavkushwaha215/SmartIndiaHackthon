@@ -11,7 +11,8 @@ interface AuthContextType {
   currentRole: UserRole;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (params: { name: string; role: UserRole; phone: string }) => Promise<User>;
+  login: (params: { phone: string; password: string }) => Promise<User>;
+  register: (params: { name: string; role: UserRole; phone: string; password: string }) => Promise<User>;
   quickSwitchUser: (userId: string) => Promise<User>;
   switchRole: (role: UserRole) => void;
   logout: () => Promise<void>;
@@ -27,17 +28,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // Restore preferred language or default to English
+    const savedLang = (localStorage.getItem('sahyog_lang') as LanguagePreference) || 'en';
+    changeLanguage(savedLang);
+
     // Restore session or default to demo customer
     const saved = localStorage.getItem(AUTH_USER_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setCurrentUser(parsed);
-        if (parsed.language_pref) {
-          changeLanguage(parsed.language_pref);
-        }
       } catch {
         setCurrentUser(SEED_USERS[0]);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(SEED_USERS[0]));
       }
     } else {
       // Default to Customer Ramesh Kumar for seamless first impression
@@ -47,9 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const login = async ({ name, role, phone }: { name: string; role: UserRole; phone: string }): Promise<User> => {
+  const login = async ({ phone, password }: { phone: string; password: string }): Promise<User> => {
     const cleanPhone = phone.trim().replace(/\D/g, '');
-    const cleanName = name.trim();
 
     // 1. Phone validation (Error 102)
     if (cleanPhone.length !== 10) {
@@ -58,31 +60,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw err;
     }
 
-    // 2. Name validation (Error 400)
-    if (!cleanName) {
-      const err = createAppError(ERROR_CODES.BAD_REQUEST, 'Please enter your full name');
+    // 2. Password validation (Error 400)
+    if (!password) {
+      const err = createAppError(ERROR_CODES.BAD_REQUEST, 'Please enter your password');
       await logger.logAuth('LOGIN_FAILED', null, cleanPhone, ERROR_CODES.BAD_REQUEST, err.message);
       throw err;
     }
 
     try {
-      // Check if user exists or create a new profile
-      let user = await db.getUserByPhone(cleanPhone);
-      if (!user) {
-        user = {
-          id: `user-${Date.now()}`,
-          name: cleanName,
-          role,
-          phone: cleanPhone,
-          language_pref: (i18n.language as LanguagePreference) || 'en',
-          avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanPhone}`,
-        };
-        await db.upsertUser(user);
-      } else {
-        // Update role and name if changed
-        user = { ...user, name: cleanName, role };
-        await db.upsertUser(user);
-      }
+      const user = await db.authenticateUser(cleanPhone, password);
 
       setCurrentUser(user);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
@@ -96,36 +82,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const register = async ({ name, role, phone, password }: { name: string; role: UserRole; phone: string; password: string }): Promise<User> => {
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+    const cleanName = name.trim();
+
+    if (cleanPhone.length !== 10) {
+      throw createAppError(ERROR_CODES.INVALID_PHONE_NUMBER, 'Please enter a valid 10-digit Indian mobile number');
+    }
+    if (!cleanName) {
+      throw createAppError(ERROR_CODES.BAD_REQUEST, 'Please enter your full name');
+    }
+    if (!password || password.length < 6) {
+      throw createAppError(ERROR_CODES.BAD_REQUEST, 'Password must be at least 6 characters');
+    }
+
+    // Check if phone already exists
+    const existing = await db.getUserByPhone(cleanPhone);
+    if (existing) {
+      throw createAppError(ERROR_CODES.CONFLICT, 'An account with this phone number already exists. Please sign in instead.');
+    }
+
+    const activeLang = (localStorage.getItem('sahyog_lang') as LanguagePreference) || 'en';
+    const user: User = {
+      id: `user-${Date.now()}`,
+      name: cleanName,
+      role,
+      phone: cleanPhone,
+      language_pref: activeLang,
+      password_hash: password, // In production: bcrypt.hashSync(password, 10)
+      avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanPhone}`,
+    };
+    await db.upsertUser(user);
+
+    setCurrentUser(user);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+
+    await logger.logAuth('LOGIN_SUCCESS', user.id, user.phone, 200, `New user ${user.name} registered as ${user.role}`);
+    return user;
+  };
+
   const quickSwitchUser = async (userId: string): Promise<User> => {
     try {
       const user = await db.getUserById(userId);
       setCurrentUser(user);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
 
-      if (user.language_pref) {
-        changeLanguage(user.language_pref);
-      }
-
       await logger.logAuth('LOGIN_SUCCESS', user.id, user.phone, 200, `Quick-switched to ${user.name} (${user.role})`);
       return user;
     } catch (err: any) {
-      const code = err.code || ERROR_CODES.NOT_FOUND;
-      await logger.logError('QUICK_SWITCH_USER', err, userId);
-      throw err;
+      const fallbackUser = SEED_USERS.find((u) => u.id === userId) || SEED_USERS[0];
+      setCurrentUser(fallbackUser);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fallbackUser));
+      return fallbackUser;
     }
   };
 
   const switchRole = (role: UserRole) => {
-    if (!currentUser) return;
-    const updated = { ...currentUser, role };
-    setCurrentUser(updated);
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updated));
+    let targetUser: User;
+    if (role === 'Worker') {
+      targetUser = SEED_USERS.find((u) => u.role === 'Worker') || SEED_USERS[2];
+    } else if (role === 'Admin') {
+      targetUser = SEED_USERS.find((u) => u.role === 'Admin') || SEED_USERS[6];
+    } else {
+      targetUser = SEED_USERS.find((u) => u.role === 'Customer') || SEED_USERS[0];
+    }
+
+    setCurrentUser(targetUser);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(targetUser));
+
     logger.log({
       action: 'ROLE_SWITCHED',
-      userId: updated.id,
-      phone: updated.phone,
+      userId: targetUser.id,
+      phone: targetUser.phone,
       resultCode: 200,
-      details: `Role switched to ${role}`,
+      details: `Switched account profile to ${targetUser.name} (${role})`,
     });
   };
 
@@ -155,6 +185,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: Boolean(currentUser),
         isLoading,
         login,
+        register,
         quickSwitchUser,
         switchRole,
         logout,

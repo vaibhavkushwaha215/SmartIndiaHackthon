@@ -3,6 +3,7 @@ import { ErrorCode } from '../constants/error-codes';
 export type UserRole = 'Customer' | 'Worker' | 'Admin';
 export type LanguagePreference = 'en' | 'hi';
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type AddressType = 'House' | 'Apartment' | 'Business' | 'Other';
 
 export interface User {
   id: string;
@@ -11,6 +12,7 @@ export interface User {
   phone: string;
   language_pref: LanguagePreference;
   avatar_url?: string;
+  password_hash?: string; // Plain text in prototype, bcrypt in production
 }
 
 export interface Worker {
@@ -25,10 +27,30 @@ export interface Worker {
   experience_years?: number;
   completed_jobs_count?: number;
   bio?: string;
+  category?: string; // e.g. "ELECTRICAL", "PLUMBING", "APPLIANCE", "CARPENTRY", "CLEANING", "PAINTING", "PEST_GARDENING"
   // Joined / populated fields for UI
   name?: string;
   phone?: string;
   avatar_url?: string;
+}
+
+export interface SavedAddress {
+  id: string;
+  user_id?: string;
+  tag: string;
+  fullName: string;
+  mobileNumber: string;
+  pincode: string;
+  flat: string;
+  area: string;
+  landmark?: string;
+  city: string;
+  state: string;
+  isDefault: boolean;
+  addressType: AddressType;
+  deliveryInstructions?: string;
+  canDeliverSaturday?: boolean;
+  canDeliverSunday?: boolean;
 }
 
 export interface Booking {

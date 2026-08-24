@@ -10,8 +10,15 @@ CREATE TABLE IF NOT EXISTS public.users (
     phone TEXT NOT NULL,
     language_pref TEXT DEFAULT 'en' CHECK (language_pref IN ('en', 'hi')),
     avatar_url TEXT,
+    password_hash TEXT DEFAULT 'changeme', -- Plain text for prototype; migrate to bcrypt in production
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Migration for existing Supabase instances (run in SQL Editor):
+-- ALTER TABLE public.users ADD COLUMN IF NOT EXISTS password_hash TEXT DEFAULT 'changeme';
+-- UPDATE public.users SET password_hash = 'customer123' WHERE role = 'Customer';
+-- UPDATE public.users SET password_hash = 'worker123' WHERE role = 'Worker';
+-- UPDATE public.users SET password_hash = 'admin123' WHERE role = 'Admin';
 
 -- 2. Create Workers Table
 CREATE TABLE IF NOT EXISTS public.workers (

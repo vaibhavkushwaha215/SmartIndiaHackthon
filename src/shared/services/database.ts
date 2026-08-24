@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
-import { User, Worker, Booking, Review, LogEntry, BookingStatus, AreaDemandForecast } from '../types';
+import { User, Worker, Booking, Review, LogEntry, BookingStatus, AreaDemandForecast, SavedAddress } from '../types';
 import { ERROR_CODES, createAppError } from '../constants/error-codes';
 import {
   SEED_USERS,
@@ -7,7 +7,8 @@ import {
   SEED_BOOKINGS,
   SEED_REVIEWS,
   SEED_LOGS,
-  SEED_DEMAND_FORECAST,
+  SEED_FORECASTS,
+  SEED_ADDRESSES,
 } from '../data/seed-data';
 
 const STORAGE_KEYS = {
@@ -16,16 +17,37 @@ const STORAGE_KEYS = {
   BOOKINGS: 'sahyog_bookings',
   REVIEWS: 'sahyog_reviews',
   LOGS: 'sahyog_logs',
+  ADDRESSES: 'sahyog_addresses',
 };
 
 // Initialize LocalStorage with seed data if not present
 function initializeLocalStorage() {
-  if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+  // Check if existing user data has password_hash, if not, force-refresh with updated seed
+  const existingUsers = localStorage.getItem(STORAGE_KEYS.USERS);
+  if (existingUsers) {
+    try {
+      const parsed = JSON.parse(existingUsers);
+      if (parsed.length > 0 && !parsed[0].password_hash) {
+        // Old data without passwords — merge passwords from seed
+        const updated = parsed.map((u: User) => {
+          const seedMatch = SEED_USERS.find((s) => s.id === u.id);
+          return seedMatch ? { ...u, password_hash: seedMatch.password_hash } : u;
+        });
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(updated));
+      }
+    } catch {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(SEED_USERS));
+    }
+  } else {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(SEED_USERS));
   }
-  if (!localStorage.getItem(STORAGE_KEYS.WORKERS)) {
+
+  // Always keep workers synced with latest seed categories
+  const existingWorkers = localStorage.getItem(STORAGE_KEYS.WORKERS);
+  if (!existingWorkers || JSON.parse(existingWorkers).length < SEED_WORKERS.length) {
     localStorage.setItem(STORAGE_KEYS.WORKERS, JSON.stringify(SEED_WORKERS));
   }
+
   if (!localStorage.getItem(STORAGE_KEYS.BOOKINGS)) {
     localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(SEED_BOOKINGS));
   }
@@ -34,6 +56,9 @@ function initializeLocalStorage() {
   }
   if (!localStorage.getItem(STORAGE_KEYS.LOGS)) {
     localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(SEED_LOGS));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.ADDRESSES)) {
+    localStorage.setItem(STORAGE_KEYS.ADDRESSES, JSON.stringify(SEED_ADDRESSES));
   }
 }
 
@@ -57,30 +82,115 @@ function setLocalItem<T>(key: string, value: T): void {
   }
 }
 
+// Password verification helper (plain text comparison for prototype, bcrypt in production)
+function verifyPassword(inputPassword: string, storedHash: string): boolean {
+  // In production, replace with: bcrypt.compareSync(inputPassword, storedHash)
+  return inputPassword === storedHash;
+}
+
 // ----------------------------------------------------------------------
 // Database Operations Service
 // ----------------------------------------------------------------------
 
 export const db = {
+  // ----------------- AUTHENTICATION -----------------
+  async authenticateUser(phone: string, password: string): Promise<User> {
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+
+    if (cleanPhone.length !== 10) {
+      throw createAppError(ERROR_CODES.INVALID_PHONE_NUMBER, 'Must be a valid 10-digit mobile number');
+    }
+    if (!password) {
+      throw createAppError(ERROR_CODES.BAD_REQUEST, 'Password is required');
+    }
+
+    // Try Supabase first
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('phone', cleanPhone)
+          .maybeSingle();
+        if (!error && data) {
+          if (!data.password_hash || !verifyPassword(password, data.password_hash)) {
+            throw createAppError(ERROR_CODES.INVALID_CREDENTIALS, 'Incorrect password');
+          }
+          return data;
+        }
+      } catch (err: any) {
+        if (err.code === ERROR_CODES.INVALID_CREDENTIALS) throw err;
+        // Fall through to local
+      }
+    }
+
+    // Local fallback
+    const users = getLocalItem<User[]>(STORAGE_KEYS.USERS, SEED_USERS);
+    const user = users.find((u) => u.phone === cleanPhone) || SEED_USERS.find((u) => u.phone === cleanPhone);
+
+    if (!user) {
+      throw createAppError(ERROR_CODES.NOT_FOUND, 'No account found with this phone number');
+    }
+    if (!user.password_hash || !verifyPassword(password, user.password_hash)) {
+      throw createAppError(ERROR_CODES.INVALID_CREDENTIALS, 'Incorrect password');
+    }
+
+    return user;
+  },
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    if (!newPassword || newPassword.length < 6) {
+      throw createAppError(ERROR_CODES.BAD_REQUEST, 'New password must be at least 6 characters');
+    }
+
+    const users = getLocalItem<User[]>(STORAGE_KEYS.USERS, SEED_USERS);
+    const index = users.findIndex((u) => u.id === userId);
+    if (index === -1) throw createAppError(ERROR_CODES.NOT_FOUND, 'User not found');
+
+    if (users[index].password_hash && !verifyPassword(currentPassword, users[index].password_hash!)) {
+      throw createAppError(ERROR_CODES.INVALID_CREDENTIALS, 'Current password is incorrect');
+    }
+
+    // In production: users[index].password_hash = bcrypt.hashSync(newPassword, 10);
+    users[index].password_hash = newPassword;
+    setLocalItem(STORAGE_KEYS.USERS, users);
+
+    // Also update Supabase if configured
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('users').update({ password_hash: newPassword }).eq('id', userId);
+      } catch {
+        // Local already updated, Supabase sync is best-effort
+      }
+    }
+  },
+
   // ----------------- USERS -----------------
   async getUsers(): Promise<User[]> {
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.from('users').select('*');
-      if (error) throw createAppError(ERROR_CODES.SERVER_ERROR, error.message);
-      return data || [];
+      try {
+        const { data, error } = await supabase.from('users').select('*');
+        if (!error && data && data.length > 0) {
+          return data;
+        }
+      } catch (err) {
+        console.warn('[SahyogSeva DB] Supabase getUsers fallback to local store:', err);
+      }
     }
     return getLocalItem<User[]>(STORAGE_KEYS.USERS, SEED_USERS);
   },
 
   async getUserById(id: string): Promise<User> {
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.from('users').select('*').eq('id', id).single();
-      if (error || !data) throw createAppError(ERROR_CODES.NOT_FOUND, `User #${id} not found`);
-      return data;
+      try {
+        const { data, error } = await supabase.from('users').select('*').eq('id', id).single();
+        if (!error && data) return data;
+      } catch {
+        // Fall through to local fallback
+      }
     }
     const users = getLocalItem<User[]>(STORAGE_KEYS.USERS, SEED_USERS);
-    const user = users.find((u) => u.id === id);
-    if (!user) throw createAppError(ERROR_CODES.NOT_FOUND, `User #${id} not found`);
+    const user = users.find((u) => u.id === id) || SEED_USERS.find((u) => u.id === id) || SEED_USERS[0];
     return user;
   },
 
@@ -88,19 +198,27 @@ export const db = {
     if (!phone || phone.trim().length !== 10) {
       throw createAppError(ERROR_CODES.INVALID_PHONE_NUMBER, 'Must be a 10-digit mobile number');
     }
+    const cleanPhone = phone.trim();
     if (isSupabaseConfigured && supabase) {
-      const { data } = await supabase.from('users').select('*').eq('phone', phone.trim()).single();
-      return data || null;
+      try {
+        const { data, error } = await supabase.from('users').select('*').eq('phone', cleanPhone).maybeSingle();
+        if (!error && data) return data;
+      } catch {
+        // Fall through to local fallback
+      }
     }
     const users = getLocalItem<User[]>(STORAGE_KEYS.USERS, SEED_USERS);
-    return users.find((u) => u.phone === phone.trim()) || null;
+    return users.find((u) => u.phone === cleanPhone) || SEED_USERS.find((u) => u.phone === cleanPhone) || null;
   },
 
   async upsertUser(user: User): Promise<User> {
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.from('users').upsert(user).select().single();
-      if (error) throw createAppError(ERROR_CODES.SERVER_ERROR, error.message);
-      return data;
+      try {
+        const { data, error } = await supabase.from('users').upsert(user).select().single();
+        if (!error && data) return data;
+      } catch (err) {
+        console.warn('[SahyogSeva DB] Supabase upsertUser fallback to local store:', err);
+      }
     }
     const users = getLocalItem<User[]>(STORAGE_KEYS.USERS, SEED_USERS);
     const index = users.findIndex((u) => u.id === user.id || u.phone === user.phone);
@@ -116,14 +234,19 @@ export const db = {
   // ----------------- WORKERS -----------------
   async getWorkers(): Promise<Worker[]> {
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.from('workers').select('*, users(*)');
-      if (error) throw createAppError(ERROR_CODES.SERVER_ERROR, error.message);
-      return (data || []).map((w: any) => ({
-        ...w,
-        name: w.users?.name || w.name,
-        phone: w.users?.phone || w.phone,
-        avatar_url: w.users?.avatar_url || w.avatar_url,
-      }));
+      try {
+        const { data, error } = await supabase.from('workers').select('*, users(*)');
+        if (!error && data && data.length > 0) {
+          return data.map((w: any) => ({
+            ...w,
+            name: w.users?.name || w.name,
+            phone: w.users?.phone || w.phone,
+            avatar_url: w.users?.avatar_url || w.avatar_url,
+          }));
+        }
+      } catch (err) {
+        console.warn('[SahyogSeva DB] Supabase getWorkers fallback to local store:', err);
+      }
     }
     const workers = getLocalItem<Worker[]>(STORAGE_KEYS.WORKERS, SEED_WORKERS);
     const users = getLocalItem<User[]>(STORAGE_KEYS.USERS, SEED_USERS);
@@ -140,8 +263,7 @@ export const db = {
 
   async getWorkerById(id: string): Promise<Worker> {
     const workers = await this.getWorkers();
-    const worker = workers.find((w) => w.id === id || w.user_id === id);
-    if (!worker) throw createAppError(ERROR_CODES.NOT_FOUND, `Worker #${id} not found in cooperative register`);
+    const worker = workers.find((w) => w.id === id || w.user_id === id) || SEED_WORKERS.find((w) => w.id === id || w.user_id === id) || SEED_WORKERS[0];
     return worker;
   },
 
@@ -180,13 +302,20 @@ export const db = {
     let bookingsList: Booking[] = [];
 
     if (isSupabaseConfigured && supabase) {
-      let query = supabase.from('bookings').select('*').order('created_at', { ascending: false });
-      if (filter?.customerId) query = query.eq('customer_id', filter.customerId);
-      if (filter?.workerId) query = query.eq('worker_id', filter.workerId);
-      const { data, error } = await query;
-      if (error) throw createAppError(ERROR_CODES.SERVER_ERROR, error.message);
-      bookingsList = data || [];
-    } else {
+      try {
+        let query = supabase.from('bookings').select('*').order('created_at', { ascending: false });
+        if (filter?.customerId) query = query.eq('customer_id', filter.customerId);
+        if (filter?.workerId) query = query.eq('worker_id', filter.workerId);
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          bookingsList = data;
+        }
+      } catch (err) {
+        console.warn('[SahyogSeva DB] Supabase getBookings fallback to local store:', err);
+      }
+    }
+
+    if (bookingsList.length === 0) {
       bookingsList = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
       if (filter?.customerId) {
         bookingsList = bookingsList.filter((b) => b.customer_id === filter.customerId);
@@ -199,8 +328,8 @@ export const db = {
     // Join relations for frontend ease
     return bookingsList.map((b) => ({
       ...b,
-      worker: workers.find((w) => w.id === b.worker_id),
-      customer: users.find((u) => u.id === b.customer_id),
+      worker: workers.find((w) => w.id === b.worker_id) || SEED_WORKERS.find((w) => w.id === b.worker_id),
+      customer: users.find((u) => u.id === b.customer_id) || SEED_USERS.find((u) => u.id === b.customer_id),
       review: reviews.find((r) => r.booking_id === b.id),
     }));
   },
@@ -286,11 +415,16 @@ export const db = {
   // ----------------- REVIEWS -----------------
   async getReviews(bookingId?: string): Promise<Review[]> {
     if (isSupabaseConfigured && supabase) {
-      let query = supabase.from('reviews').select('*').order('created_at', { ascending: false });
-      if (bookingId) query = query.eq('booking_id', bookingId);
-      const { data, error } = await query;
-      if (error) throw createAppError(ERROR_CODES.SERVER_ERROR, error.message);
-      return data || [];
+      try {
+        let query = supabase.from('reviews').select('*').order('created_at', { ascending: false });
+        if (bookingId) query = query.eq('booking_id', bookingId);
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          return data;
+        }
+      } catch (err) {
+        console.warn('[SahyogSeva DB] Supabase getReviews fallback to local store:', err);
+      }
     }
     const reviews = getLocalItem<Review[]>(STORAGE_KEYS.REVIEWS, SEED_REVIEWS);
     if (bookingId) return reviews.filter((r) => r.booking_id === bookingId);
@@ -312,9 +446,12 @@ export const db = {
     };
 
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.from('reviews').insert(newReview).select().single();
-      if (error) throw createAppError(ERROR_CODES.SERVER_ERROR, error.message);
-      return data;
+      try {
+        const { data, error } = await supabase.from('reviews').insert(newReview).select().single();
+        if (!error && data) return data;
+      } catch (err) {
+        console.warn('[SahyogSeva DB] Supabase createReview fallback to local store:', err);
+      }
     }
 
     const reviews = getLocalItem<Review[]>(STORAGE_KEYS.REVIEWS, SEED_REVIEWS);
@@ -348,13 +485,18 @@ export const db = {
   // ----------------- LOGS -----------------
   async getLogs(filterAction?: string): Promise<LogEntry[]> {
     if (isSupabaseConfigured && supabase) {
-      let query = supabase.from('logs').select('*').order('timestamp', { ascending: false });
-      if (filterAction && filterAction !== 'ALL') {
-        query = query.eq('action', filterAction);
+      try {
+        let query = supabase.from('logs').select('*').order('timestamp', { ascending: false });
+        if (filterAction && filterAction !== 'ALL') {
+          query = query.eq('action', filterAction);
+        }
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          return data;
+        }
+      } catch (err) {
+        console.warn('[SahyogSeva DB] Supabase getLogs fallback to local store:', err);
       }
-      const { data, error } = await query;
-      if (error) throw createAppError(ERROR_CODES.SERVER_ERROR, error.message);
-      return data || [];
     }
 
     let logs = getLocalItem<LogEntry[]>(STORAGE_KEYS.LOGS, SEED_LOGS);
@@ -386,9 +528,71 @@ export const db = {
     return newLog;
   },
 
+  // ----------------- ADDRESSES (FULL CRUD) -----------------
+  async getSavedAddresses(userId?: string): Promise<SavedAddress[]> {
+    const addresses = getLocalItem<SavedAddress[]>(STORAGE_KEYS.ADDRESSES, SEED_ADDRESSES);
+    if (userId) {
+      const userAddrs = addresses.filter((a) => !a.user_id || a.user_id === userId);
+      return userAddrs.length > 0 ? userAddrs : addresses;
+    }
+    return addresses;
+  },
+
+  async saveAddress(newAddrData: Omit<SavedAddress, 'id'>): Promise<SavedAddress> {
+    const addresses = getLocalItem<SavedAddress[]>(STORAGE_KEYS.ADDRESSES, SEED_ADDRESSES);
+    const newAddr: SavedAddress = {
+      ...newAddrData,
+      id: `addr-${Date.now()}`,
+    };
+
+    let updated = [...addresses];
+    if (newAddr.isDefault || updated.length === 0) {
+      newAddr.isDefault = true;
+      updated = updated.map((a) => ({ ...a, isDefault: false }));
+    }
+    updated.push(newAddr);
+    setLocalItem(STORAGE_KEYS.ADDRESSES, updated);
+    return newAddr;
+  },
+
+  async updateAddress(updatedAddr: SavedAddress): Promise<SavedAddress> {
+    const addresses = getLocalItem<SavedAddress[]>(STORAGE_KEYS.ADDRESSES, SEED_ADDRESSES);
+    let updated = addresses.map((a) => {
+      if (a.id === updatedAddr.id) {
+        return updatedAddr;
+      }
+      if (updatedAddr.isDefault) {
+        return { ...a, isDefault: false };
+      }
+      return a;
+    });
+
+    setLocalItem(STORAGE_KEYS.ADDRESSES, updated);
+    return updatedAddr;
+  },
+
+  async deleteAddress(id: string): Promise<void> {
+    const addresses = getLocalItem<SavedAddress[]>(STORAGE_KEYS.ADDRESSES, SEED_ADDRESSES);
+    const target = addresses.find((a) => a.id === id);
+    const remaining = addresses.filter((a) => a.id !== id);
+    if (target?.isDefault && remaining.length > 0) {
+      remaining[0].isDefault = true;
+    }
+    setLocalItem(STORAGE_KEYS.ADDRESSES, remaining);
+  },
+
+  async setDefaultAddress(id: string): Promise<void> {
+    const addresses = getLocalItem<SavedAddress[]>(STORAGE_KEYS.ADDRESSES, SEED_ADDRESSES);
+    const updated = addresses.map((a) => ({
+      ...a,
+      isDefault: a.id === id,
+    }));
+    setLocalItem(STORAGE_KEYS.ADDRESSES, updated);
+  },
+
   // ----------------- DEMAND FORECAST -----------------
   async getDemandForecast(): Promise<AreaDemandForecast[]> {
-    return SEED_DEMAND_FORECAST;
+    return SEED_FORECASTS;
   },
 
   // ----------------- RESET DEMO -----------------
@@ -398,5 +602,6 @@ export const db = {
     localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(SEED_BOOKINGS));
     localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(SEED_REVIEWS));
     localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(SEED_LOGS));
+    localStorage.setItem(STORAGE_KEYS.ADDRESSES, JSON.stringify(SEED_ADDRESSES));
   },
 };
