@@ -81,7 +81,13 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
 
-    const customerId = currentUser?.id || 'user-cust-1';
+    if (!currentUser) {
+      showError(ERROR_CODES.UNAUTHORIZED, 'Please sign in or create an account to book an artisan.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const customerId = currentUser.id;
 
     // 1. Validation checks (Code 400)
     if (!address.trim()) {

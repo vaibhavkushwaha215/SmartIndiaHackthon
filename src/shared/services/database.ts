@@ -229,7 +229,8 @@ export const db = {
       }
     }
     const users = getLocalItem<User[]>(STORAGE_KEYS.USERS, SEED_USERS);
-    const user = users.find((u) => u.id === id) || SEED_USERS.find((u) => u.id === id) || SEED_USERS[0];
+    const user = users.find((u) => u.id === id) || SEED_USERS.find((u) => u.id === id);
+    if (!user) throw createAppError(ERROR_CODES.NOT_FOUND, `User #${id} not found`);
     return user;
   },
 
@@ -302,7 +303,8 @@ export const db = {
 
   async getWorkerById(id: string): Promise<Worker> {
     const workers = await this.getWorkers();
-    const worker = workers.find((w) => w.id === id || w.user_id === id) || SEED_WORKERS.find((w) => w.id === id || w.user_id === id) || SEED_WORKERS[0];
+    const worker = workers.find((w) => w.id === id || w.user_id === id) || SEED_WORKERS.find((w) => w.id === id || w.user_id === id);
+    if (!worker) throw createAppError(ERROR_CODES.NOT_FOUND, `Worker #${id} not found`);
     return worker;
   },
 
@@ -349,34 +351,34 @@ export const db = {
         let query = supabase.from('bookings').select('*').order('created_at', { ascending: false });
         if (filter?.customerId) query = query.eq('customer_id', filter.customerId);
         if (filter?.workerId) query = query.eq('worker_id', filter.workerId);
+
         const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          data.forEach((remoteBooking) => {
-            // Keep local version if already present to preserve active edits, or insert if new
-            if (!bookingsMap.has(remoteBooking.id)) {
-              bookingsMap.set(remoteBooking.id, remoteBooking);
-            }
-          });
+        if (!error && data) {
+          data.forEach((b: Booking) => bookingsMap.set(b.id, b));
         }
       } catch (err) {
         console.warn('[SahyogSeva DB] Supabase getBookings fallback to local store:', err);
       }
     }
 
-    let bookingsList = Array.from(bookingsMap.values());
+    const merged = Array.from(bookingsMap.values());
+    const enriched = this.enrichBookings(merged, workers, users, reviews);
 
     if (filter?.customerId) {
-      bookingsList = bookingsList.filter((b) => b.customer_id === filter.customerId);
+      return enriched.filter((b) => b.customer_id === filter.customerId);
     }
     if (filter?.workerId) {
-      bookingsList = bookingsList.filter((b) => b.worker_id === filter.workerId);
+      return enriched.filter((b) => b.worker_id === filter.workerId);
     }
 
-    // Join relations for frontend ease
-    return bookingsList.map((b) => ({
+    return enriched;
+  },
+
+  enrichBookings(bookings: Booking[], workers: Worker[], users: User[], reviews: Review[]): Booking[] {
+    return bookings.map((b) => ({
       ...b,
-      worker: workers.find((w) => w.id === b.worker_id) || SEED_WORKERS.find((w) => w.id === b.worker_id),
-      customer: users.find((u) => u.id === b.customer_id) || SEED_USERS.find((u) => u.id === b.customer_id),
+      customer: users.find((u) => u.id === b.customer_id),
+      worker: workers.find((w) => w.id === b.worker_id),
       review: reviews.find((r) => r.booking_id === b.id),
     }));
   },
@@ -445,27 +447,10 @@ export const db = {
 
   async updateBookingStatus(id: string, status: BookingStatus, amountPaid?: number): Promise<Booking> {
     const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
-    let index = bookings.findIndex((b) => b.id === id);
+    const index = bookings.findIndex((b) => b.id === id);
 
     if (index === -1) {
-      // If booking was not yet in local storage, initialize it from seed or fallback
-      const seedMatch = SEED_BOOKINGS.find((b) => b.id === id);
-      const fallbackBooking: Booking = seedMatch ? { ...seedMatch } : {
-        id,
-        customer_id: 'user-cust-1',
-        worker_id: 'worker-1',
-        date: new Date().toISOString().split('T')[0],
-        time_slot: '10:00 AM - 12:00 PM',
-        address: 'Customer Service Location',
-        status: status,
-        created_at: new Date().toISOString(),
-        amount: amountPaid || 299,
-        grossAmount: amountPaid || 299,
-        platformFee: 0,
-        workerEarnings: amountPaid || 299,
-      };
-      bookings.unshift(fallbackBooking);
-      index = 0;
+      throw createAppError(ERROR_CODES.NOT_FOUND, `Booking #${id} not found in system.`);
     }
 
     const prevStatus = bookings[index].status;

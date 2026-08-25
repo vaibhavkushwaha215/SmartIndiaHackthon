@@ -20,7 +20,11 @@ export const WorkerEarnings: React.FC = () => {
   const [transactions, setTransactions] = useState<WorkerEarningTransaction[]>([]);
 
   useEffect(() => {
-    db.getWorkerEarnings(currentUser?.id || 'worker-1').then(setTransactions);
+    if (currentUser?.id) {
+      db.getWorkerEarnings(currentUser.id).then(setTransactions);
+    } else {
+      setTransactions([]);
+    }
   }, [currentUser]);
 
   const totalGross = transactions.reduce((sum, tx) => sum + tx.gross_amount, 0);

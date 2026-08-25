@@ -340,14 +340,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                     setIsSwitchHovered(false);
                                     showSuccess('Switched to Worker: Rajesh Sharma');
                                   }}
-                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                                    currentRole === 'Worker' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
+                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[var(--color-primary-light)] transition cursor-pointer ${
+                                    currentRole === 'Worker' ? 'bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold' : 'text-[var(--color-text)]'
                                   }`}
                                 >
                                   <span className="flex items-center gap-1">
-                                    ⚡ Worker (Rajesh) <span className="text-xs text-emerald-700 font-bold bg-emerald-100 px-1 rounded">Verified</span>
+                                    ⚡ Worker (Rajesh) <span className="text-[10px] text-[var(--color-primary)] font-bold bg-[var(--color-primary-light)] px-1 rounded">Verified</span>
                                   </span>
-                                  {currentRole === 'Worker' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                                  {currentRole === 'Worker' && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-primary)]" />}
                                 </button>
 
                                 {/* Option 3: Admin */}
@@ -359,12 +359,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                     setIsSwitchHovered(false);
                                     showSuccess('Switched to Admin Portal');
                                   }}
-                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                                    currentRole === 'Admin' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
+                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[var(--color-primary-light)] transition cursor-pointer ${
+                                    currentRole === 'Admin' ? 'bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold' : 'text-[var(--color-text)]'
                                   }`}
                                 >
                                   <span>🛡️ Admin Portal</span>
-                                  {currentRole === 'Admin' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                                  {currentRole === 'Admin' && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-primary)]" />}
                                 </button>
                               </div>
                             )}
@@ -372,13 +372,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
                           {/* 4. Apply Now CTA (if not a worker) */}
                           {currentRole !== 'Worker' && (
-                            <div className="p-2 border-t border-slate-100">
+                            <div className="p-2 border-t border-[var(--color-border)]">
                               <button
                                 onClick={() => {
                                   setIsUserMenuOpen(false);
                                   onTabChange('apply-worker');
                                 }}
-                                className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                                className="w-full py-2 px-3 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
                               >
                                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                                 <span>{isHindi ? 'कारीगर बनें? आवेदन करें!' : 'Not a worker? Apply Now!'}</span>
