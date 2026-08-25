@@ -212,7 +212,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
               {!currentUser ? (
                 <button
                   onClick={() => setIsLoginModalOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition cursor-pointer"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>{isHindi ? 'साइन इन करें' : 'Sign In'}</span>
@@ -513,7 +513,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2"
           >
             <Send className="w-4 h-4" />
             <span>Submit Cooperative Membership Request</span>

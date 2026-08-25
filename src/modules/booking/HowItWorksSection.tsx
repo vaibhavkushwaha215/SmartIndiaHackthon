@@ -88,7 +88,7 @@ export const HowItWorksSection: React.FC = () => {
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <ShieldCheck className="w-5 h-5" />
           </div>
-          <h5 className="font-bold text-xs text-slate-900">100% Police Verified</h5>
+          <h4 className="font-bold text-xs text-slate-900">100% Police Verified</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
             Aadhaar and criminal background verified local neighborhood pros.
           </p>
@@ -98,7 +98,7 @@ export const HowItWorksSection: React.FC = () => {
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <Banknote className="w-5 h-5" />
           </div>
-          <h5 className="font-bold text-xs text-slate-900">Pay After Service</h5>
+          <h4 className="font-bold text-xs text-slate-900">Pay After Service</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
             Zero advance fee. Pay Cash or UPI directly after complete job satisfaction.
           </p>
@@ -108,7 +108,7 @@ export const HowItWorksSection: React.FC = () => {
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <Clock className="w-5 h-5" />
           </div>
-          <h5 className="font-bold text-xs text-slate-900">30-Min Rapid Response</h5>
+          <h4 className="font-bold text-xs text-slate-900">30-Min Rapid Response</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
             Emergency electricians and technicians available on-demand in your sector.
           </p>
@@ -118,7 +118,7 @@ export const HowItWorksSection: React.FC = () => {
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
             <Award className="w-5 h-5" />
           </div>
-          <h5 className="font-bold text-xs text-slate-900">30-Day Service Guarantee</h5>
+          <h4 className="font-bold text-xs text-slate-900">30-Day Service Guarantee</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
             Free rework or full inspection guarantee if any issue recurs within 30 days.
           </p>

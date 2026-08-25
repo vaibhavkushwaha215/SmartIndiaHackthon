@@ -8,7 +8,7 @@ export const SEED_USERS: User[] = [
     phone: '9876543210',
     language_pref: 'en',
     password_hash: 'customer123',
-    avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-cust-2',
@@ -17,7 +17,7 @@ export const SEED_USERS: User[] = [
     phone: '9811223344',
     language_pref: 'hi',
     password_hash: 'customer123',
-    avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-work-1',
@@ -26,7 +26,7 @@ export const SEED_USERS: User[] = [
     phone: '9820011223',
     language_pref: 'en',
     password_hash: 'worker123',
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-work-2',
@@ -35,7 +35,7 @@ export const SEED_USERS: User[] = [
     phone: '9820022334',
     language_pref: 'hi',
     password_hash: 'worker123',
-    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-work-3',
@@ -44,7 +44,7 @@ export const SEED_USERS: User[] = [
     phone: '9820033445',
     language_pref: 'hi',
     password_hash: 'worker123',
-    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-work-4',
@@ -53,7 +53,7 @@ export const SEED_USERS: User[] = [
     phone: '9820044556',
     language_pref: 'en',
     password_hash: 'worker123',
-    avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-work-5',
@@ -62,7 +62,7 @@ export const SEED_USERS: User[] = [
     phone: '9820055667',
     language_pref: 'hi',
     password_hash: 'worker123',
-    avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-work-6',
@@ -71,7 +71,7 @@ export const SEED_USERS: User[] = [
     phone: '9820066778',
     language_pref: 'en',
     password_hash: 'worker123',
-    avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-work-7',
@@ -80,7 +80,7 @@ export const SEED_USERS: User[] = [
     phone: '9820077889',
     language_pref: 'hi',
     password_hash: 'worker123',
-    avatar_url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-work-8',
@@ -89,7 +89,7 @@ export const SEED_USERS: User[] = [
     phone: '9820088990',
     language_pref: 'hi',
     password_hash: 'worker123',
-    avatar_url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-work-9',
@@ -98,7 +98,7 @@ export const SEED_USERS: User[] = [
     phone: '9820099001',
     language_pref: 'en',
     password_hash: 'worker123',
-    avatar_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&auto=format&fit=crop&q=75',
   },
   {
     id: 'user-admin-1',
@@ -107,7 +107,7 @@ export const SEED_USERS: User[] = [
     phone: '9900011223',
     language_pref: 'en',
     password_hash: 'admin123',
-    avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=75',
   },
 ];
 
@@ -128,7 +128,7 @@ export const SEED_WORKERS: Worker[] = [
     bio: 'Certified master electrician affiliated with Delhi Vidyut Sahyog. 9 years in residential diagnostics and heavy load setups.',
     name: 'Rajesh Sharma',
     phone: '9820011223',
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=75',
   },
   // 2. Appliance Repair
   {
@@ -146,7 +146,7 @@ export const SEED_WORKERS: Worker[] = [
     bio: 'Dedicated technician specializing in AC cooling diagnostics, geysers, and modern home appliance electronics.',
     name: 'Amit Patel',
     phone: '9820022334',
-    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=75',
   },
   // 3. Electrical (Smart Home)
   {
@@ -164,7 +164,7 @@ export const SEED_WORKERS: Worker[] = [
     bio: 'Senior electrical artisan with ITI Certification. Expertise in modular switchboards and smart load automation.',
     name: 'Manoj Kumar Maurya',
     phone: '9820033445',
-    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=75',
   },
   // 4. Plumbing
   {
@@ -182,7 +182,7 @@ export const SEED_WORKERS: Worker[] = [
     bio: 'Expert sanitary & plumbing technician. Specialized in bathroom leak detection and pressure pump overhauls.',
     name: 'Suresh Babu',
     phone: '9820044556',
-    avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=75',
   },
   // 5. Carpentry
   {
@@ -200,7 +200,7 @@ export const SEED_WORKERS: Worker[] = [
     bio: 'Precision woodworker and modular furniture assembler. Expertise in sliding door channels, mortise locks, and custom shelving.',
     name: 'Dinesh Yadav',
     phone: '9820055667',
-    avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120&auto=format&fit=crop&q=75',
   },
   // 6. Painting & Waterproofing
   {
@@ -218,7 +218,7 @@ export const SEED_WORKERS: Worker[] = [
     bio: 'Skilled painting supervisor trusted for clean, dust-free interior painting and durable anti-dampness waterproofing coats.',
     name: 'Vikram Singh',
     phone: '9820066778',
-    avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=75',
   },
   // 7. Pest Control & Gardening
   {
@@ -236,7 +236,7 @@ export const SEED_WORKERS: Worker[] = [
     bio: 'Government-certified pest control operator using eco-safe and pet-friendly botanical herbal formulations.',
     name: 'Santosh Kumar Prajapati',
     phone: '9820077889',
-    avatar_url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=120&auto=format&fit=crop&q=75',
   },
   // 8. Deep Cleaning & Housekeeping
   {
@@ -254,7 +254,7 @@ export const SEED_WORKERS: Worker[] = [
     bio: 'Leader of certified cleaning artisan collective. Uses industrial vacuuming and hygienic biodegradable chemical solutions.',
     name: 'Kavita Devi',
     phone: '9820088990',
-    avatar_url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&auto=format&fit=crop&q=75',
   },
   // 9. Emergency Electrician
   {
@@ -272,7 +272,7 @@ export const SEED_WORKERS: Worker[] = [
     bio: 'Rapid-dispatch commercial & residential electrician ready for emergency phase outages and submeter repairs.',
     name: 'Harish Chander',
     phone: '9820099001',
-    avatar_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
+    avatar_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&auto=format&fit=crop&q=75',
   },
 ];
 
