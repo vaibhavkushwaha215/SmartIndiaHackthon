@@ -35,12 +35,12 @@ export const HowItWorksSection: React.FC = () => {
       {/* Dark Steps Card */}
       <div className="bg-[#091424] text-white rounded-3xl p-8 sm:p-12 shadow-xl border border-slate-800 space-y-8">
         <div className="text-center max-w-xl mx-auto space-y-2">
-          <span className="inline-flex items-center gap-1 bg-emerald-950 text-emerald-400 text-[11px] font-bold px-3 py-1 rounded-full border border-emerald-700/50">
+          <span className="inline-flex items-center gap-1 bg-emerald-950 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full border border-emerald-700/50">
             <Sparkles className="w-3 h-3" /> SEAMLESS & TRUSTWORTHY
           </span>
-          <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             How SahyogSeva Works For You
-          </h3>
+          </h2>
           <p className="text-xs sm:text-sm text-slate-400">
             Designed specifically for local neighborhoods with 100% transparency and pay-after-service safety.
           </p>
@@ -52,7 +52,7 @@ export const HowItWorksSection: React.FC = () => {
               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-extrabold flex items-center justify-center text-sm border border-emerald-500/30">
                 {s.step}
               </div>
-              <h4 className="text-base font-bold text-white">{s.title}</h4>
+              <h3 className="text-base font-bold text-white">{s.title}</h3>
               <p className="text-xs text-slate-400 leading-relaxed">{s.desc}</p>
             </div>
           ))}
@@ -67,7 +67,7 @@ export const HowItWorksSection: React.FC = () => {
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs text-center space-y-1">
-          <div className="text-2xl sm:text-3xl font-extrabold text-amber-500">4.88 ★</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-amber-600">4.88 ★</div>
           <div className="text-xs text-slate-500 font-medium">Average Customer Rating</div>
         </div>
 
@@ -89,7 +89,7 @@ export const HowItWorksSection: React.FC = () => {
             <ShieldCheck className="w-5 h-5" />
           </div>
           <h5 className="font-bold text-xs text-slate-900">100% Police Verified</h5>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed">
             Aadhaar and criminal background verified local neighborhood pros.
           </p>
         </div>
@@ -99,7 +99,7 @@ export const HowItWorksSection: React.FC = () => {
             <Banknote className="w-5 h-5" />
           </div>
           <h5 className="font-bold text-xs text-slate-900">Pay After Service</h5>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed">
             Zero advance fee. Pay Cash or UPI directly after complete job satisfaction.
           </p>
         </div>
@@ -109,7 +109,7 @@ export const HowItWorksSection: React.FC = () => {
             <Clock className="w-5 h-5" />
           </div>
           <h5 className="font-bold text-xs text-slate-900">30-Min Rapid Response</h5>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed">
             Emergency electricians and technicians available on-demand in your sector.
           </p>
         </div>
@@ -119,7 +119,7 @@ export const HowItWorksSection: React.FC = () => {
             <Award className="w-5 h-5" />
           </div>
           <h5 className="font-bold text-xs text-slate-900">30-Day Service Guarantee</h5>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed">
             Free rework or full inspection guarantee if any issue recurs within 30 days.
           </p>
         </div>

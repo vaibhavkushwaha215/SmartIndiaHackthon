@@ -38,28 +38,37 @@ export const StarRating: React.FC<StarRatingProps> = ({
           const isFilled = currentVal >= starValue;
           const isHalf = currentVal > i && currentVal < starValue;
 
+          const starIcon = (
+            <Star
+              className={`${starSizes} ${
+                isFilled
+                  ? 'fill-amber-400 text-amber-500'
+                  : isHalf
+                  ? 'fill-amber-200 text-amber-500'
+                  : 'fill-slate-100 text-slate-300'
+              }`}
+            />
+          );
+
+          if (!interactive) {
+            return (
+              <span key={i} className="p-0.5" aria-hidden="true">
+                {starIcon}
+              </span>
+            );
+          }
+
           return (
             <button
               key={i}
               type="button"
-              disabled={!interactive}
-              onClick={() => interactive && onChange && onChange(starValue)}
-              onMouseEnter={() => interactive && setHoverRating(starValue)}
-              onMouseLeave={() => interactive && setHoverRating(null)}
-              className={`transition-colors ${
-                interactive ? 'cursor-pointer hover:scale-110' : 'cursor-default'
-              } p-0.5`}
+              onClick={() => onChange && onChange(starValue)}
+              onMouseEnter={() => setHoverRating(starValue)}
+              onMouseLeave={() => setHoverRating(null)}
+              className="cursor-pointer hover:scale-110 transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label={`Rate ${starValue} stars`}
             >
-              <Star
-                className={`${starSizes} ${
-                  isFilled
-                    ? 'fill-amber-400 text-amber-500'
-                    : isHalf
-                    ? 'fill-amber-200 text-amber-500'
-                    : 'fill-slate-100 text-slate-300'
-                }`}
-              />
+              {starIcon}
             </button>
           );
         })}

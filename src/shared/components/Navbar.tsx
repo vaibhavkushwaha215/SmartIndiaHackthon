@@ -103,7 +103,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         
         {/* Top Announcement Ribbon */}
-        <div className="bg-[#0b3b2c] text-emerald-100 text-[11px] sm:text-xs py-1.5 px-4 border-b border-emerald-800">
+        <div className="bg-[#0b3b2c] text-emerald-100 text-xs py-1.5 px-4 border-b border-emerald-800">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1">
             <div className="flex items-center gap-2 font-medium">
               <span>🛡️ 100% Background & Police Verified Local Professionals</span>
@@ -137,9 +137,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
               >
                 {/* Desktop: Horizontal Logo */}
                 <img
-                  src={isHindi ? "/assets/logos/logo-hi.png" : "/assets/logos/logo-en.png"}
+                  src={isHindi ? "/assets/logos/logo-hi.webp" : "/assets/logos/logo-en.webp"}
                   alt="SahyogSeva"
                   className="hidden sm:block h-10 object-contain"
+                  width={200}
+                  height={40}
                   onError={(e) => {
                     (e.target as HTMLElement).style.display = 'none';
                   }}
@@ -147,9 +149,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
                 {/* Mobile: Square Emblem */}
                 <img
-                  src="/assets/logos/logo-square.png"
+                  src="/assets/logos/logo-square.webp"
                   alt="SahyogSeva"
                   className="sm:hidden w-10 h-10 object-contain rounded-lg"
+                  width={40}
+                  height={40}
                   onError={(e) => {
                     (e.target as HTMLElement).style.display = 'none';
                   }}
@@ -160,8 +164,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
               <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-xs text-slate-700 font-semibold border border-slate-200">
                 <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                 <div>
-                  <div className="text-[9px] text-slate-400 uppercase font-bold">NEIGHBORHOOD</div>
-                  <div className="leading-tight text-[11px] font-bold">Indiranagar, Bengaluru</div>
+                <div className="text-xs text-slate-400 uppercase font-bold">NEIGHBORHOOD</div>
+                  <div className="leading-tight text-xs font-bold">Indiranagar, Bengaluru</div>
                 </div>
               </div>
             </div>
@@ -229,7 +233,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                       <div className="text-xs font-bold text-slate-900 leading-tight">
                         {currentUser?.name || 'Account'}
                       </div>
-                      <div className="text-[10px] text-emerald-700 font-bold leading-none">
+                      <div className="text-xs text-emerald-700 font-bold leading-none">
                         {currentUser?.role || 'Customer'}
                       </div>
                     </div>
@@ -257,8 +261,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                           />
                           <div>
                             <div className="text-xs font-bold text-slate-900">{currentUser?.name || 'User'}</div>
-                            <div className="text-[10px] text-slate-500 font-mono">+91 {currentUser?.phone || '9876543210'}</div>
-                            <RoleBadge role={currentRole} className="mt-1 inline-block text-[9px] py-0" />
+                            <div className="text-xs text-slate-500 font-mono">+91 {currentUser?.phone || '9876543210'}</div>
+                            <RoleBadge role={currentRole} className="mt-1 inline-block text-xs py-0" />
                           </div>
                         </div>
 
@@ -275,7 +279,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                               <Settings className="w-4 h-4 text-slate-400" />
                               <span>{isHindi ? 'सेटिंग्स और भाषा' : 'Settings & Language'}</span>
                             </div>
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
                               {isHindi ? 'HI' : 'EN'}
                             </span>
                           </button>
@@ -312,7 +316,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                             {/* Flyout Submenu */}
                             {isSwitchHovered && (
                               <div className="absolute right-full top-0 mr-1 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 z-40 animate-in fade-in slide-in-from-right-2">
-                                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                <div className="px-3 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
                                   {isHindi ? 'प्रोफ़ाइल चुनें' : 'Switch Account Profile'}
                                 </div>
 
@@ -347,7 +351,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                   }`}
                                 >
                                   <span className="flex items-center gap-1">
-                                    ⚡ Worker (Rajesh) <span className="text-[9px] text-emerald-700 font-bold bg-emerald-100 px-1 rounded">Verified</span>
+                                    ⚡ Worker (Rajesh) <span className="text-xs text-emerald-700 font-bold bg-emerald-100 px-1 rounded">Verified</span>
                                   </span>
                                   {currentRole === 'Worker' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                                 </button>

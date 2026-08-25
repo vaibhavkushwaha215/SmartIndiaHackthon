@@ -35,7 +35,7 @@ export const EmergencySOSBanner: React.FC<EmergencySOSBannerProps> = ({ onBookEm
 
       <button
         onClick={onBookEmergency}
-        className="self-stretch sm:self-auto px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-600/20 transition flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+        className="self-stretch sm:self-auto px-5 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold shadow-md shadow-amber-600/20 transition flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
       >
         <span>{isHindi ? 'आपातकालीन प्रो बुक करें' : 'Book Emergency Pro'}</span>
         <ArrowRight className="w-4 h-4" />

@@ -131,9 +131,11 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
               <img
-                src={isHindi ? "/assets/logos/logo-hi.png" : "/assets/logos/logo-en.png"}
+                src={isHindi ? "/assets/logos/logo-hi.webp" : "/assets/logos/logo-en.webp"}
                 alt="SahyogSeva"
                 className="h-10 object-contain brightness-125"
+                width={200}
+                height={40}
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none';
                 }}
@@ -170,7 +172,7 @@ export const Footer: React.FC = () => {
 
           {/* Services Column */}
           <div className="space-y-3 text-xs">
-            <h4 className="text-white font-bold tracking-wider uppercase text-[11px]">SERVICES</h4>
+            <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>SERVICES</div>
             <ul className="space-y-2 text-slate-400">
               <li className="hover:text-emerald-400 transition cursor-pointer">Electrician & Wireman</li>
               <li className="hover:text-emerald-400 transition cursor-pointer">Plumber & Pipe Repairs</li>
@@ -182,7 +184,7 @@ export const Footer: React.FC = () => {
 
           {/* Specialized Care */}
           <div className="space-y-3 text-xs">
-            <h4 className="text-white font-bold tracking-wider uppercase text-[11px]">SPECIALIZED CARE</h4>
+            <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>SPECIALIZED CARE</div>
             <ul className="space-y-2 text-slate-400">
               <li className="hover:text-emerald-400 transition cursor-pointer">Home Deep Cleaning</li>
               <li className="hover:text-emerald-400 transition cursor-pointer">Painter & Wall Finish</li>
@@ -193,7 +195,7 @@ export const Footer: React.FC = () => {
 
           {/* Popular Localities */}
           <div className="space-y-3 text-xs">
-            <h4 className="text-white font-bold tracking-wider uppercase text-[11px]">POPULAR LOCALITIES</h4>
+            <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>POPULAR LOCALITIES</div>
             <ul className="space-y-2 text-slate-400">
               <li className="hover:text-emerald-400 transition cursor-pointer">Indiranagar (Bengaluru)</li>
               <li className="hover:text-emerald-400 transition cursor-pointer">Koramangala (Bengaluru)</li>
@@ -206,7 +208,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div>
             © 2026 SahyogSeva Community Services. Designed for local trust and fair empowerment.
           </div>

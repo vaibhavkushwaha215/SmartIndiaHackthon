@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['assets/logos/logo-square.png', 'assets/logos/icon-192.png', 'assets/logos/icon-512.png'],
+      includeAssets: ['assets/logos/logo-square.webp', 'assets/logos/icon-192.webp', 'assets/logos/icon-512.webp'],
       manifest: {
         name: 'SahyogSeva - Cooperative Doorstep Services',
         short_name: 'SahyogSeva',
@@ -22,21 +22,21 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
-            src: '/assets/logos/icon-192.png',
+            src: '/assets/logos/icon-192.webp',
             sizes: '192x192',
-            type: 'image/png',
+            type: 'image/webp',
             purpose: 'any',
           },
           {
-            src: '/assets/logos/icon-512.png',
+            src: '/assets/logos/icon-512.webp',
             sizes: '512x512',
-            type: 'image/png',
+            type: 'image/webp',
             purpose: 'any',
           },
           {
-            src: '/assets/logos/icon-maskable-512.png',
+            src: '/assets/logos/icon-maskable-512.webp',
             sizes: '512x512',
-            type: 'image/png',
+            type: 'image/webp',
             purpose: 'maskable',
           },
         ],
@@ -50,6 +50,9 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    sourcemap: true,
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
