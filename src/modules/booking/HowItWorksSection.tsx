@@ -33,7 +33,7 @@ export const HowItWorksSection: React.FC = () => {
   return (
     <div className="space-y-8 pt-6">
       {/* Dark Steps Card */}
-      <div className="bg-[#091424] text-white rounded-3xl p-8 sm:p-12 shadow-xl border border-slate-800 space-y-8">
+      <div className="bg-[#091424] text-white rounded-3xl p-5 sm:p-8 md:p-12 shadow-xl border border-slate-800 space-y-8">
         <div className="text-center max-w-xl mx-auto space-y-2">
           <span className="inline-flex items-center gap-1 bg-emerald-950 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full border border-emerald-700/50">
             <Sparkles className="w-3 h-3" /> SEAMLESS & TRUSTWORTHY

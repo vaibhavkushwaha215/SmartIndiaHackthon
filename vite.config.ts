@@ -9,7 +9,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['assets/logos/logo-square.webp', 'assets/logos/icon-192.webp', 'assets/logos/icon-512.webp'],
+      includeAssets: [
+        'assets/logos/logo-square.webp',
+        'assets/logos/icon-192.png',
+        'assets/logos/icon-512.png',
+        'assets/logos/icon-192.webp',
+        'assets/logos/icon-512.webp',
+        'robots.txt'
+      ],
       manifest: {
         name: 'SahyogSeva - Cooperative Doorstep Services',
         short_name: 'SahyogSeva',
@@ -21,6 +28,24 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         icons: [
+          {
+            src: '/assets/logos/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/assets/logos/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/assets/logos/icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
           {
             src: '/assets/logos/icon-192.webp',
             sizes: '192x192',

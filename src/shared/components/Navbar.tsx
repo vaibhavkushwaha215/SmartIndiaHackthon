@@ -103,23 +103,23 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         
         {/* Top Announcement Ribbon */}
-        <div className="bg-[#0b3b2c] text-emerald-100 text-xs py-1.5 px-4 border-b border-emerald-800">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1">
-            <div className="flex items-center gap-2 font-medium">
-              <span>🛡️ 100% Background & Police Verified Local Professionals</span>
-              <span className="hidden md:inline">•</span>
-              <span className="hidden md:inline">Zero Advance Payment • Pay Cash / UPI After Service</span>
+        <div className="bg-[#0b3b2c] text-emerald-100 text-xs py-1.5 px-3 sm:px-4 border-b border-emerald-800">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-left">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1 sm:gap-2 font-medium">
+              <span>🛡️ 100% Verified Local Pros</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="hidden sm:inline">Zero Advance • Pay After Service</span>
             </div>
-            <div className="flex items-center gap-3 font-semibold">
+            <div className="flex items-center justify-center gap-3 font-semibold">
               <span className="text-emerald-300">
-                Emergency 24x7 Help: <strong>1800-SAHYOG</strong>
+                Emergency: <strong>1800-SAHYOG</strong>
               </span>
               <button
                 onClick={toggleLanguage}
                 className="flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-white transition cursor-pointer"
               >
                 <Globe className="w-3.5 h-3.5" />
-                <span>{isHindi ? 'English (EN)' : 'हिंदी (HI)'}</span>
+                <span>{isHindi ? 'EN' : 'HI'}</span>
               </button>
             </div>
           </div>

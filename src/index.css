@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  html, body, #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
   body {
     @apply bg-slate-50 text-slate-900 selection:bg-emerald-200 selection:text-emerald-900;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
