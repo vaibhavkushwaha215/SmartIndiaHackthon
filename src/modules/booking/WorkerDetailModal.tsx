@@ -171,11 +171,11 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
       }
       subtitle="Verified by State Electrical Cooperative Federation • Zero Commission Model"
     >
-      <div className="flex flex-col md:flex-row gap-8 max-h-[75vh] overflow-hidden">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8">
         
         {/* Left Side: Navigation Tabs */}
         <div className="md:w-56 shrink-0 flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 border-b md:border-b-0 md:border-r border-slate-100 pr-0 md:pr-6">
-          <div className="hidden md:block text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">
+          <div className="hidden md:block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">
             Quick Navigation
           </div>
 
@@ -239,14 +239,14 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
               <Award className="w-4 h-4 text-amber-500" />
               <span>Reviews</span>
             </div>
-            <span className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">
+            <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">
               {reviews.length}
             </span>
           </button>
         </div>
 
-        {/* Right Side: Spacious Scrollable Content */}
-        <div className="flex-1 overflow-y-auto space-y-6 pr-2 pb-4 scroll-smooth">
+        {/* Right Side: Spacious Content */}
+        <div className="flex-1 space-y-6 md:pr-2 pb-4 scroll-smooth">
           
           {/* Section 1: Worker Info */}
           <div id="modal-sec-info" className="space-y-4">
@@ -440,7 +440,7 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
             onClose();
             onBookNow(worker);
           }}
-          className="px-7 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 transition flex items-center gap-2 cursor-pointer hover:scale-105"
+          className="px-7 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md shadow-emerald-700/20 transition flex items-center gap-2 cursor-pointer hover:scale-105"
         >
           <Calendar className="w-4 h-4" />
           <span>{t('booking.book_now', 'Book Slot')}</span>

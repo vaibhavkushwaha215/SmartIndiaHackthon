@@ -52,7 +52,7 @@ const MainLayout: React.FC = () => {
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-emerald-200">
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 lg:pb-12">
         {renderActiveModule()}
       </main>
 

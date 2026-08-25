@@ -114,7 +114,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md shadow-emerald-700/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <span>Submit Review</span>
             <ArrowRight className="w-4 h-4" />
