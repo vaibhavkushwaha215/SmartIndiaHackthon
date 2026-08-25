@@ -10,6 +10,8 @@ interface AuthContextType {
   currentUser: User | null;
   currentRole: UserRole;
   isAuthenticated: boolean;
+  isSuperAdmin: boolean;
+  isAdminOrSuperAdmin: boolean;
   isLoading: boolean;
   login: (params: { phone: string; password: string }) => Promise<User>;
   register: (params: { name: string; role: UserRole; phone: string; password: string }) => Promise<User>;
@@ -96,6 +98,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw createAppError(ERROR_CODES.BAD_REQUEST, 'Password must be at least 6 characters');
     }
 
+    // Security Check: Public registration cannot create Admin or SuperAdmin accounts
+    if (role === 'Admin' || role === 'SuperAdmin') {
+      const err = createAppError(
+        ERROR_CODES.FORBIDDEN,
+        'Registration as Admin or SuperAdmin is restricted. Please contact cooperative platform governance.'
+      );
+      await logger.logAuth('REGISTRATION_FAILED', null, cleanPhone, ERROR_CODES.FORBIDDEN, err.message);
+      throw err;
+    }
+
     // Check if phone already exists (Error 103)
     const existing = await db.getUserByPhone(cleanPhone);
     if (existing) {
@@ -138,8 +150,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchRole = (role: UserRole) => {
+    // Security check: cannot elevate to SuperAdmin via client-side switch
+    if (role === 'SuperAdmin' && currentUser?.role !== 'SuperAdmin') {
+      logger.logAuth('ACCESS_DENIED', currentUser?.id || null, currentUser?.phone || null, 403, 'Unauthorized switch to SuperAdmin rejected');
+      return;
+    }
+
     let targetUser: User;
-    if (role === 'Worker') {
+    if (role === 'SuperAdmin') {
+      targetUser = SEED_USERS.find((u) => u.role === 'SuperAdmin') || SEED_USERS[0];
+    } else if (role === 'Worker') {
       targetUser = SEED_USERS.find((u) => u.role === 'Worker') || SEED_USERS[2];
     } else if (role === 'Admin') {
       targetUser = SEED_USERS.find((u) => u.role === 'Admin') || SEED_USERS[6];
@@ -177,12 +197,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const isSuperAdmin = currentUser?.role === 'SuperAdmin';
+  const isAdminOrSuperAdmin = currentUser?.role === 'Admin' || currentUser?.role === 'SuperAdmin';
+
   return (
     <AuthContext.Provider
       value={{
         currentUser,
         currentRole: currentUser?.role || 'Customer',
         isAuthenticated: Boolean(currentUser),
+        isSuperAdmin,
+        isAdminOrSuperAdmin,
         isLoading,
         login,
         register,

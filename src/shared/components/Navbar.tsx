@@ -9,6 +9,7 @@ import {
   Wrench,
   CalendarDays,
   Shield,
+  ShieldCheck,
   Activity,
   Globe,
   LogOut,
@@ -42,7 +43,7 @@ interface NavItemConfig {
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const { t, i18n } = useTranslation();
-  const { currentUser, currentRole, logout, quickSwitchUser, switchRole, updateLanguage } = useAuth();
+  const { currentUser, currentRole, isSuperAdmin, logout, quickSwitchUser, switchRole, updateLanguage } = useAuth();
   const { showSuccess } = useToast();
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -83,11 +84,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   };
 
   const navItems: NavItemConfig[] = [
-    { id: 'booking', label: isHindi ? 'सभी सेवाएं' : 'All Services', icon: Wrench, roles: ['Customer', 'Worker', 'Admin'], featureKey: 'BOOKING_SYSTEM', isAllServices: true },
-    { id: 'my-bookings', label: t('nav.my_bookings', 'My Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin'], featureKey: 'MY_BOOKINGS' },
-    { id: 'worker-dashboard', label: t('nav.worker_dashboard', 'Worker Dashboard'), icon: Wrench, roles: ['Worker', 'Admin'], featureKey: 'WORKER_DASHBOARD' },
-    { id: 'admin-dashboard', label: t('nav.admin_dashboard', 'Admin Portal'), icon: Shield, roles: ['Admin'], featureKey: 'ADMIN_PORTAL' },
-    { id: 'demand-forecast', label: t('nav.demand_forecast', 'Demand Forecast'), icon: Activity, roles: ['Admin', 'Worker', 'Customer'], featureKey: 'DEMAND_FORECAST' },
+    { id: 'booking', label: isHindi ? 'सभी सेवाएं' : 'All Services', icon: Wrench, roles: ['Customer', 'Worker', 'Admin'], featureKey: 'customerModule', isAllServices: true },
+    { id: 'my-bookings', label: t('nav.my_bookings', 'My Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin'], featureKey: 'customerModule' },
+    { id: 'worker-dashboard', label: t('nav.worker_dashboard', 'Worker Dashboard'), icon: Wrench, roles: ['Worker', 'Admin'], featureKey: 'workerModule' },
+    { id: 'admin-dashboard', label: t('nav.admin_dashboard', 'Admin Portal'), icon: Shield, roles: ['Admin'], featureKey: 'adminModule' },
+    { id: 'demand-forecast', label: t('nav.demand_forecast', 'Demand Forecast'), icon: Activity, roles: ['Admin', 'Worker', 'Customer'], featureKey: 'demandForecasting' },
     { id: 'settings', label: isHindi ? 'सेटिंग्स' : 'Settings', icon: Settings, roles: ['Customer', 'Worker', 'Admin'] },
   ];
 

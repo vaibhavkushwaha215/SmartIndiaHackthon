@@ -17,6 +17,16 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
       icon: Clock,
       label: t('status.pending', 'Pending Acceptance'),
     },
+    accepted: {
+      bg: 'bg-blue-50 text-blue-800 border-blue-200/80',
+      icon: CheckCircle2,
+      label: 'Accepted',
+    },
+    in_progress: {
+      bg: 'bg-indigo-50 text-indigo-800 border-indigo-200/80',
+      icon: Clock,
+      label: 'In Progress',
+    },
     confirmed: {
       bg: 'bg-blue-50 text-blue-800 border-blue-200/80',
       icon: CheckCircle2,
@@ -89,6 +99,7 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, className = '' }) =>
     Customer: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     Worker: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     Admin: 'bg-purple-50 text-purple-700 border-purple-200',
+    SuperAdmin: 'bg-purple-100 text-purple-900 border-purple-300 font-extrabold shadow-xs',
   }[role];
 
   return (

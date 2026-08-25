@@ -208,15 +208,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Demo passwords: <span className="font-mono text-emerald-600">customer123</span> · <span className="font-mono text-emerald-600">worker123</span> · <span className="font-mono text-emerald-600">admin123</span>
+            <p className="text-xs text-slate-400 mt-1">
+              Demo passwords: <span className="font-mono text-emerald-700">customer123</span> · <span className="font-mono text-emerald-700">worker123</span> · <span className="font-mono text-emerald-700">admin123</span>
             </p>
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-700/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md shadow-emerald-700/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <span>{t('auth.sign_in_btn', 'Sign In')}</span>
             <ArrowRight className="w-4 h-4" />
@@ -229,17 +229,17 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
-              {t('auth.role_label', 'Select Role')}
+              {t('auth.role_label', 'Select Account Type')}
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['Customer', 'Worker', 'Admin'] as UserRole[]).map((r) => (
+            <div className="grid grid-cols-2 gap-2">
+              {(['Customer', 'Worker'] as UserRole[]).map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
                   className={`py-2 px-2 text-xs font-bold rounded-lg border transition text-center cursor-pointer ${
                     role === r
-                      ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
+                      ? 'border-emerald-700 bg-emerald-700 text-white shadow-sm'
                       : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
                   }`}
                 >

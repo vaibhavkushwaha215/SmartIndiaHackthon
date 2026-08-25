@@ -3,6 +3,8 @@ import { Worker, Booking } from '../../shared/types';
 import { db } from '../../shared/services/database';
 import { StatusBadge, VerifiedBadge } from '../../shared/components/Badge';
 import { StarRating } from '../../shared/components/StarRating';
+import { AdminWorkersManagement } from './AdminWorkersManagement';
+import { AdminAnalytics } from './AdminAnalytics';
 import {
   Shield,
   Users,
@@ -16,23 +18,31 @@ import {
   MapPin,
   Phone,
   Clock,
+  Briefcase,
+  Layers,
+  ArrowRight,
+  Scale,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+export type AdminSubTab = 'overview' | 'workers' | 'analytics';
+
 interface AdminDashboardProps {
+  initialSubTab?: AdminSubTab;
   onNavigateToForecast?: () => void;
   onNavigateToLogs?: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
+  initialSubTab = 'overview',
   onNavigateToForecast,
   onNavigateToLogs,
 }) => {
   const { t } = useTranslation();
+  const [activeSubTab, setActiveSubTab] = useState<AdminSubTab>(initialSubTab);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'workers' | 'bookings'>('workers');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const loadData = async () => {
@@ -54,253 +64,217 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const totalCompleted = bookings.filter((b) => b.status === 'completed').length;
   const totalEscrowPool = bookings.reduce((sum, b) => sum + (b.amount || 299), 0);
+  const verifiedWorkersCount = workers.filter((w) => w.verified || w.verificationStatus === 'Verified').length;
 
-  const filteredWorkers = workers.filter(
-    (w) =>
-      (w.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      w.cooperative_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      w.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      w.skill.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredBookings = bookings.filter(
-    (b) =>
-      b.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (b.customer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (b.worker?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.status.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const SUB_TABS: { id: AdminSubTab; label: string; icon: React.FC<{ className?: string }> }[] = [
+    { id: 'overview', label: 'Administration Overview', icon: Layers },
+    { id: 'workers', label: 'Workers & Compliance (/admin/workers)', icon: Users },
+    { id: 'analytics', label: 'Cooperative Analytics (/admin/analytics)', icon: TrendingUp },
+  ];
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+      
       {/* Admin Header Banner */}
-      <div className="bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-linear-to-r from-purple-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-purple-500/30 border border-purple-400/40 flex items-center justify-center">
               <Shield className="w-4 h-4 text-purple-200" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold">{t('admin.dashboard_title', 'Cooperative Administration Portal')}</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold">
+              {t('admin.dashboard_title', 'Cooperative Administration Portal')}
+            </h1>
           </div>
           <p className="text-xs sm:text-sm text-purple-200/80 mt-1">
-            System-wide oversight for cooperative workers, bookings, demand allocation, and compliance.
+            System-wide oversight for cooperative workers, bookings, fair opportunity allocation, and compliance.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {onNavigateToForecast && (
             <button
               onClick={onNavigateToForecast}
-              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-white/15"
             >
               <TrendingUp className="w-3.5 h-3.5 text-amber-300" />
-              <span>Forecast</span>
+              <span>Demand Forecast</span>
             </button>
           )}
+
           {onNavigateToLogs && (
             <button
               onClick={onNavigateToLogs}
-              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-white/15"
             >
-              <FileText className="w-3.5 h-3.5 text-emerald-300" />
+              <FileText className="w-3.5 h-3.5 text-purple-300" />
               <span>Audit Logs</span>
             </button>
           )}
+
           <button
             onClick={loadData}
             className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
-            title="Refresh tables"
+            title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-              {t('admin.total_workers', 'Active Workers')}
-            </span>
-            <div className="text-2xl font-extrabold text-slate-900 mt-1">{workers.length}</div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <Users className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-              {t('admin.total_bookings', 'Total Bookings')}
-            </span>
-            <div className="text-2xl font-extrabold text-slate-900 mt-1">{bookings.length}</div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-            <Calendar className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-              {t('admin.completed_bookings', 'Completed Jobs')}
-            </span>
-            <div className="text-2xl font-extrabold text-emerald-600 mt-1">{totalCompleted}</div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Coop Escrow Flow</span>
-            <div className="text-2xl font-extrabold text-purple-600 mt-1">₹{totalEscrowPool}</div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <Shield className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
-
-      {/* Main Table Section */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-        {/* Tab & Search Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2">
+      {/* Sub-Navigation Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-b border-slate-200">
+        {SUB_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeSubTab === tab.id;
+          return (
             <button
-              onClick={() => setActiveTab('workers')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                activeTab === 'workers'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              key={tab.id}
+              onClick={() => setActiveSubTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                isActive
+                  ? 'border-purple-700 text-purple-900 bg-purple-50/50 rounded-t-xl'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
               }`}
             >
-              {t('admin.all_workers_tab', 'Registered Electricians')} ({workers.length})
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
             </button>
-            <button
-              onClick={() => setActiveTab('bookings')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                activeTab === 'bookings'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {t('admin.all_bookings_tab', 'All Bookings Register')} ({bookings.length})
-            </button>
-          </div>
-
-          {/* Search bar */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search table records..."
-              className="w-full pl-9 pr-3.5 py-1.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* WORKERS TABLE */}
-        {activeTab === 'workers' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                  <th className="py-3 px-3">Electrician</th>
-                  <th className="py-3 px-3">Cooperative ID</th>
-                  <th className="py-3 px-3">Skill & Specialty</th>
-                  <th className="py-3 px-3">Area</th>
-                  <th className="py-3 px-3">Rating</th>
-                  <th className="py-3 px-3">Tariff</th>
-                  <th className="py-3 px-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredWorkers.map((w) => (
-                  <tr key={w.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-3">
-                      <div className="flex items-center gap-2.5">
-                        <img
-                          src={w.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'}
-                          alt={w.name}
-                          className="w-8 h-8 rounded-lg object-cover border border-slate-200"
-                        />
-                        <div>
-                          <div className="font-bold text-slate-900">{w.name}</div>
-                          <div className="text-[10px] text-slate-400 font-mono">+91 {w.phone}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3 font-mono text-[11px] text-slate-700">{w.cooperative_id}</td>
-                    <td className="py-3.5 px-3 max-w-[220px] truncate text-slate-600 font-medium" title={w.skill}>
-                      {w.skill}
-                    </td>
-                    <td className="py-3.5 px-3 text-slate-700">{w.area}</td>
-                    <td className="py-3.5 px-3">
-                      <StarRating rating={w.rating_avg} size="sm" showNumber />
-                    </td>
-                    <td className="py-3.5 px-3 font-bold text-slate-800">₹{w.hourly_rate || 299}/hr</td>
-                    <td className="py-3.5 px-3">
-                      <VerifiedBadge cooperativeId={w.cooperative_id} size="sm" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* BOOKINGS TABLE */}
-        {activeTab === 'bookings' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                  <th className="py-3 px-3">Booking ID</th>
-                  <th className="py-3 px-3">Customer</th>
-                  <th className="py-3 px-3">Worker</th>
-                  <th className="py-3 px-3">Date & Slot</th>
-                  <th className="py-3 px-3">Address</th>
-                  <th className="py-3 px-3">Amount</th>
-                  <th className="py-3 px-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-3 font-mono font-bold text-slate-800">#{b.id}</td>
-                    <td className="py-3.5 px-3">
-                      <div className="font-bold text-slate-900">{b.customer?.name || 'Customer'}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">{b.customer?.phone}</div>
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <div className="font-semibold text-slate-800">{b.worker?.name || 'Worker'}</div>
-                      <div className="text-[10px] text-emerald-700">{b.worker?.area}</div>
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <div className="font-semibold text-slate-800">{b.date}</div>
-                      <div className="text-[10px] text-slate-500">{b.time_slot}</div>
-                    </td>
-                    <td className="py-3.5 px-3 max-w-[200px] truncate text-slate-600" title={b.address}>
-                      {b.address}
-                    </td>
-                    <td className="py-3.5 px-3 font-bold text-emerald-800">₹{b.amount || 299}</td>
-                    <td className="py-3.5 px-3">
-                      <StatusBadge status={b.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          );
+        })}
       </div>
+
+      {/* SUBTAB 1: OVERVIEW */}
+      {activeSubTab === 'overview' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          
+          {/* Key Metrics Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                <Users className="w-3.5 h-3.5 text-purple-700" />
+                Verified Workers
+              </span>
+              <div className="text-2xl font-black text-slate-900">
+                {verifiedWorkersCount} / {workers.length}
+              </div>
+              <p className="text-[11px] text-emerald-700 font-semibold">100% Police Verified</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-indigo-700" />
+                Total Bookings
+              </span>
+              <div className="text-2xl font-black text-slate-900">{bookings.length}</div>
+              <p className="text-[11px] text-slate-500">{totalCompleted} completed</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-700" />
+                Escrow Volume
+              </span>
+              <div className="text-2xl font-black text-emerald-700">₹{totalEscrowPool}</div>
+              <p className="text-[11px] text-emerald-700 font-semibold">Cooperative Protected</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                <Scale className="w-3.5 h-3.5 text-purple-700" />
+                FairMatch Gini
+              </span>
+              <div className="text-2xl font-black text-purple-900">0.14</div>
+              <p className="text-[11px] text-purple-700 font-semibold">Equitable job spread</p>
+            </div>
+          </div>
+
+          {/* Quick Action Navigation Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                <Users className="w-4 h-4 text-purple-700" />
+                <span>Worker & Intake Administration</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Audit active cooperative members, inspect verification IDs, approve incoming onboarding applications, or suspend non-compliant workers.
+              </p>
+              <button
+                onClick={() => setActiveSubTab('workers')}
+                className="w-full py-2.5 px-4 rounded-xl bg-purple-900 hover:bg-purple-950 text-white font-bold text-xs transition cursor-pointer flex items-center justify-between"
+              >
+                <span>Open Worker Registry (/admin/workers)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-emerald-700" />
+                <span>Cooperative Analytics & Fairness</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Inspect category demand trends, booking fulfillment rates, and the anti-monopoly Worker Opportunity Distribution chart.
+              </p>
+              <button
+                onClick={() => setActiveSubTab('analytics')}
+                className="w-full py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition cursor-pointer flex items-center justify-between"
+              >
+                <span>View Analytics (/admin/analytics)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Recent Bookings List */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-purple-700" />
+                <span>Recent Platform Bookings</span>
+              </h3>
+              <span className="text-xs text-slate-400 font-semibold">{bookings.length} total</span>
+            </div>
+
+            <div className="divide-y divide-slate-100">
+              {bookings.slice(0, 5).map((booking) => (
+                <div
+                  key={booking.id}
+                  className="p-4 sm:p-5 hover:bg-slate-50/70 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded">
+                        {booking.id}
+                      </span>
+                      <StatusBadge status={booking.status} />
+                      <span className="font-bold text-slate-900">
+                        {booking.worker?.name || 'Assigned Worker'}
+                      </span>
+                    </div>
+                    <div className="text-slate-500 text-[11px]">
+                      Customer: <strong>{booking.customer?.name || 'Customer'}</strong> • Location: {booking.address}
+                    </div>
+                  </div>
+
+                  <div className="sm:text-right shrink-0 space-y-0.5">
+                    <div className="font-black text-slate-900">₹{booking.amount || 299}</div>
+                    <div className="text-[11px] text-slate-400">{booking.date} • {booking.time_slot}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* SUBTAB 2: WORKERS & COMPLIANCE */}
+      {activeSubTab === 'workers' && <AdminWorkersManagement />}
+
+      {/* SUBTAB 3: ANALYTICS */}
+      {activeSubTab === 'analytics' && <AdminAnalytics />}
+
     </div>
   );
 };

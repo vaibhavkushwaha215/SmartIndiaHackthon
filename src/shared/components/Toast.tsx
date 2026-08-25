@@ -17,6 +17,7 @@ interface ToastContextType {
   showToast: (toast: Omit<ToastItem, 'id'>) => void;
   showError: (code: ErrorCode, detail?: string) => void;
   showSuccess: (message: string, title?: string) => void;
+  showWarning: (message: string, title?: string) => void;
   showInfo: (message: string, title?: string) => void;
   removeToast: (id: string) => void;
 }
@@ -32,7 +33,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const showToast = useCallback(
     (toast: Omit<ToastItem, 'id'>) => {
-      const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+      const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       const newToast: ToastItem = { ...toast, id };
       setToasts((prev) => [...prev, newToast]);
 
@@ -70,6 +71,18 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [showToast]
   );
 
+  const showWarning = useCallback(
+    (message: string, title = 'Warning') => {
+      showToast({
+        type: 'warning',
+        title,
+        message,
+        duration: 4500,
+      });
+    },
+    [showToast]
+  );
+
   const showInfo = useCallback(
     (message: string, title = 'Information') => {
       showToast({
@@ -83,7 +96,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 
   return (
-    <ToastContext.Provider value={{ showToast, showError, showSuccess, showInfo, removeToast }}>
+    <ToastContext.Provider value={{ showToast, showError, showSuccess, showWarning, showInfo, removeToast }}>
       {children}
       {/* Toast Notification Portal */}
       <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm sm:max-w-md w-full pointer-events-none px-4 sm:px-0">

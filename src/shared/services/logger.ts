@@ -54,7 +54,13 @@ export const logger = {
     return db.addLog(entry);
   },
 
-  async logAuth(action: 'LOGIN_SUCCESS' | 'LOGIN_FAILED' | 'LOGOUT', userId: string | null, phone: string | null, resultCode: number, details?: string) {
+  async logAuth(
+    action: 'LOGIN_SUCCESS' | 'LOGIN_FAILED' | 'LOGOUT' | 'ACCESS_DENIED' | 'REGISTRATION_FAILED',
+    userId: string | null,
+    phone: string | null,
+    resultCode: number,
+    details?: string
+  ) {
     return this.log({ action, userId, phone, resultCode, details });
   },
 

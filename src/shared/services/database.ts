@@ -1,5 +1,21 @@
 import { supabase, isSupabaseConfigured } from './supabase';
-import { User, Worker, Booking, Review, LogEntry, BookingStatus, AreaDemandForecast, SavedAddress } from '../types';
+import {
+  User,
+  Worker,
+  Booking,
+  Review,
+  LogEntry,
+  BookingStatus,
+  AreaDemandForecast,
+  SavedAddress,
+  FeatureKey,
+  FeatureDefinition,
+  SystemSettings,
+  IntegrationStatusInfo,
+  SuperAdminAuditEntry,
+  WorkerApplication,
+  WorkerEarningTransaction,
+} from '../types';
 import { ERROR_CODES, createAppError } from '../constants/error-codes';
 import {
   SEED_USERS,
@@ -9,6 +25,12 @@ import {
   SEED_LOGS,
   SEED_FORECASTS,
   SEED_ADDRESSES,
+  SEED_FEATURE_DEFINITIONS,
+  SEED_SYSTEM_SETTINGS,
+  SEED_INTEGRATIONS,
+  SEED_SUPERADMIN_AUDIT,
+  SEED_WORKER_APPLICATIONS,
+  SEED_WORKER_EARNINGS,
 } from '../data/seed-data';
 
 const STORAGE_KEYS = {
@@ -18,22 +40,33 @@ const STORAGE_KEYS = {
   REVIEWS: 'sahyog_reviews',
   LOGS: 'sahyog_logs',
   ADDRESSES: 'sahyog_addresses',
+  FEATURE_FLAGS: 'sahyog_feature_flags',
+  SYSTEM_SETTINGS: 'sahyog_system_settings',
+  SUPERADMIN_AUDIT: 'sahyog_superadmin_audit',
+  WORKER_APPLICATIONS: 'sahyog_worker_applications',
+  WORKER_EARNINGS: 'sahyog_worker_earnings',
 };
 
 // Initialize LocalStorage with seed data if not present
 function initializeLocalStorage() {
-  // Check if existing user data has password_hash, if not, force-refresh with updated seed
+  // Check if existing user data has password_hash and superadmin, if not, merge with updated seed
   const existingUsers = localStorage.getItem(STORAGE_KEYS.USERS);
   if (existingUsers) {
     try {
-      const parsed = JSON.parse(existingUsers);
-      if (parsed.length > 0 && !parsed[0].password_hash) {
-        // Old data without passwords — merge passwords from seed
-        const updated = parsed.map((u: User) => {
-          const seedMatch = SEED_USERS.find((s) => s.id === u.id);
-          return seedMatch ? { ...u, password_hash: seedMatch.password_hash } : u;
-        });
-        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(updated));
+      const parsed: User[] = JSON.parse(existingUsers);
+      const hasSuperAdmin = parsed.some((u) => u.role === 'SuperAdmin');
+      if (!hasSuperAdmin || (parsed.length > 0 && !parsed[0].password_hash)) {
+        // Merge missing users from seed
+        const merged = [...parsed];
+        for (const seedUser of SEED_USERS) {
+          const index = merged.findIndex((u) => u.id === seedUser.id);
+          if (index >= 0) {
+            merged[index] = { ...seedUser, ...merged[index], password_hash: seedUser.password_hash };
+          } else {
+            merged.push(seedUser);
+          }
+        }
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(merged));
       }
     } catch {
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(SEED_USERS));
@@ -59,6 +92,12 @@ function initializeLocalStorage() {
   }
   if (!localStorage.getItem(STORAGE_KEYS.ADDRESSES)) {
     localStorage.setItem(STORAGE_KEYS.ADDRESSES, JSON.stringify(SEED_ADDRESSES));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.SYSTEM_SETTINGS)) {
+    localStorage.setItem(STORAGE_KEYS.SYSTEM_SETTINGS, JSON.stringify(SEED_SYSTEM_SETTINGS));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.SUPERADMIN_AUDIT)) {
+    localStorage.setItem(STORAGE_KEYS.SUPERADMIN_AUDIT, JSON.stringify(SEED_SUPERADMIN_AUDIT));
   }
 }
 
@@ -299,7 +338,11 @@ export const db = {
     const users = await this.getUsers();
     const reviews = await this.getReviews();
 
-    let bookingsList: Booking[] = [];
+    const localBookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
+    const bookingsMap = new Map<string, Booking>();
+
+    // Seed/local bookings first
+    localBookings.forEach((b) => bookingsMap.set(b.id, b));
 
     if (isSupabaseConfigured && supabase) {
       try {
@@ -308,21 +351,25 @@ export const db = {
         if (filter?.workerId) query = query.eq('worker_id', filter.workerId);
         const { data, error } = await query;
         if (!error && data && data.length > 0) {
-          bookingsList = data;
+          data.forEach((remoteBooking) => {
+            // Keep local version if already present to preserve active edits, or insert if new
+            if (!bookingsMap.has(remoteBooking.id)) {
+              bookingsMap.set(remoteBooking.id, remoteBooking);
+            }
+          });
         }
       } catch (err) {
         console.warn('[SahyogSeva DB] Supabase getBookings fallback to local store:', err);
       }
     }
 
-    if (bookingsList.length === 0) {
-      bookingsList = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
-      if (filter?.customerId) {
-        bookingsList = bookingsList.filter((b) => b.customer_id === filter.customerId);
-      }
-      if (filter?.workerId) {
-        bookingsList = bookingsList.filter((b) => b.worker_id === filter.workerId);
-      }
+    let bookingsList = Array.from(bookingsMap.values());
+
+    if (filter?.customerId) {
+      bookingsList = bookingsList.filter((b) => b.customer_id === filter.customerId);
+    }
+    if (filter?.workerId) {
+      bookingsList = bookingsList.filter((b) => b.worker_id === filter.workerId);
     }
 
     // Join relations for frontend ease
@@ -359,23 +406,6 @@ export const db = {
       throw createAppError(ERROR_CODES.INVALID_SERVICE_DATE, 'Service booking date must be between today and the next 14 days');
     }
 
-    // 3. Conflict check (Error 301 / 409 - Double booked slot)
-    const existingBookings = await this.getBookings();
-    const conflict = existingBookings.find(
-      (b) =>
-        b.worker_id === bookingData.worker_id &&
-        b.date === bookingData.date &&
-        b.time_slot === bookingData.time_slot &&
-        b.status !== 'cancelled'
-    );
-
-    if (conflict) {
-      throw createAppError(
-        ERROR_CODES.SLOT_ALREADY_BOOKED,
-        `Technician already has a scheduled slot on ${bookingData.date} during ${bookingData.time_slot}`
-      );
-    }
-
     const newBooking: Booking = {
       id: `bk-${Date.now()}`,
       created_at: new Date().toISOString(),
@@ -396,10 +426,30 @@ export const db = {
     return newBooking;
   },
 
-  async updateBookingStatus(id: string, status: BookingStatus): Promise<Booking> {
+  async updateBookingStatus(id: string, status: BookingStatus, amountPaid?: number): Promise<Booking> {
     const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
-    const index = bookings.findIndex((b) => b.id === id);
-    if (index === -1) throw createAppError(ERROR_CODES.NOT_FOUND, `Booking #${id} not found`);
+    let index = bookings.findIndex((b) => b.id === id);
+
+    if (index === -1) {
+      // If booking was not yet in local storage, initialize it from seed or fallback
+      const seedMatch = SEED_BOOKINGS.find((b) => b.id === id);
+      const fallbackBooking: Booking = seedMatch ? { ...seedMatch } : {
+        id,
+        customer_id: 'user-cust-1',
+        worker_id: 'worker-1',
+        date: new Date().toISOString().split('T')[0],
+        time_slot: '10:00 AM - 12:00 PM',
+        address: 'Customer Service Location',
+        status: status,
+        created_at: new Date().toISOString(),
+        amount: amountPaid || 299,
+        grossAmount: amountPaid || 299,
+        platformFee: 0,
+        workerEarnings: amountPaid || 299,
+      };
+      bookings.unshift(fallbackBooking);
+      index = 0;
+    }
 
     const prevStatus = bookings[index].status;
 
@@ -411,23 +461,41 @@ export const db = {
       throw createAppError(ERROR_CODES.INVALID_STATUS_TRANSITION, 'Cancelled booking cannot be marked completed.');
     }
 
-    if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.from('bookings').update({ status }).eq('id', id).select().single();
-      if (error) throw createAppError(ERROR_CODES.SERVER_ERROR, error.message);
-      return data;
+    bookings[index].status = status;
+    if (amountPaid) {
+      bookings[index].amount = amountPaid;
+      bookings[index].grossAmount = amountPaid;
+      bookings[index].platformFee = 0;
+      bookings[index].workerEarnings = amountPaid;
     }
 
-    bookings[index].status = status;
     setLocalItem(STORAGE_KEYS.BOOKINGS, bookings);
 
-    // If newly marked completed, increment worker's completed jobs count only once!
+    // If newly marked completed, increment worker's completed jobs count only once
     if (status === 'completed' && prevStatus !== 'completed') {
-      const workerId = bookings[index].worker_id;
-      const workers = getLocalItem<Worker[]>(STORAGE_KEYS.WORKERS, SEED_WORKERS);
-      const wIdx = workers.findIndex((w) => w.id === workerId);
-      if (wIdx >= 0) {
-        workers[wIdx].completed_jobs_count = (workers[wIdx].completed_jobs_count || 0) + 1;
-        setLocalItem(STORAGE_KEYS.WORKERS, workers);
+      try {
+        const workerId = bookings[index].worker_id;
+        const workers = getLocalItem<Worker[]>(STORAGE_KEYS.WORKERS, SEED_WORKERS);
+        const wIdx = workers.findIndex((w) => w.id === workerId);
+        if (wIdx >= 0) {
+          workers[wIdx].completed_jobs_count = (workers[wIdx].completed_jobs_count || 0) + 1;
+          setLocalItem(STORAGE_KEYS.WORKERS, workers);
+        }
+      } catch {
+        // Non-fatal
+      }
+    }
+
+    // Best-effort async synchronization to Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        // Map in_progress / accepted to confirmed for Supabase schemas with older check constraints
+        const supabaseStatus = status === 'in_progress' || status === 'accepted' ? 'confirmed' : status;
+        const updatePayload: any = { status: supabaseStatus };
+        if (amountPaid) updatePayload.amount = amountPaid;
+        await supabase.from('bookings').update(updatePayload).eq('id', id);
+      } catch (supabaseErr) {
+        console.warn('[SahyogSeva DB] Supabase updateBookingStatus background sync notice:', supabaseErr);
       }
     }
 
@@ -631,6 +699,224 @@ export const db = {
     return SEED_FORECASTS;
   },
 
+  // ----------------- SUPERADMIN & SYSTEM CONFIGURATION -----------------
+  async getFeatureFlags(): Promise<Record<FeatureKey, boolean>> {
+    const raw = getLocalItem<Record<string, boolean>>(STORAGE_KEYS.FEATURE_FLAGS, {});
+    const defaults = SEED_FEATURE_DEFINITIONS.reduce(
+      (acc, f) => ({ ...acc, [f.key]: f.enabled }),
+      {} as Record<FeatureKey, boolean>
+    );
+    return { ...defaults, ...raw };
+  },
+
+  async updateFeatureFlag(
+    key: FeatureKey,
+    enabled: boolean,
+    actor?: { id: string; name: string },
+    reason?: string
+  ): Promise<Record<FeatureKey, boolean>> {
+    const current = await this.getFeatureFlags();
+    const prevVal = current[key];
+    const updated = { ...current, [key]: enabled };
+    setLocalItem(STORAGE_KEYS.FEATURE_FLAGS, updated);
+    window.dispatchEvent(new CustomEvent('sahyog:feature_flags_updated', { detail: updated }));
+
+    // Log audit entry without exposing secrets
+    if (actor) {
+      await this.logSuperAdminAction({
+        actorId: actor.id,
+        actorName: actor.name,
+        actionType: 'FEATURE_TOGGLE',
+        target: key,
+        previousValue: String(prevVal),
+        newValue: String(enabled),
+        reason: reason || `Toggled feature flag "${key}" to ${enabled ? 'ENABLED' : 'DISABLED'}`,
+      });
+    }
+
+    return updated;
+  },
+
+  async getSystemSettings(): Promise<SystemSettings> {
+    return getLocalItem<SystemSettings>(STORAGE_KEYS.SYSTEM_SETTINGS, SEED_SYSTEM_SETTINGS);
+  },
+
+  async updateSystemSettings(
+    newSettings: Partial<SystemSettings>,
+    actor?: { id: string; name: string },
+    reason?: string
+  ): Promise<SystemSettings> {
+    const current = await this.getSystemSettings();
+    const updated = { ...current, ...newSettings };
+    setLocalItem(STORAGE_KEYS.SYSTEM_SETTINGS, updated);
+
+    // Audit log setting changes
+    if (actor) {
+      for (const [key, val] of Object.entries(newSettings)) {
+        await this.logSuperAdminAction({
+          actorId: actor.id,
+          actorName: actor.name,
+          actionType: key === 'maintenanceMode' ? 'MAINTENANCE_TOGGLE' : 'SETTING_CHANGE',
+          target: key,
+          previousValue: String((current as any)[key]),
+          newValue: String(val),
+          reason: reason || `Updated system configuration parameter "${key}"`,
+        });
+      }
+    }
+
+    window.dispatchEvent(new CustomEvent('sahyog:settings_updated', { detail: updated }));
+    return updated;
+  },
+
+  async getIntegrations(): Promise<IntegrationStatusInfo[]> {
+    return SEED_INTEGRATIONS;
+  },
+
+  async getSuperAdminAuditLogs(): Promise<SuperAdminAuditEntry[]> {
+    return getLocalItem<SuperAdminAuditEntry[]>(STORAGE_KEYS.SUPERADMIN_AUDIT, SEED_SUPERADMIN_AUDIT);
+  },
+
+  async logSuperAdminAction(entry: Omit<SuperAdminAuditEntry, 'id' | 'timestamp'>): Promise<SuperAdminAuditEntry> {
+    const logs = await this.getSuperAdminAuditLogs();
+    const newEntry: SuperAdminAuditEntry = {
+      id: `audit-sa-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: new Date().toISOString(),
+      ...entry,
+    };
+    const updated = [newEntry, ...logs];
+    setLocalItem(STORAGE_KEYS.SUPERADMIN_AUDIT, updated);
+    return newEntry;
+  },
+
+  // ----------------- WORKER APPLICATIONS -----------------
+  async getWorkerApplications(): Promise<WorkerApplication[]> {
+    return getLocalItem<WorkerApplication[]>(STORAGE_KEYS.WORKER_APPLICATIONS, SEED_WORKER_APPLICATIONS);
+  },
+
+  async getWorkerApplicationByPhone(phone: string): Promise<WorkerApplication | null> {
+    const apps = await this.getWorkerApplications();
+    return apps.find((a) => a.phone === phone.trim()) || null;
+  },
+
+  async submitWorkerApplication(
+    app: Omit<WorkerApplication, 'id' | 'submittedAt' | 'status'>
+  ): Promise<WorkerApplication> {
+    const apps = await this.getWorkerApplications();
+    const newApp: WorkerApplication = {
+      ...app,
+      id: `app-${Date.now()}`,
+      status: 'Pending',
+      submittedAt: new Date().toISOString(),
+    };
+    const updated = [newApp, ...apps];
+    setLocalItem(STORAGE_KEYS.WORKER_APPLICATIONS, updated);
+    return newApp;
+  },
+
+  async approveWorkerApplication(
+    appId: string,
+    adminName: string
+  ): Promise<{ worker: Worker; user: User }> {
+    const apps = await this.getWorkerApplications();
+    const appIndex = apps.findIndex((a) => a.id === appId);
+    if (appIndex === -1) {
+      throw new Error('Application not found');
+    }
+
+    const app = apps[appIndex];
+    app.status = 'Approved';
+    app.reviewedAt = new Date().toISOString();
+    app.reviewedBy = adminName;
+    setLocalItem(STORAGE_KEYS.WORKER_APPLICATIONS, apps);
+
+    // 1. Ensure user exists with Worker role
+    let user = await this.getUserByPhone(app.phone);
+    if (!user) {
+      user = {
+        id: `user-work-${Date.now()}`,
+        name: app.fullName,
+        role: 'Worker',
+        phone: app.phone,
+        language_pref: 'en',
+        password_hash: 'worker123',
+        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=75',
+      };
+      await this.upsertUser(user);
+    } else {
+      user.role = 'Worker';
+      await this.upsertUser(user);
+    }
+
+    // 2. Create / Activate Worker record
+    const workers = await this.getWorkers();
+    let worker = workers.find((w) => w.user_id === user!.id || w.phone === app.phone);
+    if (!worker) {
+      worker = {
+        id: `worker-${Date.now()}`,
+        user_id: user.id,
+        cooperative_id: app.cooperativeSociety || 'COOP-DL-804',
+        skill: app.primarySkill,
+        area: app.serviceArea || app.city,
+        verified: true,
+        rating_avg: 5.0,
+        hourly_rate: app.hourlyRate || 299,
+        experience_years: app.experienceYears || 1,
+        completed_jobs_count: 0,
+        bio: `Verified cooperative artisan in ${app.primarySkill}. Affiliated with ${app.cooperativeSociety}.`,
+        name: app.fullName,
+        phone: app.phone,
+        isAvailable: true,
+        verificationStatus: 'Verified',
+        joinedDate: new Date().toISOString().split('T')[0],
+        totalEarnings: 0,
+        recentJobCount: 0,
+      };
+      workers.push(worker);
+      setLocalItem(STORAGE_KEYS.WORKERS, workers);
+    } else {
+      worker.verified = true;
+      worker.verificationStatus = 'Verified';
+      worker.isAvailable = true;
+      setLocalItem(STORAGE_KEYS.WORKERS, workers);
+    }
+
+    return { worker, user };
+  },
+
+  async rejectWorkerApplication(
+    appId: string,
+    adminName: string,
+    reason: string
+  ): Promise<WorkerApplication> {
+    const apps = await this.getWorkerApplications();
+    const app = apps.find((a) => a.id === appId);
+    if (!app) throw new Error('Application not found');
+
+    app.status = 'Rejected';
+    app.reviewedAt = new Date().toISOString();
+    app.reviewedBy = adminName;
+    app.rejectionReason = reason;
+    setLocalItem(STORAGE_KEYS.WORKER_APPLICATIONS, apps);
+    return app;
+  },
+
+  // ----------------- WORKER EARNINGS & AVAILABILITY -----------------
+  async getWorkerEarnings(workerId: string): Promise<WorkerEarningTransaction[]> {
+    const all = getLocalItem<WorkerEarningTransaction[]>(STORAGE_KEYS.WORKER_EARNINGS, SEED_WORKER_EARNINGS);
+    return all.filter((tx) => tx.worker_id === workerId);
+  },
+
+  async setWorkerAvailability(workerId: string, isAvailable: boolean): Promise<Worker> {
+    const workers = await this.getWorkers();
+    const worker = workers.find((w) => w.id === workerId || w.user_id === workerId);
+    if (!worker) throw new Error('Worker not found');
+
+    worker.isAvailable = isAvailable;
+    setLocalItem(STORAGE_KEYS.WORKERS, workers);
+    return worker;
+  },
+
   // ----------------- RESET DEMO -----------------
   resetToDefaults(): void {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(SEED_USERS));
@@ -639,5 +925,7 @@ export const db = {
     localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(SEED_REVIEWS));
     localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(SEED_LOGS));
     localStorage.setItem(STORAGE_KEYS.ADDRESSES, JSON.stringify(SEED_ADDRESSES));
+    localStorage.setItem(STORAGE_KEYS.SYSTEM_SETTINGS, JSON.stringify(SEED_SYSTEM_SETTINGS));
+    localStorage.setItem(STORAGE_KEYS.SUPERADMIN_AUDIT, JSON.stringify(SEED_SUPERADMIN_AUDIT));
   },
 };

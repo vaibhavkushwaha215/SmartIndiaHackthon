@@ -47,3 +47,6 @@ build/
 *.njsproj
 *.sln
 *.sw?
+*.rar
+*.zip
+*.7z

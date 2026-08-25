@@ -1,9 +1,122 @@
 import { ErrorCode } from '../constants/error-codes';
 
-export type UserRole = 'Customer' | 'Worker' | 'Admin';
+export type UserRole = 'Customer' | 'Worker' | 'Admin' | 'SuperAdmin';
 export type LanguagePreference = 'en' | 'hi';
-export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'accepted' | 'in_progress' | 'confirmed' | 'completed' | 'cancelled';
 export type AddressType = 'House' | 'Apartment' | 'Business' | 'Other';
+export type WorkerApplicationStatus = 'Pending' | 'Under Review' | 'Approved' | 'Rejected';
+
+export interface WorkerApplication {
+  id: string;
+  user_id?: string;
+  fullName: string;
+  phone: string;
+  email?: string;
+  address: string;
+  city: string;
+  pincode: string;
+  primarySkill: string;
+  additionalSkills: string[];
+  experienceYears: number;
+  serviceArea: string;
+  availability: 'Full-Time' | 'Part-Time' | 'On-Demand';
+  hourlyRate: number;
+  documentType: 'Aadhaar' | 'Voter ID' | 'Trade Certificate' | 'Other';
+  documentNumberMasked: string;
+  cooperativeSociety: string;
+  status: WorkerApplicationStatus;
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  rejectionReason?: string;
+}
+
+export interface WorkerEarningTransaction {
+  id: string;
+  booking_id: string;
+  worker_id: string;
+  customer_name: string;
+  service_name: string;
+  gross_amount: number;
+  cooperative_fee: number;
+  net_earnings: number;
+  date: string;
+  status: 'Settled' | 'In Escrow' | 'Processing';
+}
+
+// ==========================================
+// FEATURE FLAGS & SYSTEM CONFIGURATION TYPES
+// ==========================================
+
+export type FeatureKey =
+  | 'customerModule'
+  | 'workerModule'
+  | 'adminModule'
+  | 'fairMatch'
+  | 'workerApplications'
+  | 'chatbot'
+  | 'demandForecasting'
+  | 'payments'
+  | 'notifications'
+  | 'multilingual'
+  | 'emergencyBooking';
+
+export type FeatureCategory = 'core' | 'operations' | 'ai' | 'finance' | 'communication';
+
+export interface FeatureDefinition {
+  key: FeatureKey;
+  name: string;
+  description: string;
+  enabled: boolean;
+  category: FeatureCategory;
+  environmentRestriction?: 'all' | 'development' | 'production' | 'staging';
+  isExperimental?: boolean;
+  dependsOn?: FeatureKey[];
+}
+
+export type FeatureFlagState = Record<FeatureKey, boolean>;
+
+export interface SystemSettings {
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+  customerRegistrationEnabled: boolean;
+  workerApplicationsEnabled: boolean;
+  bookingEnabled: boolean;
+  defaultServiceRadiusKm: number;
+  maxBookingRadiusKm: number;
+  platformServiceFeePercent: number;
+  defaultLanguage: LanguagePreference;
+  defaultCurrency: string;
+  escrowProtectionEnabled: boolean;
+  autoAssignLeadTimeoutMins: number;
+}
+
+export type IntegrationId = 'gemini-ai' | 'payments-escrow' | 'maps-geolocation' | 'notifications';
+export type IntegrationHealthStatus = 'Configured' | 'Not configured' | 'Enabled' | 'Disabled' | 'Connection unavailable';
+
+export interface IntegrationStatusInfo {
+  id: IntegrationId;
+  name: string;
+  description: string;
+  status: IntegrationHealthStatus;
+  provider: string;
+  environmentVarName?: string; // name only, never the secret
+  lastHeartbeat?: string;
+  isPrototypeMock: boolean;
+  capabilities: string[];
+}
+
+export interface SuperAdminAuditEntry {
+  id: string;
+  timestamp: string;
+  actorId: string;
+  actorName: string;
+  actionType: 'FEATURE_TOGGLE' | 'SETTING_CHANGE' | 'MAINTENANCE_TOGGLE' | 'INTEGRATION_UPDATE';
+  target: string;
+  previousValue: string;
+  newValue: string;
+  reason?: string;
+}
 
 export interface User {
   id: string;
@@ -28,6 +141,11 @@ export interface Worker {
   completed_jobs_count?: number;
   bio?: string;
   category?: string; // e.g. "ELECTRICAL", "PLUMBING", "APPLIANCE", "CARPENTRY", "CLEANING", "PAINTING", "PEST_GARDENING"
+  isAvailable?: boolean;
+  verificationStatus?: 'Verified' | 'Pending' | 'Rejected' | 'Suspended';
+  joinedDate?: string;
+  totalEarnings?: number;
+  recentJobCount?: number;
   // Joined / populated fields for UI
   name?: string;
   phone?: string;
@@ -64,6 +182,10 @@ export interface Booking {
   created_at: string;
   problem_description?: string;
   amount?: number;
+  grossAmount?: number;
+  platformFee?: number;
+  workerEarnings?: number;
+  matchedViaFairMatch?: boolean;
   // Joined fields for UI convenience
   worker?: Worker;
   customer?: User;

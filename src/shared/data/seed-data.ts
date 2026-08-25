@@ -1,4 +1,14 @@
-import { User, Worker, Booking, Review, LogEntry, AreaDemandForecast, SavedAddress } from '../types';
+import {
+  User,
+  Worker,
+  Booking,
+  Review,
+  LogEntry,
+  AreaDemandForecast,
+  SavedAddress,
+  WorkerApplication,
+  WorkerEarningTransaction,
+} from '../types';
 
 export const SEED_USERS: User[] = [
   {
@@ -108,6 +118,15 @@ export const SEED_USERS: User[] = [
     language_pref: 'en',
     password_hash: 'admin123',
     avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=75',
+  },
+  {
+    id: 'user-superadmin-1',
+    name: 'Dr. Anand Swarup',
+    role: 'SuperAdmin',
+    phone: '9999900001',
+    language_pref: 'en',
+    password_hash: 'superadmin123',
+    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=75',
   },
 ];
 
@@ -483,5 +502,315 @@ export const SEED_FORECASTS: AreaDemandForecast[] = [
     active_workers: 18,
     demand_level: 'High',
     cooperative_support_needed: true,
+  },
+];
+
+// ==========================================
+// FEATURE DEFINITIONS SEED
+// ==========================================
+
+export const SEED_FEATURE_DEFINITIONS: import('../types').FeatureDefinition[] = [
+  {
+    key: 'customerModule',
+    name: 'Customer Directory & Booking',
+    description: 'Core customer booking flow, artisan search, and slot scheduling catalog.',
+    enabled: true,
+    category: 'core',
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'workerModule',
+    name: 'Worker Profile & Job Dashboard',
+    description: 'Artisan work portal, job acceptance flow, and daily earnings ledger.',
+    enabled: true,
+    category: 'core',
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'adminModule',
+    name: 'Cooperative Administration Portal',
+    description: 'Cooperative oversight, dispute management, and worker credentials audit.',
+    enabled: true,
+    category: 'operations',
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'fairMatch',
+    name: 'FairMatch™ Equitable Dispatch Algorithm',
+    description: 'Cooperative rotation engine ensuring fair job distribution across verified members.',
+    enabled: true,
+    category: 'operations',
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'workerApplications',
+    name: 'Worker & Cooperative Onboarding',
+    description: 'Self-service registration wizard and trade certificate submission for artisans.',
+    enabled: true,
+    category: 'operations',
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'chatbot',
+    name: 'Sahyog AI Voice & Chat Assistant',
+    description: 'Multilingual conversational AI for instant vernacular service booking & support.',
+    enabled: false,
+    category: 'ai',
+    isExperimental: true,
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'demandForecasting',
+    name: 'Predictive Demand AI Analysis',
+    description: 'Machine learning forecasting for weekly neighborhood service volume and surge warnings.',
+    enabled: true,
+    category: 'ai',
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'payments',
+    name: 'Escrow & UPI Direct Settlements',
+    description: 'Zero-commission escrow holding pool with automated post-service UPI release.',
+    enabled: true,
+    category: 'finance',
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'notifications',
+    name: 'Multi-Channel Alert Dispatcher',
+    description: 'SMS, WhatsApp, and Web Push notifications for OTP verification and booking status.',
+    enabled: true,
+    category: 'communication',
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'multilingual',
+    name: 'Vernacular Localization (EN / HI)',
+    description: 'Full interface multi-language support in English and Hindi with script optimization.',
+    enabled: true,
+    category: 'communication',
+    environmentRestriction: 'all',
+  },
+  {
+    key: 'emergencyBooking',
+    name: 'Emergency 30-Min SOS Dispatch',
+    description: 'Urgent priority dispatch for water leaks, short circuits, and critical repairs.',
+    enabled: true,
+    category: 'operations',
+    environmentRestriction: 'all',
+  },
+];
+
+// ==========================================
+// SYSTEM SETTINGS SEED
+// ==========================================
+
+export const SEED_SYSTEM_SETTINGS: import('../types').SystemSettings = {
+  maintenanceMode: false,
+  maintenanceMessage: 'SahyogSeva is currently performing scheduled cooperative ledger maintenance. Direct booking will resume shortly.',
+  customerRegistrationEnabled: true,
+  workerApplicationsEnabled: true,
+  bookingEnabled: true,
+  defaultServiceRadiusKm: 15,
+  maxBookingRadiusKm: 40,
+  platformServiceFeePercent: 0, // Zero brokerage cooperative principle
+  defaultLanguage: 'en',
+  defaultCurrency: 'INR (₹)',
+  escrowProtectionEnabled: true,
+  autoAssignLeadTimeoutMins: 15,
+};
+
+// ==========================================
+// INTEGRATIONS SEED (Zero secrets exposed)
+// ==========================================
+
+export const SEED_INTEGRATIONS: import('../types').IntegrationStatusInfo[] = [
+  {
+    id: 'gemini-ai',
+    name: 'Google Gemini 2.5 AI Engine',
+    description: 'Generative AI for natural vernacular language translation, smart dispatch, and voice assistance.',
+    status: 'Configured',
+    provider: 'Google Cloud Vertex AI',
+    environmentVarName: 'VITE_GEMINI_API_KEY',
+    lastHeartbeat: new Date().toISOString(),
+    isPrototypeMock: false,
+    capabilities: ['Vernacular Chatbot', 'Skill Categorization', 'Demand Anomaly Detection'],
+  },
+  {
+    id: 'payments-escrow',
+    name: 'Cooperative Escrow Pool Gateway',
+    description: 'Zero-commission escrow holding protocol with simulated NPCI UPI & Cash settlements.',
+    status: 'Enabled',
+    provider: 'Sahyog Direct Escrow Node',
+    environmentVarName: 'VITE_PAYMENT_GATEWAY_ENV',
+    lastHeartbeat: new Date().toISOString(),
+    isPrototypeMock: true,
+    capabilities: ['Escrow Hold', 'Instant Worker Payout', 'Dispute Refund Hold'],
+  },
+  {
+    id: 'maps-geolocation',
+    name: 'Geolocation & Neighborhood Mapping',
+    description: 'HTML5 browser location provider with reverse geocoding for Delhi NCR and Bengaluru sectors.',
+    status: 'Enabled',
+    provider: 'Browser Geolocation API + OpenStreetMap',
+    environmentVarName: 'VITE_MAPS_ENDPOINT',
+    lastHeartbeat: new Date().toISOString(),
+    isPrototypeMock: false,
+    capabilities: ['Address Auto-Fill', 'Proximity Calculation', 'Neighborhood Pinpoint'],
+  },
+  {
+    id: 'notifications',
+    name: 'Multi-Channel Push & SMS Hub',
+    description: 'PWA Web Push notification worker with in-app reactive toast messaging.',
+    status: 'Enabled',
+    provider: 'Web Notifications API + ServiceWorker Push',
+    environmentVarName: 'VITE_NOTIFICATIONS_CHANNEL',
+    lastHeartbeat: new Date().toISOString(),
+    isPrototypeMock: false,
+    capabilities: ['Booking Confirmations', 'Emergency Dispatch SOS', 'Status Updates'],
+  },
+];
+
+// ==========================================
+// SUPERADMIN AUDIT LOG SEED
+// ==========================================
+
+export const SEED_SUPERADMIN_AUDIT: import('../types').SuperAdminAuditEntry[] = [
+  {
+    id: 'audit-sa-1',
+    timestamp: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
+    actorId: 'user-superadmin-1',
+    actorName: 'Dr. Anand Swarup',
+    actionType: 'FEATURE_TOGGLE',
+    target: 'fairMatch',
+    previousValue: 'false',
+    newValue: 'true',
+    reason: 'Enabled cooperative FairMatch dispatch rotation for Delhi NCR',
+  },
+  {
+    id: 'audit-sa-2',
+    timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
+    actorId: 'user-superadmin-1',
+    actorName: 'Dr. Anand Swarup',
+    actionType: 'SETTING_CHANGE',
+    target: 'platformServiceFeePercent',
+    previousValue: '2.5%',
+    newValue: '0.0%',
+    reason: 'Affirmed Zero-Commission Cooperative Charter policy',
+  },
+  {
+    id: 'audit-sa-3',
+    timestamp: new Date(Date.now() - 3600000 * 6).toISOString(),
+    actorId: 'user-superadmin-1',
+    actorName: 'Dr. Anand Swarup',
+    actionType: 'INTEGRATION_UPDATE',
+    target: 'gemini-ai',
+    previousValue: 'Not configured',
+    newValue: 'Configured',
+    reason: 'Connected Gemini 2.5 API for vernacular localization',
+  },
+];
+
+export const SEED_WORKER_APPLICATIONS: WorkerApplication[] = [
+  {
+    id: 'app-001',
+    fullName: 'Manoj Kumar Verma',
+    phone: '9811099881',
+    email: 'manoj.verma@example.com',
+    address: 'B-142, Pocket 3, Mayur Vihar Phase 1',
+    city: 'New Delhi',
+    pincode: '110091',
+    primarySkill: 'Plumbing & Pipe Line Setup',
+    additionalSkills: ['Sanitary Fitting', 'Water Tank Cleaning', 'Drainage Unblocking'],
+    experienceYears: 6,
+    serviceArea: 'Mayur Vihar & East Delhi',
+    availability: 'Full-Time',
+    hourlyRate: 249,
+    documentType: 'Aadhaar',
+    documentNumberMasked: '•••• •••• 4912',
+    cooperativeSociety: 'East Delhi Shramik Sahakari Samiti',
+    status: 'Pending',
+    submittedAt: new Date(Date.now() - 3600000 * 18).toISOString(),
+  },
+  {
+    id: 'app-002',
+    fullName: 'Sunil Jadhav',
+    phone: '9822011992',
+    email: 'sunil.jadhav@example.com',
+    address: 'Plot 45, Sector 12, Kharghar',
+    city: 'Navi Mumbai',
+    pincode: '410210',
+    primarySkill: 'House Painting & Wall Texturing',
+    additionalSkills: ['Waterproofing', 'Wood Polishing'],
+    experienceYears: 8,
+    serviceArea: 'Navi Mumbai & Thane',
+    availability: 'On-Demand',
+    hourlyRate: 399,
+    documentType: 'Trade Certificate',
+    documentNumberMasked: 'TC-MH-8921',
+    cooperativeSociety: 'Maharashtra Shramik Karigar Federation',
+    status: 'Under Review',
+    submittedAt: new Date(Date.now() - 3600000 * 36).toISOString(),
+  },
+  {
+    id: 'app-003',
+    fullName: 'Ramesh Sharma',
+    phone: '9820011223',
+    email: 'rajesh.sharma@example.com',
+    address: 'L-24, Lajpat Nagar 4',
+    city: 'New Delhi',
+    pincode: '110024',
+    primarySkill: 'Master Electrician',
+    additionalSkills: ['Inverter Repair', 'MCB Tripping'],
+    experienceYears: 9,
+    serviceArea: 'Lajpat Nagar & South Delhi',
+    availability: 'Full-Time',
+    hourlyRate: 299,
+    documentType: 'Aadhaar',
+    documentNumberMasked: '•••• •••• 8823',
+    cooperativeSociety: 'Delhi Vidyut Sahyog (COOP-DL-804)',
+    status: 'Approved',
+    submittedAt: new Date(Date.now() - 3600000 * 24 * 30).toISOString(),
+    reviewedAt: new Date(Date.now() - 3600000 * 24 * 28).toISOString(),
+    reviewedBy: 'Sunita Patel (Admin)',
+  },
+];
+
+export const SEED_WORKER_EARNINGS: WorkerEarningTransaction[] = [
+  {
+    id: 'tx-001',
+    booking_id: 'book-101',
+    worker_id: 'worker-1',
+    customer_name: 'Priya Mehta',
+    service_name: 'Main MCB Box & Inverter Diagnostic',
+    gross_amount: 598,
+    cooperative_fee: 0,
+    net_earnings: 598,
+    date: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
+    status: 'Settled',
+  },
+  {
+    id: 'tx-002',
+    booking_id: 'book-102',
+    worker_id: 'worker-1',
+    customer_name: 'Vikram Malhotra',
+    service_name: 'Kitchen Earthing Wiring Setup',
+    gross_amount: 897,
+    cooperative_fee: 0,
+    net_earnings: 897,
+    date: new Date(Date.now() - 3600000 * 24 * 4).toISOString(),
+    status: 'Settled',
+  },
+  {
+    id: 'tx-003',
+    booking_id: 'book-103',
+    worker_id: 'worker-1',
+    customer_name: 'Ananya Deshmukh',
+    service_name: 'Sensor Light Installation',
+    gross_amount: 299,
+    cooperative_fee: 0,
+    net_earnings: 299,
+    date: new Date(Date.now() - 3600000 * 5).toISOString(),
+    status: 'In Escrow',
   },
 ];

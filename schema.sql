@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS public.users (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('Customer', 'Worker', 'Admin')),
+    role TEXT NOT NULL CHECK (role IN ('Customer', 'Worker', 'Admin', 'SuperAdmin')),
     phone TEXT NOT NULL,
     language_pref TEXT DEFAULT 'en' CHECK (language_pref IN ('en', 'hi')),
     avatar_url TEXT,
@@ -15,10 +15,13 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 
 -- Migration for existing Supabase instances (run in SQL Editor):
+-- ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_role_check;
+-- ALTER TABLE public.users ADD CONSTRAINT users_role_check CHECK (role IN ('Customer', 'Worker', 'Admin', 'SuperAdmin'));
 -- ALTER TABLE public.users ADD COLUMN IF NOT EXISTS password_hash TEXT DEFAULT 'changeme';
 -- UPDATE public.users SET password_hash = 'customer123' WHERE role = 'Customer';
 -- UPDATE public.users SET password_hash = 'worker123' WHERE role = 'Worker';
 -- UPDATE public.users SET password_hash = 'admin123' WHERE role = 'Admin';
+-- UPDATE public.users SET password_hash = 'superadmin123' WHERE role = 'SuperAdmin';
 
 -- 2. Create Workers Table
 CREATE TABLE IF NOT EXISTS public.workers (
@@ -44,7 +47,7 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     date DATE NOT NULL,
     time_slot TEXT NOT NULL,
     address TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
+    status TEXT NOT NULL CHECK (status IN ('pending', 'accepted', 'confirmed', 'in_progress', 'completed', 'cancelled')),
     problem_description TEXT,
     amount NUMERIC(10, 2),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -73,12 +76,21 @@ CREATE TABLE IF NOT EXISTS public.logs (
     details TEXT
 );
 
+-- 6. Create System Configuration Table (Generic for Feature Flags & Settings)
+CREATE TABLE IF NOT EXISTS public.system_config (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_by TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
 
 -- Anonymous/Public Read Policies for Cooperative Prototype
 CREATE POLICY "Allow public read on users" ON public.users FOR SELECT USING (true);
@@ -96,6 +108,9 @@ CREATE POLICY "Allow public write on reviews" ON public.reviews FOR ALL USING (t
 CREATE POLICY "Allow public read on logs" ON public.logs FOR SELECT USING (true);
 CREATE POLICY "Allow public insert on logs" ON public.logs FOR INSERT WITH CHECK (true);
 
+CREATE POLICY "Allow public read on system_config" ON public.system_config FOR SELECT USING (true);
+CREATE POLICY "Allow public write on system_config" ON public.system_config FOR ALL USING (true);
+
 -- Seed Workers & Users
 INSERT INTO public.users (id, name, role, phone, language_pref, avatar_url) VALUES
 ('user-cust-1', 'Ramesh Kumar', 'Customer', '9876543210', 'en', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'),
@@ -106,7 +121,8 @@ INSERT INTO public.users (id, name, role, phone, language_pref, avatar_url) VALU
 ('user-work-4', 'Suresh Babu', 'Worker', '9820044556', 'en', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80'),
 ('user-work-5', 'Dinesh Yadav', 'Worker', '9820055667', 'hi', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80'),
 ('user-work-6', 'Vikram Singh', 'Worker', '9820066778', 'en', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80'),
-('user-admin-1', 'Sunita Patel', 'Admin', '9900011223', 'en', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80')
+('user-admin-1', 'Sunita Patel', 'Admin', '9900011223', 'en', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'),
+('user-superadmin-1', 'Dr. Anand Swarup', 'SuperAdmin', '9999900001', 'en', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.workers (id, user_id, cooperative_id, skill, area, verified, rating_avg, hourly_rate, experience_years, completed_jobs_count, bio) VALUES

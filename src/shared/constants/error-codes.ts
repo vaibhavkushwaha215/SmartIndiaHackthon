@@ -22,6 +22,7 @@ export const ERROR_CODES = {
   // 400s: HTTP & Resource Lifecycle
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
   NOT_FOUND: 404,
   INVALID_TARIFF_AMOUNT: 405,
   CONFLICT: 409, // Alias for concurrent slot conflict
@@ -59,6 +60,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   // 400s
   [ERROR_CODES.BAD_REQUEST]: 'Bad request. Required fields are missing or invalid.',
   [ERROR_CODES.UNAUTHORIZED]: 'Unauthorized. You do not have permission for this action.',
+  [ERROR_CODES.FORBIDDEN]: 'Forbidden. Access restricted to authorized platform personnel.',
   [ERROR_CODES.NOT_FOUND]: 'Resource not found in cooperative records.',
   [ERROR_CODES.INVALID_TARIFF_AMOUNT]: 'Cooperative tariff rate must be between ₹100 and ₹2,000 / hour.',
   [ERROR_CODES.CONFLICT]: 'Conflict detected. Selected time slot is already booked.',
