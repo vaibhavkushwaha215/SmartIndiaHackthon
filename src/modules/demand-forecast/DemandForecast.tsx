@@ -97,18 +97,22 @@ export const DemandForecast: React.FC = () => {
         </div>
 
         {/* Responsive Recharts Container */}
-        <div className="h-72 w-full pt-4">
+        <div className="h-80 w-full pt-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={forecastData}
-              margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
+              margin={{ top: 10, right: 10, left: -20, bottom: 30 }}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis
                 dataKey="area"
-                tick={{ fontSize: 10, fill: '#64748b' }}
+                tick={{ fontSize: 11, fill: '#475569', fontWeight: 500 }}
                 tickFormatter={(v) => v.split(' ')[0]}
                 interval={0}
+                angle={-35}
+                textAnchor="end"
+                height={50}
+                dy={6}
               />
               <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
               <Tooltip
@@ -122,7 +126,7 @@ export const DemandForecast: React.FC = () => {
                 itemStyle={{ color: '#f8fafc' }}
               />
               <Legend
-                wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                wrapperStyle={{ fontSize: '11px', paddingTop: '15px' }}
               />
               <Bar
                 dataKey="predicted_jobs"

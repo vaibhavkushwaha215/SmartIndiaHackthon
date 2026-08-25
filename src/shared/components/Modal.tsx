@@ -46,29 +46,33 @@ export const Modal: React.FC<ModalProps> = ({
   }[maxWidth];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
-      <div
-        className={`relative w-full ${maxWidthClass} bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden transform animate-in zoom-in-95 duration-200 z-10`}
-        role="dialog"
-        aria-modal="true"
-      >
-        {(title || subtitle) && (
-          <div className="px-6 sm:px-8 py-4 border-b border-slate-100 flex items-start justify-between bg-slate-50/60">
-            <div>
-              {title && <h3 className="text-lg sm:text-xl font-bold text-slate-900">{title}</h3>}
-              {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain">
+      <div className="min-h-full flex items-start sm:items-center justify-center p-2 sm:p-4 md:p-6 py-4 sm:py-8">
+        <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
+        <div
+          className={`relative w-full ${maxWidthClass} max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)] flex flex-col bg-white rounded-3xl shadow-2xl border border-slate-100 transform animate-in zoom-in-95 duration-200 z-10 my-auto`}
+          role="dialog"
+          aria-modal="true"
+        >
+          {(title || subtitle) && (
+            <div className="flex-shrink-0 px-5 sm:px-8 py-3.5 sm:py-4 border-b border-slate-100 flex items-start justify-between bg-slate-50/95 rounded-t-3xl sticky top-0 z-20">
+              <div className="min-w-0 pr-2">
+                {title && <div className="text-base sm:text-xl font-bold text-slate-900 truncate sm:whitespace-normal">{title}</div>}
+                {subtitle && <p className="text-xs text-slate-500 mt-0.5 truncate sm:whitespace-normal">{subtitle}</p>}
+              </div>
+              <button
+                onClick={onClose}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-200/60 transition -mr-1 cursor-pointer flex-shrink-0"
+                aria-label="Close dialog"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-200/60 transition -mr-1 cursor-pointer"
-              aria-label="Close dialog"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          )}
+          <div className="overflow-y-auto flex-1 overscroll-contain p-4 sm:p-8 space-y-4">
+            {children}
           </div>
-        )}
-        <div className="p-6 sm:p-8">{children}</div>
+        </div>
       </div>
     </div>
   );
