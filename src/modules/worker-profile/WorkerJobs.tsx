@@ -51,13 +51,13 @@ export const WorkerJobs: React.FC = () => {
 
   const handleStatusChange = async (booking: Booking, newStatus: BookingStatus) => {
     try {
-      await db.updateBookingStatus(booking.id, newStatus, booking.amount || 299);
+      await db.updateBookingStatus(booking.id, newStatus, booking.amount || 299, currentUser);
       showSuccess(`Job ${booking.id} updated to ${newStatus.toUpperCase()}`);
       setSelectedBookingForAction(null);
       setActionType(null);
       await loadWorkerBookings();
     } catch (err: any) {
-      showError(500, err?.message || 'Failed to update job status.');
+      showError(err?.code || 500, err?.message || 'Failed to update job status.');
     }
   };
 

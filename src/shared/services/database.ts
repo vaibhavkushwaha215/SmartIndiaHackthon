@@ -445,7 +445,24 @@ export const db = {
     return newBooking;
   },
 
-  async updateBookingStatus(id: string, status: BookingStatus, amountPaid?: number): Promise<Booking> {
+  /**
+   * Helper to retrieve currently authenticated session user from localStorage
+   */
+  getAuthenticatedUser(): User | null {
+    try {
+      const saved = localStorage.getItem('sahyog_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  async updateBookingStatus(
+    id: string,
+    status: BookingStatus,
+    amountPaid?: number,
+    actor?: { id: string; role?: string; phone?: string } | User | null
+  ): Promise<Booking> {
     const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
     const index = bookings.findIndex((b) => b.id === id);
 
@@ -453,14 +470,53 @@ export const db = {
       throw createAppError(ERROR_CODES.NOT_FOUND, `Booking #${id} not found in system.`);
     }
 
-    const prevStatus = bookings[index].status;
+    const booking = bookings[index];
+    const prevStatus = booking.status;
 
-    // State machine check (Error 305: Invalid status transition)
+    // Resolve actor: explicit parameter first, then authenticated session from storage
+    const currentActor = actor !== undefined ? actor : this.getAuthenticatedUser();
+
+    // 1. Authorization & Ownership Check (Error 401: Unauthorized)
+    if (currentActor) {
+      const isPrivileged = currentActor.role === 'Admin' || currentActor.role === 'SuperAdmin';
+      
+      if (!isPrivileged) {
+        if (currentActor.role === 'Worker') {
+          // Worker must own this booking
+          const workers = getLocalItem<Worker[]>(STORAGE_KEYS.WORKERS, SEED_WORKERS);
+          const workerRecord = workers.find(
+            (w) => w.id === currentActor.id || w.user_id === currentActor.id || w.phone === currentActor.phone
+          );
+
+          const isAssignedWorker =
+            booking.worker_id === currentActor.id ||
+            (workerRecord && booking.worker_id === workerRecord.id);
+
+          if (!isAssignedWorker) {
+            throw createAppError(
+              ERROR_CODES.UNAUTHORIZED,
+              `Access Denied: You cannot modify booking #${id} because it is assigned to another artisan.`
+            );
+          }
+        } else if (currentActor.role === 'Customer') {
+          // Customers can only cancel their own bookings
+          const isOwnerCustomer = booking.customer_id === currentActor.id;
+          if (!isOwnerCustomer || status !== 'cancelled') {
+            throw createAppError(
+              ERROR_CODES.UNAUTHORIZED,
+              `Access Denied: Customers can only cancel their own scheduled bookings.`
+            );
+          }
+        }
+      }
+    }
+
+    // 2. State machine check (Error 305: Invalid status transition)
     if (prevStatus === 'completed' && status !== 'completed') {
       throw createAppError(ERROR_CODES.INVALID_STATUS_TRANSITION, 'Completed booking status cannot be reverted.');
     }
-    if (prevStatus === 'cancelled' && status === 'completed') {
-      throw createAppError(ERROR_CODES.INVALID_STATUS_TRANSITION, 'Cancelled booking cannot be marked completed.');
+    if (prevStatus === 'cancelled') {
+      throw createAppError(ERROR_CODES.INVALID_STATUS_TRANSITION, 'Cancelled bookings cannot be modified.');
     }
 
     bookings[index].status = status;

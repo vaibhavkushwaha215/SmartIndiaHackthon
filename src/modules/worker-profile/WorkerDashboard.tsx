@@ -108,11 +108,11 @@ export const WorkerDashboard: React.FC<WorkerDashboardProps> = ({
 
   const handleStatusChange = async (bookingId: string, newStatus: any) => {
     try {
-      await db.updateBookingStatus(bookingId, newStatus);
+      await db.updateBookingStatus(bookingId, newStatus, undefined, currentUser);
       showSuccess(`Booking updated to ${newStatus.toUpperCase()}`);
       loadData();
-    } catch {
-      showError(500, 'Failed to update booking.');
+    } catch (err: any) {
+      showError(err?.code || 500, err?.message || 'Failed to update booking.');
     }
   };
 
