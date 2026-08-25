@@ -19,9 +19,9 @@ export const ChatbotFloatingButton: React.FC<ChatbotFloatingButtonProps> = ({
       <button
         onClick={onClick}
         aria-label="Open SahyogSeva Assistant"
-        className="relative flex items-center justify-center w-14 h-14 rounded-full bg-linear-to-tr from-[#0b3b2c] via-emerald-800 to-teal-600 text-white shadow-xl shadow-emerald-950/25 hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border-2 border-emerald-400/40 cursor-pointer"
+        className="relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-[var(--color-primary-dark)] via-[var(--color-primary)] to-[var(--color-accent)] text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border-2 border-white/20 cursor-pointer"
       >
-        <Bot className="w-7 h-7 text-emerald-100 group-hover:rotate-12 transition-transform duration-300" />
+        <Bot className="w-7 h-7 text-white group-hover:rotate-12 transition-transform duration-300" />
         
         {/* Glow indicator */}
         <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">

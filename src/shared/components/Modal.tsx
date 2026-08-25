@@ -50,15 +50,15 @@ export const Modal: React.FC<ModalProps> = ({
       <div className="min-h-full flex items-start sm:items-center justify-center p-2 sm:p-4 md:p-6 py-4 sm:py-8">
         <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
         <div
-          className={`relative w-full ${maxWidthClass} max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)] flex flex-col bg-white rounded-3xl shadow-2xl border border-slate-100 transform animate-in zoom-in-95 duration-200 z-10 my-auto`}
+          className={`relative w-full ${maxWidthClass} max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)] flex flex-col bg-[var(--color-surface,white)] rounded-3xl shadow-2xl border border-[var(--color-border,#e2e8f0)] transform animate-in zoom-in-95 duration-200 z-10 my-auto`}
           role="dialog"
           aria-modal="true"
         >
           {(title || subtitle) && (
-            <div className="flex-shrink-0 px-5 sm:px-8 py-3.5 sm:py-4 border-b border-slate-100 flex items-start justify-between bg-slate-50/95 rounded-t-3xl sticky top-0 z-20">
+            <div className="flex-shrink-0 px-5 sm:px-8 py-3.5 sm:py-4 border-b border-[var(--color-border,#e2e8f0)] flex items-start justify-between bg-[var(--color-bg,#f8fafc)]/95 rounded-t-3xl sticky top-0 z-20">
               <div className="min-w-0 pr-2">
-                {title && <div className="text-base sm:text-xl font-bold text-slate-900 truncate sm:whitespace-normal">{title}</div>}
-                {subtitle && <p className="text-xs text-slate-500 mt-0.5 truncate sm:whitespace-normal">{subtitle}</p>}
+                {title && <div className="text-base sm:text-xl font-bold text-[var(--color-text)] truncate sm:whitespace-normal">{title}</div>}
+                {subtitle && <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate sm:whitespace-normal">{subtitle}</p>}
               </div>
               <button
                 onClick={onClose}

@@ -108,32 +108,32 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return (
             <div
               key={toast.id}
-              className={`pointer-events-auto rounded-xl shadow-lg border p-4 flex items-start gap-3 transition-all duration-300 transform translate-y-0 animate-in fade-in slide-in-from-top-2 backdrop-blur-md ${
+              className={`pointer-events-auto rounded-2xl shadow-xl border p-4 flex items-start gap-3 transition-all duration-300 transform translate-y-0 animate-in fade-in slide-in-from-top-2 backdrop-blur-md ${
                 isError
-                  ? 'bg-rose-50/95 border-rose-200 text-rose-900 shadow-rose-900/10'
+                  ? 'bg-rose-50/95 dark:bg-rose-950/90 border-rose-200 dark:border-rose-800 text-rose-950 dark:text-rose-100 shadow-rose-900/10'
                   : isSuccess
-                  ? 'bg-emerald-50/95 border-emerald-200 text-emerald-900 shadow-emerald-900/10'
+                  ? 'bg-emerald-50/95 dark:bg-emerald-950/90 border-emerald-200 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100 shadow-emerald-900/10'
                   : isWarning
-                  ? 'bg-amber-50/95 border-amber-200 text-amber-900 shadow-amber-900/10'
-                  : 'bg-indigo-50/95 border-indigo-200 text-indigo-900 shadow-indigo-900/10'
+                  ? 'bg-amber-50/95 dark:bg-amber-950/90 border-amber-200 dark:border-amber-800 text-amber-950 dark:text-amber-100 shadow-amber-900/10'
+                  : 'bg-slate-50/95 dark:bg-slate-900/90 border-slate-200 dark:border-slate-800 text-slate-950 dark:text-slate-100 shadow-slate-900/10'
               }`}
             >
               <div className="shrink-0 mt-0.5">
-                {isError && <XCircle className="w-5 h-5 text-rose-600" />}
-                {isSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
-                {isWarning && <AlertTriangle className="w-5 h-5 text-amber-600" />}
-                {!isError && !isSuccess && !isWarning && <Info className="w-5 h-5 text-indigo-600" />}
+                {isError && <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />}
+                {isSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+                {isWarning && <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
+                {!isError && !isSuccess && !isWarning && <Info className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
               </div>
               <div className="flex-1 text-sm">
-                <div className="font-semibold text-xs tracking-wider uppercase opacity-80 flex items-center gap-1.5">
+                <div className="font-bold text-xs tracking-wider uppercase opacity-90 flex items-center gap-1.5">
                   {toast.title}
                   {toast.code && (
-                    <span className="bg-rose-200/80 text-rose-900 font-mono text-[10px] px-1.5 py-0.2 rounded font-bold">
+                    <span className="bg-rose-200/80 dark:bg-rose-900/80 text-rose-900 dark:text-rose-200 font-mono text-[10px] px-1.5 py-0.2 rounded font-bold">
                       #{toast.code}
                     </span>
                   )}
                 </div>
-                <div className="mt-0.5 text-slate-800 font-medium text-xs sm:text-sm break-words">{toast.message}</div>
+                <div className="mt-0.5 font-semibold text-xs sm:text-sm break-words text-slate-900 dark:text-slate-100">{toast.message}</div>
               </div>
               <button
                 onClick={() => removeToast(toast.id)}

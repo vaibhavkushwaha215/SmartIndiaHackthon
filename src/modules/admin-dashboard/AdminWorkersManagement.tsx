@@ -287,7 +287,7 @@ export const AdminWorkersManagement: React.FC = () => {
                     onClick={() => handleToggleWorkerSuspension(worker)}
                     className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                       isSuspended
-                        ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                        ? 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white'
                         : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
                     }`}
                   >

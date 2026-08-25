@@ -209,7 +209,7 @@ export const WorkerJobs: React.FC = () => {
                   <>
                     <button
                       onClick={() => handleStatusChange(job, 'confirmed')}
-                      className="flex-1 py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                      className="flex-1 py-2 px-3 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>Accept Job</span>
@@ -237,7 +237,7 @@ export const WorkerJobs: React.FC = () => {
                 {job.status === 'in_progress' && (
                   <button
                     onClick={() => handleStatusChange(job, 'completed')}
-                    className="w-full py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                    className="w-full py-2 px-3 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Mark Service Completed (Release Escrow)</span>
@@ -245,7 +245,7 @@ export const WorkerJobs: React.FC = () => {
                 )}
 
                 {job.status === 'completed' && (
-                  <div className="w-full py-2 text-center text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl">
+                  <div className="w-full py-2 text-center text-xs font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] rounded-xl">
                     ✓ Completed & Payment Settled
                   </div>
                 )}

@@ -119,7 +119,7 @@ export const PaymentConfirmModal: React.FC<PaymentConfirmModalProps> = ({
               onClose();
               onViewBookings();
             }}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 transition flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>{t('nav.my_bookings', 'View My Bookings')}</span>
             <ArrowRight className="w-4 h-4" />

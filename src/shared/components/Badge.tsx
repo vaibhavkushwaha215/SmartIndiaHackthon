@@ -13,37 +13,37 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
 
   const config = {
     pending: {
-      bg: 'bg-amber-50 text-amber-800 border-amber-200/80',
+      bg: 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-800',
       icon: Clock,
       label: t('status.pending', 'Pending Acceptance'),
     },
     accepted: {
-      bg: 'bg-blue-50 text-blue-800 border-blue-200/80',
+      bg: 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200/80 dark:border-blue-800',
       icon: CheckCircle2,
       label: 'Accepted',
     },
     in_progress: {
-      bg: 'bg-indigo-50 text-indigo-800 border-indigo-200/80',
+      bg: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800',
       icon: Clock,
       label: 'In Progress',
     },
     confirmed: {
-      bg: 'bg-blue-50 text-blue-800 border-blue-200/80',
+      bg: 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200/80 dark:border-blue-800',
       icon: CheckCircle2,
       label: t('status.confirmed', 'Confirmed & Scheduled'),
     },
     completed: {
-      bg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+      bg: 'bg-[var(--color-primary-light,#ecfdf5)] dark:bg-emerald-950/60 text-[var(--color-primary,#059669)] dark:text-emerald-300 border-[var(--color-border,#e2e8f0)] dark:border-emerald-800',
       icon: CheckCircle2,
       label: t('status.completed', 'Service Completed'),
     },
     cancelled: {
-      bg: 'bg-rose-50 text-rose-800 border-rose-200/80',
+      bg: 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-200/80 dark:border-rose-800',
       icon: XCircle,
       label: t('status.cancelled', 'Cancelled'),
     },
   }[status] || {
-    bg: 'bg-slate-50 text-slate-700 border-slate-200',
+    bg: 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
     icon: AlertCircle,
     label: status,
   };
@@ -73,17 +73,17 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ cooperativeId, cla
     return (
       <span
         title={cooperativeId ? `Affiliation: ${cooperativeId}` : 'Verified Cooperative Member'}
-        className={`inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-md border border-emerald-200 ${className}`}
+        className={`inline-flex items-center gap-1 bg-[var(--color-primary-light,#ecfdf5)] dark:bg-emerald-950/80 text-[var(--color-primary,#059669)] dark:text-emerald-300 text-xs font-bold px-2 py-0.5 rounded-md border border-[var(--color-border,#e2e8f0)] dark:border-emerald-800 ${className}`}
       >
-        <ShieldCheck className="w-3 h-3 text-emerald-600" />
+        <ShieldCheck className="w-3 h-3 text-[var(--color-primary,#059669)] dark:text-emerald-400" />
         {t('booking.verified_badge', 'Verified')}
       </span>
     );
   }
 
   return (
-    <div className={`inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-900 border border-emerald-200/80 px-2.5 py-1 rounded-lg text-xs font-semibold ${className}`}>
-      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+    <div className={`inline-flex items-center gap-1.5 bg-[var(--color-primary-light,#ecfdf5)] dark:bg-slate-800 text-[var(--color-text,#0f172a)] dark:text-slate-100 border border-[var(--color-border,#e2e8f0)] dark:border-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold ${className}`}>
+      <ShieldCheck className="w-4 h-4 text-[var(--color-primary,#059669)] dark:text-emerald-400" />
       <span>{t('booking.verified_badge', 'Verified Cooperative Member')}</span>
     </div>
   );
@@ -96,14 +96,14 @@ interface RoleBadgeProps {
 
 export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, className = '' }) => {
   const colors = {
-    Customer: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    Worker: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    Admin: 'bg-purple-50 text-purple-700 border-purple-200',
-    SuperAdmin: 'bg-purple-100 text-purple-900 border-purple-300 font-extrabold shadow-xs',
+    Customer: 'bg-[var(--color-primary-light,#ecfdf5)] text-[var(--color-primary,#059669)] border-[var(--color-border,#e2e8f0)] dark:bg-indigo-950/80 dark:text-indigo-300 dark:border-indigo-800',
+    Worker: 'bg-[var(--color-primary-light,#ecfdf5)] text-[var(--color-primary,#059669)] border-[var(--color-border,#e2e8f0)] dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800',
+    Admin: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/80 dark:text-purple-300 dark:border-purple-800',
+    SuperAdmin: 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-900/90 dark:text-purple-200 dark:border-purple-700 font-extrabold shadow-xs',
   }[role];
 
   return (
-    <span className={`px-2 py-0.5 text-xs font-bold rounded uppercase tracking-wider border ${colors} ${className}`}>
+    <span className={`px-2.5 py-0.5 text-xs font-bold rounded-md uppercase tracking-wider border ${colors} ${className}`}>
       {role}
     </span>
   );

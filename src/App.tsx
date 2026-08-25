@@ -25,9 +25,9 @@ function parseRouteFromLocation(): string {
 
   const route = hash || path;
   if (route === 'superadmin') return 'superadmin';
-  if (route === 'login') return 'login';
-  if (route === 'register') return 'register';
-  if (route === 'apply-worker') return 'apply-worker';
+  if (route === 'login' || route === 'signin' || route === 'sign-in') return 'login';
+  if (route === 'register' || route === 'signup' || route === 'sign-up') return 'register';
+  if (route === 'apply-worker' || route === 'apply' || route === 'join') return 'apply-worker';
   if (route === 'worker/jobs' || route === 'worker-jobs') return 'worker-jobs';
   if (route === 'worker/earnings' || route === 'worker-earnings') return 'worker-earnings';
   if (route === 'worker/dashboard' || route === 'worker-dashboard') return 'worker-dashboard';
@@ -299,7 +299,7 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-emerald-200">
+    <div className="min-h-screen bg-[var(--color-bg,#f8fafc)] text-[var(--color-text,#0f172a)] flex flex-col transition-colors duration-250">
       
       {/* Maintenance Mode Notice for Non-SuperAdmins */}
       {isMaintenance && !isSuperAdmin && (

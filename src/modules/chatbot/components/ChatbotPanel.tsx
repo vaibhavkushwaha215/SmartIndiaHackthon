@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTheme } from '../../../shared/context/ThemeContext';
 import { ChatMessage, ChatbotContext } from '../types';
 import { chatService } from '../services/gemini.service';
 import { SUGGESTED_PROMPTS } from '../services/knowledgeEngine';
@@ -6,12 +7,8 @@ import {
   Bot,
   X,
   Send,
-  Sparkles,
   RotateCcw,
   User,
-  ShieldCheck,
-  ChevronDown,
-  Info,
 } from 'lucide-react';
 
 interface ChatbotPanelProps {
@@ -32,6 +29,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
   onClose,
   context,
 }) => {
+  const { currentTheme } = useTheme();
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
       const saved = sessionStorage.getItem('sahyog_chat_history');
@@ -78,31 +76,26 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
     setIsTyping(true);
 
     try {
-      const reply = await chatService.generateResponse(query, context);
-      const assistantMsg: ChatMessage = {
+      const responseText = await chatService.generateResponse(query, context);
+      const botMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        text: reply,
+        text: responseText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
-      setMessages((prev) => [...prev, assistantMsg]);
+      setMessages((prev) => [...prev, botMsg]);
     } catch (err: any) {
       const errorMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        text: 'Sorry, I encountered a temporary connection issue. Please feel free to ask again or call 1800-SAHYOG for immediate assistance.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        text: 'I encountered an issue connecting to the AI knowledge base. Please try asking again.',
         isError: true,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsTyping(false);
     }
-  };
-
-  const handleClearChat = () => {
-    setMessages([INITIAL_MESSAGE]);
-    sessionStorage.removeItem('sahyog_chat_history');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -112,7 +105,11 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
     }
   };
 
-  // Helper to render basic markdown formatting (bold, bullet points) safely
+  const handleClearChat = () => {
+    setMessages([INITIAL_MESSAGE]);
+    sessionStorage.removeItem('sahyog_chat_history');
+  };
+
   const renderFormattedText = (text: string) => {
     const lines = text.split('\n');
     return lines.map((line, lIdx) => {
@@ -122,19 +119,19 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
 
       return (
         <div key={lIdx} className={isBullet ? 'flex items-start gap-1.5 ml-1 mt-0.5' : line ? 'mt-1' : 'h-1.5'}>
-          {isBullet && <span className="text-emerald-700 font-black">•</span>}
+          {isBullet && <span className="text-[var(--color-primary)] font-black">•</span>}
           <span>
             {parts.map((part, pIdx) => {
               if (part.startsWith('**') && part.endsWith('**')) {
                 return (
-                  <strong key={pIdx} className="font-bold text-slate-900">
+                  <strong key={pIdx} className="font-bold text-[var(--color-text)]">
                     {part.slice(2, -2)}
                   </strong>
                 );
               }
               if (part.startsWith('*') && part.endsWith('*')) {
                 return (
-                  <em key={pIdx} className="italic text-slate-600">
+                  <em key={pIdx} className="italic text-[var(--color-text-secondary)]">
                     {part.slice(1, -1)}
                   </em>
                 );
@@ -148,34 +145,34 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
   };
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 right-2 sm:right-6 z-50 w-[calc(100vw-1rem)] sm:w-96 max-w-sm max-h-[80vh] sm:max-h-[580px] h-[550px] bg-white rounded-3xl shadow-2xl border border-emerald-500/20 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
+    <div className="fixed bottom-20 md:bottom-6 right-2 sm:right-6 z-50 w-[calc(100vw-1rem)] sm:w-96 max-w-sm max-h-[80vh] sm:max-h-[580px] h-[550px] bg-[var(--color-surface,white)] rounded-3xl shadow-2xl border border-[var(--color-border,#e2e8f0)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
       
       {/* 1. Header */}
-      <div className="bg-linear-to-r from-[#0b3b2c] via-emerald-900 to-teal-900 p-4 text-white flex items-center justify-between shadow-md">
+      <div className={`bg-gradient-to-r ${currentTheme.colors.headerGradient || 'from-slate-950 via-slate-900 to-emerald-950'} p-4 text-white flex items-center justify-between shadow-md`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-inner">
+          <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white shadow-inner">
             <Bot className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
               <h3 className="font-black text-sm tracking-tight text-white">SahyogSeva Assistant</h3>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="AI Ready"></span>
+              <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse" title="AI Ready"></span>
             </div>
-            <p className="text-[11px] text-emerald-200/80 font-medium">Cooperative Community AI</p>
+            <p className="text-[11px] text-white/80 font-medium">Cooperative Community AI</p>
           </div>
         </div>
 
         <div className="flex items-center gap-1">
           <button
             onClick={handleClearChat}
-            className="p-1.5 rounded-xl hover:bg-white/10 text-emerald-200 transition cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer"
             title="Reset conversation"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-white/10 text-emerald-200 transition cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer"
             title="Minimize Assistant"
           >
             <X className="w-5 h-5" />
@@ -184,7 +181,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
       </div>
 
       {/* 2. Message History Container */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-50/70 text-xs">
+      <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-[var(--color-bg,#f8fafc)] text-xs">
         {messages.map((msg) => {
           const isUser = msg.role === 'user';
 
@@ -194,7 +191,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
               className={`flex items-end gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
             >
               {!isUser && (
-                <div className="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center shrink-0 mb-1 text-[10px] font-bold shadow-xs">
+                <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shrink-0 mb-1 text-[10px] font-bold shadow-xs">
                   <Bot className="w-3.5 h-3.5" />
                 </div>
               )}
@@ -202,10 +199,10 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
               <div
                 className={`max-w-[82%] p-3 rounded-2xl shadow-xs space-y-1 ${
                   isUser
-                    ? 'bg-emerald-700 text-white rounded-br-xs'
+                    ? 'bg-[var(--color-primary)] text-white rounded-br-xs'
                     : msg.isError
                     ? 'bg-rose-50 text-rose-800 border border-rose-200 rounded-bl-xs'
-                    : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-xs'
+                    : 'bg-[var(--color-surface,white)] text-[var(--color-text)] border border-[var(--color-border,#e2e8f0)] rounded-bl-xs'
                 }`}
               >
                 <div className="leading-relaxed whitespace-pre-wrap">
@@ -213,7 +210,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
                 </div>
                 <div
                   className={`text-[9px] text-right font-medium ${
-                    isUser ? 'text-emerald-200' : 'text-slate-400'
+                    isUser ? 'text-white/70' : 'text-[var(--color-text-muted)]'
                   }`}
                 >
                   {msg.timestamp}
@@ -232,13 +229,13 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
         {/* Typing animation bubble */}
         {isTyping && (
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center shrink-0 text-[10px] font-bold">
+            <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shrink-0 text-[10px] font-bold">
               <Bot className="w-3.5 h-3.5" />
             </div>
-            <div className="p-3 bg-white rounded-2xl rounded-bl-xs border border-slate-200 shadow-xs flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.2s]"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.4s]"></span>
+            <div className="p-3 bg-[var(--color-surface,white)] rounded-2xl rounded-bl-xs border border-[var(--color-border,#e2e8f0)] shadow-xs flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.2s]"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.4s]"></span>
             </div>
           </div>
         )}
@@ -248,12 +245,12 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
 
       {/* 3. Suggested Prompt Chips */}
       {messages.length <= 2 && (
-        <div className="px-3 py-2 bg-white border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        <div className="px-3 py-2 bg-[var(--color-surface,white)] border-t border-[var(--color-border,#e2e8f0)] flex items-center gap-1.5 overflow-x-auto scrollbar-none">
           {SUGGESTED_PROMPTS.map((prompt) => (
             <button
               key={prompt.id}
               onClick={() => handleSendMessage(prompt.query)}
-              className="px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold transition whitespace-nowrap cursor-pointer shrink-0"
+              className="px-2.5 py-1 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-border,#e2e8f0)] text-[10px] font-bold transition whitespace-nowrap cursor-pointer shrink-0 hover:opacity-80"
             >
               {prompt.label}
             </button>
@@ -262,7 +259,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
       )}
 
       {/* 4. Text Input & Send */}
-      <div className="p-3 bg-white border-t border-slate-200 space-y-1.5">
+      <div className="p-3 bg-[var(--color-surface,white)] border-t border-[var(--color-border,#e2e8f0)] space-y-1.5">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -271,7 +268,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
             onKeyDown={handleKeyDown}
             disabled={isTyping}
             placeholder="Ask SahyogSeva Assistant..."
-            className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 text-slate-800 placeholder:text-slate-400 font-medium"
+            className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--color-border,#e2e8f0)] text-xs bg-[var(--color-bg,#f8fafc)] focus:bg-[var(--color-surface,white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] font-medium"
           />
           <button
             onClick={() => handleSendMessage()}
@@ -279,7 +276,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
             aria-label="Send message"
             className={`p-2.5 rounded-xl text-white transition flex items-center justify-center shadow-xs cursor-pointer ${
               inputQuery.trim() && !isTyping
-                ? 'bg-emerald-700 hover:bg-emerald-800'
+                ? 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]'
                 : 'bg-slate-300 cursor-not-allowed'
             }`}
           >

@@ -171,7 +171,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-700/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+            className="w-full py-3 px-4 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
           >
             <span>{isSubmitting ? 'Creating Account...' : 'Register as Customer'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -180,11 +180,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
         {/* Footer Links */}
         <div className="pt-2 border-t border-slate-100 space-y-2 text-center text-xs">
-          <div className="flex items-center justify-center gap-1 text-slate-600">
+          <div className="flex items-center justify-center gap-1 text-[var(--color-text-secondary)]">
             <span>Already have an account?</span>
             <button
               onClick={onNavigateToLogin}
-              className="font-bold text-emerald-700 hover:underline cursor-pointer"
+              className="font-bold text-[var(--color-primary)] hover:underline cursor-pointer"
             >
               Sign In
             </button>
@@ -196,6 +196,18 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
           >
             Looking to offer services? <u>Apply as a Cooperative Worker</u>
           </button>
+
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                window.location.hash = '';
+                window.location.pathname = '/';
+              }}
+              className="text-slate-400 hover:text-slate-600 text-xs font-semibold hover:underline cursor-pointer"
+            >
+              ← Return to Home / Browse Services
+            </button>
+          </div>
         </div>
 
       </div>

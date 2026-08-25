@@ -407,7 +407,7 @@ export const ApplyWorkerPage: React.FC<ApplyWorkerPageProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 px-6 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow-lg shadow-emerald-700/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 px-6 rounded-2xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-black text-sm shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <span>{isSubmitting ? 'Submitting Application...' : 'Submit Cooperative Onboarding Application'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -420,9 +420,9 @@ export const ApplyWorkerPage: React.FC<ApplyWorkerPageProps> = ({
           <div className="space-y-6">
             <ApplicationStatusCard />
 
-            <div className="bg-emerald-50 rounded-3xl p-6 border border-emerald-200 text-emerald-950 space-y-3">
+            <div className="bg-[var(--color-primary-light)] rounded-3xl p-6 border border-[var(--color-border)] text-[var(--color-text)] space-y-3">
               <h4 className="font-extrabold text-sm flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                <ShieldCheck className="w-4 h-4 text-[var(--color-primary)]" />
                 <span>The Cooperative Advantage</span>
               </h4>
               <ul className="text-xs space-y-2 text-emerald-900/90 leading-relaxed list-disc list-inside">

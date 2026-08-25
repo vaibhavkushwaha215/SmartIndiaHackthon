@@ -14,6 +14,7 @@ import {
   Globe,
   LogOut,
   ChevronRight,
+  ChevronDown,
   Users,
   Menu,
   MapPin,
@@ -46,17 +47,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const { currentUser, currentRole, isSuperAdmin, logout, quickSwitchUser, switchRole, updateLanguage } = useAuth();
   const { showSuccess } = useToast();
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSwitchHovered, setIsSwitchHovered] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-  const [isApplyWorkerModalOpen, setIsApplyWorkerModalOpen] = useState(false);
-
-  // Application form state
-  const [applicantName, setApplicantName] = useState('');
-  const [applicantPhone, setApplicantPhone] = useState('');
-  const [applicantSkill, setApplicantSkill] = useState('Electrician & Wireman');
-  const [applicantArea, setApplicantArea] = useState('Indiranagar, Bengaluru');
 
   const isHindi = i18n.language === 'hi';
 
@@ -71,16 +64,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
       const el = document.getElementById('services-grid');
       el?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
-  };
-
-  const handleWorkerApplication = (e: React.FormEvent) => {
-    e.preventDefault();
-    showSuccess(
-      isHindi
-        ? 'सहकारी आवेदन प्राप्त हुआ! हमारी सत्यापन टीम 24 घंटे में संपर्क करेगी।'
-        : 'Application submitted! Cooperative verification team will contact you within 24 hours.'
-    );
-    setIsApplyWorkerModalOpen(false);
   };
 
   const navItems: NavItemConfig[] = [
@@ -101,10 +84,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+      <header className="sticky top-0 z-40 bg-[var(--color-surface,white)]/95 backdrop-blur-md border-b border-[var(--color-border,#e2e8f0)] shadow-xs transition-colors duration-250">
         
         {/* Top Announcement Ribbon - Hidden on small displays / PWA mobile screens */}
-        <div className="hidden md:block bg-[#0b3b2c] text-emerald-100 text-xs py-1.5 px-4 border-b border-emerald-800">
+        <div className="hidden md:block bg-[var(--color-primary-dark,#0b3b2c)] text-white text-xs py-1.5 px-4 border-b border-white/10 transition-colors duration-250">
           <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-1 text-left">
             <div className="flex items-center gap-2 font-medium">
               <span>🛡️ 100% Background & Police Verified Local Professionals</span>
@@ -186,13 +169,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                         onTabChange(item.id);
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       isActive
-                        ? 'bg-emerald-50 text-emerald-700 font-extrabold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+                        ? 'bg-[var(--color-primary)] text-white shadow-xs'
+                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-primary-light)]'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} />
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[var(--color-primary)]'}`} />
                     <span>{item.label}</span>
                   </button>
                 );
@@ -205,10 +188,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
               {/* Mobile Language Switcher */}
               <button
                 onClick={toggleLanguage}
-                className="md:hidden flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs transition cursor-pointer"
+                className="md:hidden flex items-center gap-1 bg-[var(--color-surface,white)] hover:bg-[var(--color-primary-light)] text-[var(--color-text)] font-bold px-2.5 py-1.5 rounded-xl border border-[var(--color-border)] text-xs transition cursor-pointer"
                 title="Toggle Language"
               >
-                <Globe className="w-3.5 h-3.5 text-emerald-700" />
+                <Globe className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                 <span>{isHindi ? 'EN' : 'HI'}</span>
               </button>
 
@@ -222,8 +205,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
               {/* User Profile / Login Button */}
               {!currentUser ? (
                 <button
-                  onClick={() => setIsLoginModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+                  onClick={() => onTabChange('login')}
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs shadow-xs transition cursor-pointer"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>{isHindi ? 'साइन इन करें' : 'Sign In'}</span>
@@ -232,26 +215,26 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition cursor-pointer"
+                    className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[var(--color-surface,white)] hover:bg-[var(--color-primary-light)] border border-[var(--color-border)] transition cursor-pointer"
                     aria-label="User Account Menu"
                   >
                     <img
                       src={currentUser?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
                       alt={currentUser?.name || 'User'}
-                      className="w-7 h-7 rounded-full border border-emerald-400 object-cover"
+                      className="w-7 h-7 rounded-full border border-[var(--color-primary)] object-cover"
                     />
                     <div className="hidden md:block text-left">
-                      <div className="text-xs font-bold text-slate-900 leading-tight">
+                      <div className="text-xs font-bold text-[var(--color-text)] leading-tight">
                         {currentUser?.name || 'Account'}
                       </div>
-                      <div className="text-xs text-emerald-700 font-bold leading-none">
+                      <div className="text-xs text-[var(--color-primary)] font-bold leading-none">
                         {currentUser?.role || 'Customer'}
                       </div>
                     </div>
-                    <Menu className="w-4 h-4 text-slate-600 ml-1" />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                   </button>
 
-                  {/* Hamburger / User Dropdown Menu */}
+                  {/* Dropdown Menu */}
                   {isUserMenuOpen && (
                     <>
                       <div
@@ -261,18 +244,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                           setIsSwitchHovered(false);
                         }}
                       />
-                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-30 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute right-0 mt-2 w-64 bg-[var(--color-surface,white)] rounded-2xl shadow-2xl border border-[var(--color-border,#e2e8f0)] py-2 z-30 animate-in fade-in zoom-in-95 duration-150">
                         
                         {/* User Header */}
-                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                        <div className="px-4 py-3 border-b border-[var(--color-border,#e2e8f0)] bg-[var(--color-bg,#f8fafc)] flex items-center gap-3">
                           <img
                             src={currentUser?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
                             alt={currentUser?.name || 'User'}
-                            className="w-10 h-10 rounded-full border-2 border-emerald-500 object-cover"
+                            className="w-10 h-10 rounded-full border-2 border-[var(--color-primary)] object-cover"
                           />
                           <div>
-                            <div className="text-xs font-bold text-slate-900">{currentUser?.name || 'User'}</div>
-                            <div className="text-xs text-slate-500 font-mono">+91 {currentUser?.phone || '9876543210'}</div>
+                            <div className="text-xs font-bold text-[var(--color-text)]">{currentUser?.name || 'User'}</div>
+                            <div className="text-xs text-[var(--color-text-muted)] font-mono">+91 {currentUser?.phone || '9876543210'}</div>
                             <RoleBadge role={currentRole} className="mt-1 inline-block text-xs py-0" />
                           </div>
                         </div>
@@ -284,13 +267,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                               setIsUserMenuOpen(false);
                               onTabChange('settings');
                             }}
-                            className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center justify-between transition cursor-pointer font-medium"
+                            className="w-full text-left px-4 py-2.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] flex items-center justify-between transition cursor-pointer font-medium"
                           >
                             <div className="flex items-center gap-2.5">
                               <Settings className="w-4 h-4 text-slate-400" />
                               <span>{isHindi ? 'सेटिंग्स और भाषा' : 'Settings & Language'}</span>
                             </div>
-                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                            <span className="text-xs font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] px-1.5 py-0.5 rounded">
                               {isHindi ? 'HI' : 'EN'}
                             </span>
                           </button>
@@ -301,7 +284,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                               setIsUserMenuOpen(false);
                               setIsContactModalOpen(true);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition cursor-pointer"
+                            className="w-full text-left px-4 py-2.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] flex items-center gap-2.5 transition cursor-pointer"
                           >
                             <PhoneCall className="w-4 h-4 text-slate-400" />
                             <span>{isHindi ? 'संपर्क और हेल्पलाइन' : 'Contact Us & Helpline'}</span>
@@ -315,10 +298,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                           >
                             <button
                               onClick={() => setIsSwitchHovered(!isSwitchHovered)}
-                              className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center justify-between transition cursor-pointer font-semibold"
+                              className="w-full text-left px-4 py-2.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] flex items-center justify-between transition cursor-pointer font-semibold"
                             >
                               <div className="flex items-center gap-2.5">
-                                <Users className="w-4 h-4 text-indigo-600" />
+                                <Users className="w-4 h-4 text-[var(--color-primary)]" />
                                 <span>{isHindi ? 'खाता बदलें' : 'Switch Account'}</span>
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -326,8 +309,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
                             {/* Flyout Submenu */}
                             {isSwitchHovered && (
-                              <div className="absolute right-full top-0 mr-1 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 z-40 animate-in fade-in slide-in-from-right-2">
-                                <div className="px-3 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                              <div className="absolute right-full top-0 mr-1 w-56 bg-[var(--color-surface,white)] rounded-xl shadow-2xl border border-[var(--color-border,#e2e8f0)] py-1.5 z-40 animate-in fade-in slide-in-from-right-2">
+                                <div className="px-3 py-1 text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
                                   {isHindi ? 'प्रोफ़ाइल चुनें' : 'Switch Account Profile'}
                                 </div>
 
@@ -340,12 +323,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                     setIsSwitchHovered(false);
                                     showSuccess('Switched to Customer: Ramesh Kumar');
                                   }}
-                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                                    currentRole === 'Customer' ? 'bg-emerald-50 text-emerald-900 font-bold' : 'text-slate-700'
+                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[var(--color-primary-light)] transition cursor-pointer ${
+                                    currentRole === 'Customer' ? 'bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold' : 'text-[var(--color-text)]'
                                   }`}
                                 >
                                   <span>👤 Customer (Ramesh)</span>
-                                  {currentRole === 'Customer' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                                  {currentRole === 'Customer' && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-primary)]" />}
                                 </button>
 
                                 {/* Option 2: Worker (Rajesh Sharma) */}
@@ -393,7 +376,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                               <button
                                 onClick={() => {
                                   setIsUserMenuOpen(false);
-                                  setIsApplyWorkerModalOpen(true);
+                                  onTabChange('apply-worker');
                                 }}
                                 className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
                               >
@@ -456,83 +439,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
           <button
             onClick={() => setIsContactModalOpen(false)}
-            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl"
+            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl cursor-pointer"
           >
             Close
           </button>
         </div>
       </Modal>
-
-      {/* Apply as Worker Modal */}
-      <Modal
-        isOpen={isApplyWorkerModalOpen}
-        onClose={() => setIsApplyWorkerModalOpen(false)}
-        title="Join SahyogSeva Cooperative as an Artisan"
-        subtitle="Direct worker ownership, 100% fair wages, zero commission, and escrow payouts."
-        maxWidth="md"
-      >
-        <form onSubmit={handleWorkerApplication} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Full Name</label>
-            <input
-              type="text"
-              required
-              value={applicantName}
-              onChange={(e) => setApplicantName(e.target.value)}
-              placeholder="e.g. Vikram Sharma"
-              className="w-full px-3 py-2 rounded-xl border border-slate-200"
-            />
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">10-Digit Mobile Number</label>
-            <input
-              type="tel"
-              required
-              maxLength={10}
-              value={applicantPhone}
-              onChange={(e) => setApplicantPhone(e.target.value.replace(/\D/g, ''))}
-              placeholder="9820011223"
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono"
-            />
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Skill & Trade</label>
-            <select
-              value={applicantSkill}
-              onChange={(e) => setApplicantSkill(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200"
-            >
-              <option value="Electrician & Wireman">Electrician & Wireman (ITI Certified)</option>
-              <option value="Plumber & Pipe Specialist">Plumber & Pipe Specialist</option>
-              <option value="AC & Appliance Repair">AC & Appliance Repair</option>
-              <option value="Carpenter & Woodwork">Carpenter & Woodwork</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Operating City / Area</label>
-            <input
-              type="text"
-              required
-              value={applicantArea}
-              onChange={(e) => setApplicantArea(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2"
-          >
-            <Send className="w-4 h-4" />
-            <span>Submit Cooperative Membership Request</span>
-          </button>
-        </form>
-      </Modal>
-
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </>
   );
 };

@@ -353,14 +353,14 @@ export const WorkerList: React.FC<WorkerListProps> = ({ onNavigateToBookings }) 
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setSelectedWorkerForDetail(worker)}
-                    className="px-3 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                    className="px-3 py-2 rounded-xl border border-[var(--color-border,#e2e8f0)] text-[var(--color-text)] hover:bg-[var(--color-primary-light)] text-xs font-bold transition cursor-pointer"
                   >
                     View
                   </button>
 
                   <button
                     onClick={() => setSelectedWorkerForBooking(worker)}
-                    className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs transition cursor-pointer flex items-center gap-1"
+                    className="px-3.5 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold shadow-xs transition cursor-pointer flex items-center gap-1"
                   >
                     <Calendar className="w-3.5 h-3.5" />
                     <span>Book</span>

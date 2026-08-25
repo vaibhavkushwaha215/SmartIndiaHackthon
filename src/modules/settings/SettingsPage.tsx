@@ -387,35 +387,39 @@ export const SettingsPage: React.FC = () => {
                   <button
                     onClick={() => updateLanguage('en')}
                     className={`p-4 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
-                      !isHindi ? 'border-emerald-600 bg-emerald-50/50 shadow-xs' : 'border-slate-200 hover:bg-slate-50'
+                      !isHindi
+                        ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-text)] shadow-xs ring-2 ring-[var(--color-primary)]/20'
+                        : 'border-[var(--color-border)] hover:bg-[var(--color-bg)] text-[var(--color-text)]'
                     }`}
                   >
                     <div>
-                      <div className="font-bold text-sm text-slate-900">English (EN)</div>
-                      <div className="text-xs text-slate-500">Standard English Interface</div>
+                      <div className="font-bold text-sm text-[var(--color-text)]">English (EN)</div>
+                      <div className="text-xs text-[var(--color-text-muted)]">Standard English Interface</div>
                     </div>
-                    {!isHindi && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                    {!isHindi && <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)]" />}
                   </button>
 
                   <button
                     onClick={() => updateLanguage('hi')}
                     className={`p-4 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
-                      isHindi ? 'border-emerald-600 bg-emerald-50/50 shadow-xs' : 'border-slate-200 hover:bg-slate-50'
+                      isHindi
+                        ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-text)] shadow-xs ring-2 ring-[var(--color-primary)]/20'
+                        : 'border-[var(--color-border)] hover:bg-[var(--color-bg)] text-[var(--color-text)]'
                     }`}
                   >
                     <div>
-                      <div className="font-bold text-sm text-slate-900">हिंदी (HI)</div>
-                      <div className="text-xs text-slate-500">सहयोग सेवा हिंदी इंटरफ़ेस</div>
+                      <div className="font-bold text-sm text-[var(--color-text)]">हिंदी (HI)</div>
+                      <div className="text-xs text-[var(--color-text-muted)]">सहयोग सेवा हिंदी इंटरफ़ेस</div>
                     </div>
-                    {isHindi && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                    {isHindi && <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)]" />}
                   </button>
                 </div>
               )}
 
               {isFeatureEnabled('THEME_SELECTION') && (
-                <div className="pt-4 border-t border-slate-100 space-y-3">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <Palette className="w-4 h-4 text-indigo-600" />
+                <div className="pt-4 border-t border-[var(--color-border)] space-y-3">
+                  <h4 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
+                    <Palette className="w-4 h-4 text-[var(--color-primary)]" />
                     Visual Theme
                   </h4>
 
@@ -433,21 +437,21 @@ export const SettingsPage: React.FC = () => {
                           }}
                           className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex items-start justify-between ${
                             isSelected
-                              ? 'border-emerald-600 bg-emerald-50/50 shadow-xs ring-2 ring-emerald-500/20'
-                              : 'border-slate-200 bg-white hover:bg-slate-50'
+                              ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] shadow-xs ring-2 ring-[var(--color-primary)]/30'
+                              : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-bg)]'
                           }`}
                         >
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span
-                                className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs shrink-0"
+                                className="w-3.5 h-3.5 rounded-full border border-black/10 shadow-xs shrink-0"
                                 style={{ backgroundColor: tcfg.colors.primary }}
                               />
-                              <span className="font-bold text-xs text-slate-900">{isHindi ? tcfg.nameHi : tcfg.name}</span>
+                              <span className="font-bold text-xs text-[var(--color-text)]">{isHindi ? tcfg.nameHi : tcfg.name}</span>
                             </div>
-                            <p className="text-[11px] text-slate-500 leading-tight">{tcfg.description}</p>
+                            <p className="text-[11px] text-[var(--color-text-muted)] leading-tight">{tcfg.description}</p>
                           </div>
-                          {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 ml-2" />}
+                          {isSelected && <CheckCircle2 className="w-4 h-4 text-[var(--color-primary)] shrink-0 ml-2" />}
                         </button>
                       );
                     })}

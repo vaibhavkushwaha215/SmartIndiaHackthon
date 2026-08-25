@@ -74,9 +74,9 @@ Interactive Recharts bar chart showing next-week predicted service demand by are
 
 ### 1. Clone & Install
 ```bash
-# Clone your repository
-git clone <your-github-repo-url>
-cd sahyog-seva
+# Clone the repository
+git clone https://github.com/vaibhavkushwaha215/SmartIndiaHackthon.git
+cd SmartIndiaHackthon
 
 # Install dependencies
 npm install

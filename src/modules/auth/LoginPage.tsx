@@ -129,7 +129,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-700/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3 px-4 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <span>{isSubmitting ? 'Signing In...' : 'Sign In'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -138,11 +138,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
         {/* Secondary Links */}
         <div className="pt-2 border-t border-slate-100 space-y-2.5 text-center text-xs">
-          <div className="flex items-center justify-center gap-1.5 text-slate-600">
+          <div className="flex items-center justify-center gap-1.5 text-[var(--color-text-secondary)]">
             <span>New customer?</span>
             <button
               onClick={onNavigateToRegister}
-              className="font-bold text-emerald-700 hover:underline cursor-pointer flex items-center gap-1"
+              className="font-bold text-[var(--color-primary)] hover:underline cursor-pointer flex items-center gap-1"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Create Customer Account</span>
@@ -160,6 +160,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             >
               <Wrench className="w-3 h-3 text-amber-300" />
               <span>Apply as Worker</span>
+            </button>
+          </div>
+
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                window.location.hash = '';
+                window.location.pathname = '/';
+              }}
+              className="text-slate-400 hover:text-slate-600 text-xs font-semibold hover:underline cursor-pointer"
+            >
+              ← Return to Home / Browse Services
             </button>
           </div>
         </div>

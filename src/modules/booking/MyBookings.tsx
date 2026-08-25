@@ -114,15 +114,15 @@ export const MyBookings: React.FC = () => {
           {filteredBookings.map((b) => (
             <div
               key={b.id}
-              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-md transition-all space-y-4"
+              className="p-5 rounded-2xl bg-[var(--color-surface,white)] border border-[var(--color-border,#e2e8f0)] shadow-xs space-y-4 transition hover:shadow-md"
             >
-              {/* Header: ID, Date & Status Badge */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              {/* Header: ID, Date & Status */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--color-border,#e2e8f0)]">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                  <span className="font-mono font-bold text-xs bg-[var(--color-bg,#f8fafc)] text-[var(--color-text,#0f172a)] px-2.5 py-1 rounded-lg border border-[var(--color-border,#e2e8f0)]">
                     #{b.id}
                   </span>
-                  <span className="text-xs text-slate-400 font-medium">
+                  <span className="text-xs text-[var(--color-text-muted)] font-medium">
                     Booked on {new Date(b.created_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -136,18 +136,18 @@ export const MyBookings: React.FC = () => {
                   <img
                     src={b.worker?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'}
                     alt={b.worker?.name || 'Worker'}
-                    className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
+                    className="w-12 h-12 rounded-xl object-cover border border-[var(--color-border,#e2e8f0)] shrink-0"
                   />
                   <div className="space-y-0.5">
-                    <div className="text-sm font-bold text-slate-900">
+                    <div className="text-sm font-bold text-[var(--color-text,#0f172a)]">
                       {b.worker?.name || 'Assigned Cooperative Electrician'}
                     </div>
-                    <div className="text-[11px] text-emerald-700 font-medium">
+                    <div className="text-[11px] text-[var(--color-primary,#059669)] font-medium">
                       {b.worker?.cooperative_id || 'Delhi Vidyut Sahyog'}
                     </div>
                     {b.worker?.phone && (
-                      <div className="text-xs text-slate-500 flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-slate-400" />
+                      <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-[var(--color-text-muted)]" />
                         <span className="font-mono">+91 {b.worker.phone}</span>
                       </div>
                     )}
@@ -155,16 +155,16 @@ export const MyBookings: React.FC = () => {
                 </div>
 
                 {/* Right: Date, Time & Address */}
-                <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100 text-xs space-y-1.5">
-                  <div className="flex items-center gap-2 text-slate-800 font-semibold">
-                    <CalendarDays className="w-3.5 h-3.5 text-emerald-600" />
+                <div className="bg-[var(--color-bg,#f8fafc)] p-3.5 rounded-xl border border-[var(--color-border,#e2e8f0)] text-xs space-y-1.5">
+                  <div className="flex items-center gap-2 text-[var(--color-text,#0f172a)] font-semibold">
+                    <CalendarDays className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                     <span>{b.date}</span>
-                    <span className="text-slate-300">•</span>
-                    <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                    <span className="text-slate-400">•</span>
+                    <Clock className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                     <span>{b.time_slot}</span>
                   </div>
-                  <div className="flex items-start gap-2 text-slate-600">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2 text-[var(--color-text-secondary,#334155)]">
+                    <MapPin className="w-3.5 h-3.5 text-[var(--color-text-muted)] shrink-0 mt-0.5" />
                     <span className="line-clamp-1">{b.address}</span>
                   </div>
                 </div>
@@ -172,27 +172,27 @@ export const MyBookings: React.FC = () => {
 
               {/* Problem Description if provided */}
               {b.problem_description && (
-                <div className="text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-slate-600">
-                  <span className="font-bold text-slate-700">Requirement: </span>
+                <div className="text-xs bg-[var(--color-bg,#f8fafc)] p-2.5 rounded-lg border border-[var(--color-border,#e2e8f0)] text-[var(--color-text-secondary)]">
+                  <span className="font-bold text-[var(--color-text)]">Requirement: </span>
                   {b.problem_description}
                 </div>
               )}
 
               {/* Review section / Action Footer */}
-              <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="pt-2 border-t border-[var(--color-border,#e2e8f0)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs text-slate-500 font-medium">
-                    Escrow Amount: <strong className="text-slate-900">₹{b.amount || 299}</strong>
+                  <ShieldCheck className="w-4 h-4 text-[var(--color-primary)]" />
+                  <span className="text-xs text-[var(--color-text-muted)] font-medium">
+                    Escrow Amount: <strong className="text-[var(--color-text)]">₹{b.amount || 299}</strong>
                   </span>
                 </div>
 
                 {/* If completed and review exists -> Show rating badge */}
                 {b.review ? (
-                  <div className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200/80 text-xs">
-                    <span className="font-bold text-amber-800">Your Review:</span>
+                  <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/50 px-3 py-1.5 rounded-xl border border-amber-200/80 dark:border-amber-800 text-xs">
+                    <span className="font-bold text-amber-800 dark:text-amber-300">Your Review:</span>
                     <StarRating rating={b.review.rating} size="sm" />
-                    <span className="text-slate-600 italic truncate max-w-[200px]">"{b.review.comment}"</span>
+                    <span className="text-slate-700 dark:text-slate-200 italic truncate max-w-[200px]">"{b.review.comment}"</span>
                   </div>
                 ) : b.status === 'completed' ? (
                   <button
@@ -203,7 +203,7 @@ export const MyBookings: React.FC = () => {
                     <span>{t('booking.leave_review', 'Rate & Review')}</span>
                   </button>
                 ) : (
-                  <span className="text-xs text-slate-400 italic">
+                  <span className="text-xs text-[var(--color-text-muted)] italic">
                     Review unlocks after electrician marks service as completed
                   </span>
                 )}

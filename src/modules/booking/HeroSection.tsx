@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../auth';
+import { useTheme } from '../../shared/context/ThemeContext';
 import { ShieldCheck, Banknote, Clock, Award, ArrowRight, MapPin, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,16 +17,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const { currentUser } = useAuth();
+  const { currentTheme } = useTheme();
   const isHindi = i18n.language === 'hi';
 
   const userName = currentUser?.name?.split(' ')[0] || (isHindi ? 'रमेश' : 'Ramesh');
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#064e3b] via-[#0b3b2c] to-[#042f24] text-white p-5 sm:p-8 md:p-12 shadow-2xl border border-emerald-800/40">
+    <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${currentTheme.colors.headerGradient || 'from-slate-950 via-slate-900 to-emerald-950'} text-white p-5 sm:p-8 md:p-12 shadow-2xl border border-white/10 transition-all duration-300`}>
       
       {/* Background Decorative Glows */}
-      <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-80 h-80 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-[var(--color-primary)]/20 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-80 h-80 rounded-full bg-[var(--color-accent)]/20 blur-3xl pointer-events-none" />
 
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         
@@ -33,8 +35,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="lg:col-span-7 space-y-5 min-w-0">
           
           {/* Neighborhood Pill */}
-          <div className="inline-flex max-w-full items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/80 border border-emerald-600/40 text-xs font-semibold text-emerald-200 backdrop-blur-sm">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <div className="inline-flex max-w-full items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 border border-white/10 text-xs font-semibold text-white/90 backdrop-blur-sm">
+            <MapPin className="w-3.5 h-3.5 text-[var(--color-accent)] shrink-0" />
             <span className="truncate">
               {isHindi
                 ? `सेवा क्षेत्र: ${selectedArea === 'ALL' ? 'Indiranagar, Bengaluru' : selectedArea} • सत्यापित स्थानीय विशेषज्ञ`
@@ -45,13 +47,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           {/* Dynamic Welcome Heading */}
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight break-words">
             {isHindi ? `नमस्ते, ${userName}!` : `Namaste, ${userName}!`} <br />
-            <span className="text-emerald-300">
+            <span className="text-[var(--color-accent)]">
               {isHindi ? '30 मिनट में घर पर सेवा।' : 'Doorstep Services in 30 Minutes.'}
             </span>
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-white/80 max-w-xl leading-relaxed">
             {isHindi
               ? 'पृष्ठभूमि-सत्यापित इलेक्ट्रीशियन, तकनीशियन और घरेलू सहायक बुक करें। शून्य अग्रिम शुल्क — कार्य संतुष्टि के बाद ही नकद या UPI द्वारा भुगतान करें।'
               : 'Book background-verified electricians, plumbers, domestic helpers, carpenters & technicians. Pay zero advance — pay cash or UPI only after complete service.'}
@@ -61,7 +63,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
               onClick={onExploreClick}
-              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-[#10b981] hover:bg-[#059669] text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-emerald-900/40 transition-all flex items-center gap-2 cursor-pointer hover:scale-105"
+              className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-primary)] text-slate-950 font-bold text-xs sm:text-sm shadow-lg transition-all flex items-center gap-2 cursor-pointer hover:scale-105"
             >
               <span>{isHindi ? 'सभी सेवाएं देखें' : 'Explore All Services'}</span>
               <ArrowRight className="w-4 h-4" />

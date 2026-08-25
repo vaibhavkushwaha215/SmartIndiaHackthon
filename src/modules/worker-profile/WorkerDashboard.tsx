@@ -272,7 +272,7 @@ export const WorkerDashboard: React.FC<WorkerDashboardProps> = ({
                 <div className="flex gap-2 pt-1">
                   <button
                     onClick={() => handleStatusChange(req.id, 'confirmed')}
-                    className="flex-1 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1 shadow-xs"
+                    className="flex-1 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1 shadow-xs"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Accept Job</span>

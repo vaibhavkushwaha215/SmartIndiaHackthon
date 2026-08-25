@@ -26,7 +26,26 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     try {
       localStorage.setItem(THEME_STORAGE_KEY, themeId);
-      document.documentElement.setAttribute('data-theme', themeId);
+      const theme = getTheme(themeId);
+      const root = document.documentElement;
+      root.setAttribute('data-theme', themeId);
+      root.style.setProperty('--color-primary', theme.colors.primary);
+      root.style.setProperty('--color-primary-hover', theme.colors.primaryHover);
+      root.style.setProperty('--color-primary-light', theme.colors.primaryLight);
+      root.style.setProperty('--color-primary-dark', theme.colors.primaryDark);
+      root.style.setProperty('--color-accent', theme.colors.accent);
+      root.style.setProperty('--color-bg', theme.colors.background);
+      root.style.setProperty('--color-surface', theme.colors.surface);
+      root.style.setProperty('--color-text', theme.colors.text);
+      root.style.setProperty('--color-text-secondary', theme.colors.textSecondary);
+      root.style.setProperty('--color-text-muted', theme.colors.textMuted);
+      root.style.setProperty('--color-border', theme.colors.border);
+
+      if (theme.isDark) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
     } catch {
       // Ignore
     }

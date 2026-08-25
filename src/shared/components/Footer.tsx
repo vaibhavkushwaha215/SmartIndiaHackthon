@@ -174,11 +174,11 @@ export const Footer: React.FC = () => {
           <div className="space-y-3 text-xs">
             <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>SERVICES</div>
             <ul className="space-y-2 text-slate-400">
-              <li className="hover:text-emerald-400 transition cursor-pointer">Electrician & Wireman</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Plumber & Pipe Repairs</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Domestic Help & Maid</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Carpenter & Assembly</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">AC & Appliance Repair</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Electrician & Wireman</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Plumber & Pipe Repairs</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Domestic Help & Maid</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Carpenter & Assembly</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">AC & Appliance Repair</li>
             </ul>
           </div>
 
@@ -186,10 +186,10 @@ export const Footer: React.FC = () => {
           <div className="space-y-3 text-xs">
             <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>SPECIALIZED CARE</div>
             <ul className="space-y-2 text-slate-400">
-              <li className="hover:text-emerald-400 transition cursor-pointer">Home Deep Cleaning</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Painter & Wall Finish</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Pest Control Services</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Solar Inverter Setup</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Home Deep Cleaning</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Painter & Wall Finish</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Pest Control Services</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Solar Inverter Setup</li>
             </ul>
           </div>
 
@@ -197,11 +197,11 @@ export const Footer: React.FC = () => {
           <div className="space-y-3 text-xs">
             <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>POPULAR LOCALITIES</div>
             <ul className="space-y-2 text-slate-400">
-              <li className="hover:text-emerald-400 transition cursor-pointer">Indiranagar (Bengaluru)</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Koramangala (Bengaluru)</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Lajpat Nagar (South Delhi)</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Dwarka (West Delhi)</li>
-              <li className="hover:text-emerald-400 transition cursor-pointer">Bandra West (Mumbai)</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Indiranagar (Bengaluru)</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Koramangala (Bengaluru)</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Lajpat Nagar (South Delhi)</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Dwarka (West Delhi)</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Bandra West (Mumbai)</li>
             </ul>
           </div>
 
