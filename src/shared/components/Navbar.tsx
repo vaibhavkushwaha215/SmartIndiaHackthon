@@ -102,24 +102,24 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
     <>
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         
-        {/* Top Announcement Ribbon */}
-        <div className="bg-[#0b3b2c] text-emerald-100 text-xs py-1.5 px-3 sm:px-4 border-b border-emerald-800">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-left">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1 sm:gap-2 font-medium">
-              <span>🛡️ 100% Verified Local Pros</span>
-              <span className="hidden sm:inline">•</span>
-              <span className="hidden sm:inline">Zero Advance • Pay After Service</span>
+        {/* Top Announcement Ribbon - Hidden on small displays / PWA mobile screens */}
+        <div className="hidden md:block bg-[#0b3b2c] text-emerald-100 text-xs py-1.5 px-4 border-b border-emerald-800">
+          <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-1 text-left">
+            <div className="flex items-center gap-2 font-medium">
+              <span>🛡️ 100% Background & Police Verified Local Professionals</span>
+              <span>•</span>
+              <span>Zero Advance Payment • Pay Cash / UPI After Service</span>
             </div>
-            <div className="flex items-center justify-center gap-3 font-semibold">
+            <div className="flex items-center gap-3 font-semibold">
               <span className="text-emerald-300">
-                Emergency: <strong>1800-SAHYOG</strong>
+                Emergency 24x7: <strong>1800-SAHYOG</strong>
               </span>
               <button
                 onClick={toggleLanguage}
                 className="flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-white transition cursor-pointer"
               >
                 <Globe className="w-3.5 h-3.5" />
-                <span>{isHindi ? 'EN' : 'HI'}</span>
+                <span>{isHindi ? 'English (EN)' : 'हिंदी (HI)'}</span>
               </button>
             </div>
           </div>
@@ -199,8 +199,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
             </nav>
 
             {/* Right Action Bar */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               
+              {/* Mobile Language Switcher */}
+              <button
+                onClick={toggleLanguage}
+                className="md:hidden flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs transition cursor-pointer"
+                title="Toggle Language"
+              >
+                <Globe className="w-3.5 h-3.5 text-emerald-700" />
+                <span>{isHindi ? 'EN' : 'HI'}</span>
+              </button>
+
               {/* Quick Role Switcher Pill */}
               {currentUser && (
                 <div className="hidden sm:block">
@@ -212,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
               {!currentUser ? (
                 <button
                   onClick={() => setIsLoginModalOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition cursor-pointer"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>{isHindi ? 'साइन इन करें' : 'Sign In'}</span>
