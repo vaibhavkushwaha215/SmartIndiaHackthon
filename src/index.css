@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #059669;
-  --color-primary-hover: #047857;
+  --color-primary: #047857;
+  --color-primary-hover: #064e3b;
   --color-primary-light: #ecfdf5;
-  --color-primary-dark: #064e3b;
-  --color-accent: #10b981;
+  --color-primary-dark: #022c22;
+  --color-accent: #059669;
   --color-bg: #f8fafc;
   --color-surface: #ffffff;
   --color-text: #0f172a;
   --color-text-secondary: #334155;
   --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
+  --color-border: #cbd5e1;
 
   /* Universal Fixed Semantic Tokens (Independent of Customer Brand Themes) */
   --color-danger: #e11d48;
@@ -32,38 +32,44 @@
 }
 
 [data-theme="ocean"] {
-  --color-primary: #0284c7;
-  --color-primary-hover: #0369a1;
+  --color-primary: #0369a1;
+  --color-primary-hover: #0c4a6e;
   --color-primary-light: #f0f9ff;
-  --color-primary-dark: #0c4a6e;
-  --color-accent: #06b6d4;
+  --color-primary-dark: #082f49;
+  --color-accent: #0284c7;
   --color-bg: #f0f9ff;
   --color-surface: #ffffff;
-  --color-text: #0f172a;
+  --color-text: #0c4a6e;
+  --color-text-secondary: #0369a1;
+  --color-text-muted: #64748b;
   --color-border: #bae6fd;
 }
 
 [data-theme="terracotta"] {
-  --color-primary: #ea580c;
-  --color-primary-hover: #c2410c;
+  --color-primary: #c2410c;
+  --color-primary-hover: #7c2d12;
   --color-primary-light: #fff7ed;
-  --color-primary-dark: #7c2d12;
-  --color-accent: #f59e0b;
+  --color-primary-dark: #431407;
+  --color-accent: #d97706;
   --color-bg: #fafaf9;
   --color-surface: #ffffff;
   --color-text: #1c1917;
+  --color-text-secondary: #44403c;
+  --color-text-muted: #78716c;
   --color-border: #fed7aa;
 }
 
 [data-theme="slate"] {
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
   --color-primary-light: #1e1b4b;
   --color-primary-dark: #090d16;
   --color-accent: #818cf8;
   --color-bg: #090d16;
   --color-surface: #0f172a;
   --color-text: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
   --color-border: #1e293b;
   color-scheme: dark;
 }

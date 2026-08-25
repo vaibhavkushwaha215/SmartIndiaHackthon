@@ -44,9 +44,27 @@ export const WorkerDashboard: React.FC<WorkerDashboardProps> = ({
   const loadData = async () => {
     try {
       const [workers, allBookings] = await Promise.all([db.getWorkers(), db.getBookings()]);
-      const current =
-        workers.find((w) => w.user_id === currentUser?.id || w.phone === currentUser?.phone) ||
-        workers[0]; // fallback for demo testing
+      
+      // Match logged-in worker by user ID or phone, or synthesize from currentUser for fresh signups
+      let current = workers.find((w) => w.user_id === currentUser?.id || w.phone === currentUser?.phone);
+      
+      if (!current && currentUser?.role === 'Worker') {
+        current = {
+          id: currentUser.id,
+          user_id: currentUser.id,
+          name: currentUser.name,
+          phone: currentUser.phone,
+          skill: 'Registered Cooperative Professional',
+          cooperative_id: 'Cooperative Federation Member',
+          hourly_rate: 299,
+          area: 'Base Locality',
+          verified: true,
+          isAvailable: true,
+          rating_avg: 5.0,
+          completed_jobs_count: 0,
+          created_at: new Date().toISOString(),
+        } as unknown as Worker;
+      }
 
       if (current) {
         setWorker(current);
@@ -59,7 +77,7 @@ export const WorkerDashboard: React.FC<WorkerDashboardProps> = ({
           b.worker?.user_id === currentUser?.id ||
           b.worker?.phone === currentUser?.phone
       );
-      setBookings(myJobs.length > 0 ? myJobs : allBookings.slice(0, 4));
+      setBookings(myJobs);
     } catch {
       // Fallback
     }

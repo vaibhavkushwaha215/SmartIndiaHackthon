@@ -39,7 +39,7 @@ export const WorkerJobs: React.FC = () => {
           b.worker?.user_id === currentUser?.id ||
           b.worker?.phone === currentUser?.phone
       );
-      setBookings(myJobs.length > 0 ? myJobs : all.slice(0, 5)); // fallback to sample bookings if fresh account
+      setBookings(myJobs);
     } catch {
       // Fallback
     }

@@ -406,6 +406,23 @@ export const db = {
       throw createAppError(ERROR_CODES.INVALID_SERVICE_DATE, 'Service booking date must be between today and the next 14 days');
     }
 
+    // 3. Collision / Conflict Check: Prevent double-booking same worker on same date and time slot (Error 409)
+    const existingBookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
+    const hasCollision = existingBookings.some(
+      (b) =>
+        b.worker_id === bookingData.worker_id &&
+        b.date === bookingData.date &&
+        b.time_slot === bookingData.time_slot &&
+        b.status !== 'cancelled'
+    );
+
+    if (hasCollision) {
+      throw createAppError(
+        ERROR_CODES.CONFLICT,
+        `Artisan already has a confirmed booking for ${bookingData.time_slot} on ${bookingData.date}. Please select another time slot or professional.`
+      );
+    }
+
     const newBooking: Booking = {
       id: `bk-${Date.now()}`,
       created_at: new Date().toISOString(),
