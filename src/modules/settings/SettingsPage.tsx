@@ -27,8 +27,11 @@ import {
   MoreHorizontal,
   ChevronDown,
   Pencil,
+  ShieldCheck,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
+import { SuperAdminDashboard } from '../superadmin';
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -41,14 +44,22 @@ const INDIAN_STATES = [
   'Jammu & Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry',
 ];
 
-export const SettingsPage: React.FC = () => {
+export type SettingsTab = 'language' | 'profile' | 'addresses' | 'support' | 'superadmin';
+
+interface SettingsPageProps {
+  initialTab?: SettingsTab;
+}
+
+export const SettingsPage: React.FC<SettingsPageProps> = ({ initialTab = 'language' }) => {
   const { t, i18n } = useTranslation();
-  const { currentUser, updateLanguage } = useAuth();
+  const { currentUser, isSuperAdmin, updateLanguage } = useAuth();
   const { showSuccess, showError } = useToast();
   const { themeId, allThemes, setTheme } = useTheme();
 
   const isHindi = i18n.language === 'hi';
-  const [activeTab, setActiveTab] = useState<'language' | 'profile' | 'addresses' | 'support'>('language');
+  const [activeTab, setActiveTab] = useState<SettingsTab>(
+    initialTab === 'superadmin' && isSuperAdmin ? 'superadmin' : (initialTab || 'language')
+  );
 
   // 1. User Profile State
   const [userName, setUserName] = useState(currentUser?.name || '');
@@ -367,6 +378,25 @@ export const SettingsPage: React.FC = () => {
             >
               <HelpCircle className="w-4 h-4 text-amber-500" />
               <span>Technical Issues & Support Ticket</span>
+            </button>
+          )}
+
+          {isSuperAdmin && (
+            <button
+              onClick={() => setActiveTab('superadmin')}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition text-left cursor-pointer ${
+                activeTab === 'superadmin'
+                  ? 'bg-purple-900 text-white border border-purple-800 shadow-sm'
+                  : 'text-purple-700 hover:bg-purple-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="w-4 h-4 text-purple-600" />
+                <span>{isHindi ? 'प्लेटफ़ॉर्म गवर्नेंस' : 'Platform Governance'}</span>
+              </div>
+              <span className="text-[10px] bg-purple-100 text-purple-900 px-2 py-0.5 rounded-full font-extrabold">
+                SuperAdmin
+              </span>
             </button>
           )}
         </div>
@@ -1027,6 +1057,13 @@ export const SettingsPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          )}
+
+          {/* TAB 5: SuperAdmin Governance (Strictly for SuperAdmin) */}
+          {activeTab === 'superadmin' && isSuperAdmin && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <SuperAdminDashboard />
+            </div>
           )}
 
         </div>

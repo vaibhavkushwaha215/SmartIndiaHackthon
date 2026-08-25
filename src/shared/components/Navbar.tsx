@@ -79,7 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
     // Feature flag check
     if (item.featureKey && !isFeatureEnabled(item.featureKey)) return false;
     // Role check
-    return currentRole === 'Admin' ? true : item.roles.includes(currentRole);
+    return (currentRole === 'Admin' || isSuperAdmin) ? true : item.roles.includes(currentRole);
   });
 
   return (
@@ -365,6 +365,23 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                 >
                                   <span>🛡️ Admin Portal</span>
                                   {currentRole === 'Admin' && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-primary)]" />}
+                                </button>
+
+                                {/* Option 4: SuperAdmin */}
+                                <button
+                                  onClick={async () => {
+                                    await quickSwitchUser('user-superadmin-1');
+                                    onTabChange('admin-dashboard');
+                                    setIsUserMenuOpen(false);
+                                    setIsSwitchHovered(false);
+                                    showSuccess('Switched to SuperAdmin (Admin Portal)');
+                                  }}
+                                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[var(--color-primary-light)] transition cursor-pointer ${
+                                    currentRole === 'SuperAdmin' ? 'bg-[var(--color-primary-light)] text-purple-900 font-bold' : 'text-[var(--color-text)]'
+                                  }`}
+                                >
+                                  <span>👑 SuperAdmin</span>
+                                  {currentRole === 'SuperAdmin' && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-primary)]" />}
                                 </button>
                               </div>
                             )}

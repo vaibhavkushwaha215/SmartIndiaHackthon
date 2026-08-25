@@ -22,8 +22,10 @@ import {
   Layers,
   ArrowRight,
   Scale,
+  ShieldCheck,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../auth';
 
 export type AdminSubTab = 'overview' | 'workers' | 'analytics';
 
@@ -31,14 +33,17 @@ interface AdminDashboardProps {
   initialSubTab?: AdminSubTab;
   onNavigateToForecast?: () => void;
   onNavigateToLogs?: () => void;
+  onNavigateToSettings?: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   initialSubTab = 'overview',
   onNavigateToForecast,
   onNavigateToLogs,
+  onNavigateToSettings,
 }) => {
   const { t } = useTranslation();
+  const { isSuperAdmin } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState<AdminSubTab>(initialSubTab);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -109,6 +114,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             >
               <FileText className="w-3.5 h-3.5 text-purple-300" />
               <span>Audit Logs</span>
+            </button>
+          )}
+
+          {isSuperAdmin && onNavigateToSettings && (
+            <button
+              onClick={onNavigateToSettings}
+              className="px-3.5 py-2 rounded-xl bg-purple-600/70 hover:bg-purple-600 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-purple-400/50 shadow-xs"
+              title="Open Platform Governance in Settings"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-200" />
+              <span>Platform Governance</span>
             </button>
           )}
 

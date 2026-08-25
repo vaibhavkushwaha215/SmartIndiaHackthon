@@ -33,7 +33,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
 
   const visibleItems = navItems.filter((item) => {
     if (item.featureKey && !isFeatureEnabled(item.featureKey)) return false;
-    return currentRole === 'Admin' ? true : item.roles.includes(currentRole);
+    return (currentRole === 'Admin' || isSuperAdmin) ? true : item.roles.includes(currentRole);
   });
 
   return (

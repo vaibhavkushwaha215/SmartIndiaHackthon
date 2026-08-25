@@ -16,7 +16,7 @@ import { LoginPage, RegisterPage, ApplyWorkerPage } from './modules/auth';
 import { DemandForecast } from './modules/demand-forecast';
 import { LogsViewer } from './modules/logging';
 import { SettingsPage } from './modules/settings';
-import { SuperAdminPortal, NotFound404, AdminUnauthorized } from './modules/superadmin';
+import { NotFound404, AdminUnauthorized } from './modules/superadmin';
 import { SahyogAssistant } from './modules/chatbot';
 
 function parseRouteFromLocation(): string {
@@ -79,29 +79,18 @@ const MainLayout: React.FC = () => {
     return () => window.removeEventListener('sahyog:settings_updated', handleSettingsUpdate);
   }, []);
 
-  // -------------------------------------------------------------
-  // DEDICATED STANDALONE SUPERADMIN PORTAL (Strictly for SuperAdmin)
-  // -------------------------------------------------------------
-  if (activeTab === 'superadmin' && isSuperAdmin) {
-    return (
-      <SuperAdminPortal
-        onExit={() => {
-          window.location.hash = '';
-          setActiveTab('booking');
-        }}
-      />
-    );
-  }
-
   const renderActiveModule = () => {
     switch (activeTab) {
-      // SuperAdmin 3-Tier Security Gate
+      // SuperAdmin 3-Tier Security Gate (Unifies with standard layout)
       case 'superadmin':
+        if (isSuperAdmin) {
+          return <SettingsPage initialTab="superadmin" />;
+        }
         if (currentRole === 'Admin') {
           return (
             <AdminUnauthorized
               onGoToAdmin={() => {
-                window.location.hash = '';
+                window.location.hash = '#admin/dashboard';
                 setActiveTab('admin-dashboard');
               }}
             />
@@ -132,12 +121,9 @@ const MainLayout: React.FC = () => {
               if (role === 'Worker') {
                 window.location.hash = '#worker/dashboard';
                 setActiveTab('worker-dashboard');
-              } else if (role === 'Admin') {
+              } else if (role === 'Admin' || role === 'SuperAdmin') {
                 window.location.hash = '#admin/dashboard';
                 setActiveTab('admin-dashboard');
-              } else if (role === 'SuperAdmin') {
-                window.location.hash = '#superadmin';
-                setActiveTab('superadmin');
               } else {
                 window.location.hash = '';
                 setActiveTab('booking');
@@ -236,6 +222,10 @@ const MainLayout: React.FC = () => {
             initialSubTab="overview"
             onNavigateToForecast={() => setActiveTab('demand-forecast')}
             onNavigateToLogs={() => setActiveTab('logs')}
+            onNavigateToSettings={() => {
+              window.location.hash = '#settings';
+              setActiveTab('settings');
+            }}
           />
         );
 
@@ -248,6 +238,10 @@ const MainLayout: React.FC = () => {
             initialSubTab="workers"
             onNavigateToForecast={() => setActiveTab('demand-forecast')}
             onNavigateToLogs={() => setActiveTab('logs')}
+            onNavigateToSettings={() => {
+              window.location.hash = '#settings';
+              setActiveTab('settings');
+            }}
           />
         );
 
@@ -260,6 +254,10 @@ const MainLayout: React.FC = () => {
             initialSubTab="analytics"
             onNavigateToForecast={() => setActiveTab('demand-forecast')}
             onNavigateToLogs={() => setActiveTab('logs')}
+            onNavigateToSettings={() => {
+              window.location.hash = '#settings';
+              setActiveTab('settings');
+            }}
           />
         );
 
