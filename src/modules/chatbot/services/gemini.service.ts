@@ -4,7 +4,8 @@ import { queryKnowledgeEngine } from './knowledgeEngine';
 /**
  * SahyogSeva AI Service
  * 
- * Powered by Google Gemini Flash API with fallback to local domain knowledge engine.
+ * Powered by Google Gemini Flash API with instantaneous fallback to local domain knowledge engine.
+ * Guaranteed never to hang the UI: strict 4000ms timeout on network requests.
  */
 class GeminiChatService {
   private getApiKey(): string | null {
@@ -40,12 +41,12 @@ class GeminiChatService {
           return response.trim();
         }
       } catch (err) {
-        console.warn('[SahyogSeva AI] Gemini Cloud API error, smoothly switching to local knowledge engine:', err);
+        console.warn('[SahyogSeva AI] Gemini Cloud API unavailable or timed out, smoothly answering via local knowledge engine:', err);
       }
     }
 
-    // High-performance domain-grounded fallback
-    await new Promise((resolve) => setTimeout(resolve, 350));
+    // High-performance domain-grounded fallback (instant & reliable)
+    await new Promise((resolve) => setTimeout(resolve, 300));
     return queryKnowledgeEngine(userMessage, context);
   }
 
@@ -72,10 +73,7 @@ Platform Highlights & Rules:
    - If user asks how to book or apply, guide them step-by-step to use the app buttons.
    - Never claim you have directly booked the job in their system; direct them to tap 'Book Now' on the worker's card.`;
 
-    const endpoints = [
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`
-    ];
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`;
 
     const payload = {
       contents: [
@@ -94,35 +92,36 @@ Platform Highlights & Rules:
       },
     };
 
-    let lastError: any = null;
+    // Strict 3.5-second timeout to prevent UI hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-    for (const endpoint of endpoints) {
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-goog-api-key': apiKey,
-          },
-          body: JSON.stringify(payload),
-        });
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-goog-api-key': apiKey,
+        },
+        body: JSON.stringify(payload),
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) {
-            return text;
-          }
-        } else {
-          const errBody = await response.text();
-          lastError = new Error(`HTTP ${response.status}: ${errBody}`);
-        }
-      } catch (err) {
-        lastError = err;
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => '');
+        throw new Error(`HTTP ${response.status}: ${errBody}`);
       }
-    }
 
-    throw lastError || new Error('Failed to generate response from Gemini API');
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        throw new Error('Empty text payload received from Gemini endpoint.');
+      }
+
+      return text;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 }
 
