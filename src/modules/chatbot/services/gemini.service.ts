@@ -4,7 +4,7 @@ import { queryKnowledgeEngine } from './knowledgeEngine';
 /**
  * SahyogSeva AI Service
  * 
- * Powered by Google Gemini Flash API with instantaneous fallback to local domain knowledge engine.
+ * Powered by Google Gemini Flash Live API (gemini-3.6-flash) with fallback to local domain knowledge engine.
  */
 class GeminiChatService {
   private getApiKey(): string | null {
@@ -54,7 +54,7 @@ class GeminiChatService {
         console.error('[SahyogSeva AI] Gemini Live API call failed, falling back to local knowledge engine:', err?.message || err);
       }
     } else {
-      console.info('[SahyogSeva AI] VITE_GEMINI_API_KEY is not set or is still a placeholder. Using local knowledge engine.');
+      console.info('[SahyogSeva AI] VITE_GEMINI_API_KEY is not configured or is a placeholder. Answering via local domain knowledge engine.');
     }
 
     // High-performance domain-grounded fallback (instant & reliable)
@@ -78,11 +78,11 @@ Platform Rules & Knowledge:
 6. Current User: ${context?.userName || 'Customer'} (${context?.currentRole || 'Customer'}), on page: ${context?.currentPage || 'Home'}.
 7. Guidelines:
    - Be friendly, polite, and concise. Use clear bullet points and bold formatting.
-   - Answer in English or Hindi (depending on user's query language).
+   - Answer in English or Hindi (matching user's query language).
    - If asked how to book, guide them step-by-step to tap the 'Book Service' button on the relevant worker card.
    - Never claim you have directly booked or altered their database record.`;
 
-    const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+    const models = ['gemini-3.6-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
     const payload = {
       contents: [
         {
@@ -96,7 +96,7 @@ Platform Rules & Knowledge:
       ],
       generationConfig: {
         temperature: 0.4,
-        maxOutputTokens: 600,
+        maxOutputTokens: 800,
       },
     };
 
@@ -105,7 +105,7 @@ Platform Rules & Knowledge:
     for (const model of models) {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout
 
       try {
         const response = await fetch(endpoint, {
@@ -123,7 +123,7 @@ Platform Rules & Knowledge:
           const errorBodyText = await response.text().catch(() => '<unable to read response body>');
           console.error(`[SahyogSeva AI] Gemini API [${model}] returned HTTP ${response.status}:`, errorBodyText);
           lastError = new Error(`HTTP ${response.status}: ${errorBodyText}`);
-          continue; // Try next model fallback
+          continue; // Fallback to next model
         }
 
         const data = await response.json();
@@ -136,8 +136,8 @@ Platform Rules & Knowledge:
       } catch (err: any) {
         clearTimeout(timeoutId);
         if (err.name === 'AbortError') {
-          console.error(`[SahyogSeva AI] Gemini API [${model}] request timed out after 12 seconds.`);
-          lastError = new Error(`Request timed out for model ${model}`);
+          console.error(`[SahyogSeva AI] Gemini API [${model}] request timed out after 30 seconds.`);
+          lastError = new Error(`Request timed out after 30 seconds for model ${model}`);
         } else {
           console.error(`[SahyogSeva AI] Network error calling Gemini API [${model}]:`, err);
           lastError = err;

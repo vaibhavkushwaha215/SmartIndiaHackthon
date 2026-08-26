@@ -231,16 +231,19 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
           );
         })}
 
-        {/* Typing animation bubble */}
+        {/* Thinking / Generation animation */}
         {isTyping && (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shrink-0 text-[10px] font-bold">
-              <Bot className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 animate-in fade-in duration-300">
+            <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shrink-0 text-[10px] font-bold shadow-xs">
+              <Bot className="w-3.5 h-3.5 animate-pulse" />
             </div>
-            <div className="p-3 bg-[var(--color-surface,white)] rounded-2xl rounded-bl-xs border border-[var(--color-border,#e2e8f0)] shadow-xs flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.2s]"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.4s]"></span>
+            <div className="px-3.5 py-2.5 bg-[var(--color-surface,white)] rounded-2xl rounded-bl-xs border border-[var(--color-border,#e2e8f0)] shadow-xs flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.2s]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.4s]"></span>
+              </div>
+              <span className="text-[10px] text-slate-500 font-medium">Sahyog AI is thinking...</span>
             </div>
           </div>
         )}
