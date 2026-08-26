@@ -318,7 +318,7 @@ const MainLayout: React.FC = () => {
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       <Footer />
       <PWAInstallBanner />
-      <SahyogAssistant currentPage={activeTab} />
+      {useFeature('chatbot') && <SahyogAssistant currentPage={activeTab} />}
     </div>
   );
 };
