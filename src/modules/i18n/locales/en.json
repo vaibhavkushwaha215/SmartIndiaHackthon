@@ -400,6 +400,7 @@
     "step3Title": "Choose Date & Time Slot",
     "step4Title": "Service Address & Pincode",
     "step5Title": "Additional Details & Gender Preference",
+    "step5DetailsOnlyTitle": "Additional Instructions & Notes",
     "genderPrefLabel": "Artisan Gender Preference",
     "noPref": "No preference",
     "malePref": "Male professional",

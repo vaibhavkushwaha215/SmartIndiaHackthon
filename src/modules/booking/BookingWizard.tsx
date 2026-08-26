@@ -6,6 +6,7 @@ import { useToast } from '../../shared/components/Toast';
 import { Modal } from '../../shared/components/Modal';
 import { db } from '../../shared/services/database';
 import { logger } from '../../shared/services/logger';
+import { useFeature } from '../../shared/config/features.config';
 import { ERROR_CODES } from '../../shared/constants/error-codes';
 import {
   Calendar,
@@ -50,6 +51,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
   const { t } = useI18n();
   const { currentUser } = useAuth();
   const { showError, showSuccess } = useToast();
+  const isGenderPrefEnabled = useFeature('genderPreference');
 
   const [currentStep, setCurrentStep] = useState<number>(1);
 
@@ -254,7 +256,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
         pincode: pincode.trim(),
         locality: locality.trim(),
         additionalDetails: additionalDetails.trim(),
-        genderPreference,
+        ...(isGenderPrefEnabled && genderPreference ? { genderPreference } : {}),
         priority: 'normal',
         amount: service.baseRate,
         isLateBooking: isLate,
@@ -579,35 +581,39 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
           <div className="space-y-4 animate-in fade-in">
             <div>
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                {t('wizard.step5Title', 'Additional Details & Gender Preference')}
+                {isGenderPrefEnabled
+                  ? t('wizard.step5Title', 'Additional Details & Gender Preference')
+                  : t('wizard.step5DetailsOnlyTitle', 'Additional Instructions & Notes')}
               </h3>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                {t('wizard.genderPrefLabel', 'Artisan Gender Preference')}
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { key: 'no_preference', label: t('wizard.noPref', 'No preference') },
-                  { key: 'male', label: t('wizard.malePref', 'Male professional') },
-                  { key: 'female', label: t('wizard.femalePref', 'Female professional') },
-                ].map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => setGenderPreference(opt.key as GenderPreference)}
-                    className={`p-3 rounded-xl border text-xs font-bold transition text-center cursor-pointer ${
-                      genderPreference === opt.key
-                        ? 'bg-emerald-50 border-emerald-600 text-emerald-900 font-extrabold shadow-2xs'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+            {isGenderPrefEnabled && (
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  {t('wizard.genderPrefLabel', 'Artisan Gender Preference')}
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: 'no_preference', label: t('wizard.noPref', 'No preference') },
+                    { key: 'male', label: t('wizard.malePref', 'Male professional') },
+                    { key: 'female', label: t('wizard.femalePref', 'Female professional') },
+                  ].map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setGenderPreference(opt.key as GenderPreference)}
+                      className={`p-3 rounded-xl border text-xs font-bold transition text-center cursor-pointer ${
+                        genderPreference === opt.key
+                          ? 'bg-emerald-50 border-emerald-600 text-emerald-900 font-extrabold shadow-2xs'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">

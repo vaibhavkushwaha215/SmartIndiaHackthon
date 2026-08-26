@@ -60,7 +60,8 @@ export type FeatureKey =
   | 'notifications'
   | 'multilingual'
   | 'emergencyBooking'
-  | 'workerReviewsVisibility';
+  | 'workerReviewsVisibility'
+  | 'genderPreference';
 
 export type FeatureCategory = 'core' | 'operations' | 'ai' | 'finance' | 'communication';
 
@@ -112,7 +113,7 @@ export interface SuperAdminAuditEntry {
   timestamp: string;
   actorId: string;
   actorName: string;
-  actionType: 'FEATURE_TOGGLE' | 'SETTING_CHANGE' | 'MAINTENANCE_TOGGLE' | 'INTEGRATION_UPDATE';
+  actionType: 'FEATURE_TOGGLE' | 'SETTING_CHANGE' | 'MAINTENANCE_TOGGLE' | 'INTEGRATION_UPDATE' | 'CHARTER_UPDATE';
   target: string;
   previousValue: string;
   newValue: string;
@@ -209,7 +210,7 @@ export interface ServiceRequest {
   pincode: string;
   locality?: string;
   additionalDetails?: string;
-  genderPreference: GenderPreference;
+  genderPreference?: GenderPreference;
   priority: RequestPriority;
   amount: number;
   paymentStatus: 'HELD_IN_ESCROW' | 'RELEASED' | 'REFUNDED';

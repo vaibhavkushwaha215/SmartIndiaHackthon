@@ -19,17 +19,8 @@ class GeminiChatService {
       ) {
         return envKey.trim();
       }
-      const storedKey = sessionStorage.getItem('sahyog_gemini_api_key') || localStorage.getItem('sahyog_gemini_api_key');
-      if (
-        storedKey &&
-        storedKey.trim().length > 10 &&
-        !storedKey.includes('paste-your-key') &&
-        !storedKey.includes('your-')
-      ) {
-        return storedKey.trim();
-      }
     } catch {
-      // In environments where storage/env is restricted
+      // In environments where env is restricted
     }
     return null;
   }

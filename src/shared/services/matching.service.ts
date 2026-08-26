@@ -1,4 +1,5 @@
 import { Worker, ServiceRequest, Booking } from '../types';
+import { isFeatureEnabled } from '../config/features.config';
 
 export interface RankedRequest {
   request: ServiceRequest;
@@ -41,10 +42,12 @@ export const matchingService = {
       }
     }
 
-    // 5. Gender preference filter
-    if (request.genderPreference && request.genderPreference !== 'no_preference') {
-      if (!worker.gender || worker.gender !== request.genderPreference) {
-        return false;
+    // 5. Gender preference filter (Active only when SuperAdmin enables genderPreference feature flag)
+    if (isFeatureEnabled('genderPreference')) {
+      if (request.genderPreference && request.genderPreference !== 'no_preference') {
+        if (!worker.gender || worker.gender !== request.genderPreference) {
+          return false;
+        }
       }
     }
 

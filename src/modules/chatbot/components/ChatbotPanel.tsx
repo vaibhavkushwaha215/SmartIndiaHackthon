@@ -9,9 +9,6 @@ import {
   Send,
   RotateCcw,
   User,
-  Key,
-  Check,
-  Sparkles,
 } from 'lucide-react';
 
 interface ChatbotPanelProps {
@@ -43,9 +40,6 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
 
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [showKeyModal, setShowKeyModal] = useState(false);
-  const [customKeyInput, setCustomKeyInput] = useState('');
-  const [keySavedMessage, setKeySavedMessage] = useState(false);
   const [isCloudConfigured, setIsCloudConfigured] = useState<boolean>(() => chatService.isCloudAiConfigured());
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -68,24 +62,6 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
   }, [messages]);
 
   if (!isOpen) return null;
-
-  const handleSaveApiKey = () => {
-    const clean = customKeyInput.trim();
-    if (clean && clean.length > 5 && !clean.includes('paste-your-key')) {
-      try {
-        sessionStorage.setItem('sahyog_gemini_api_key', clean);
-        localStorage.setItem('sahyog_gemini_api_key', clean);
-        setIsCloudConfigured(true);
-        setKeySavedMessage(true);
-        setTimeout(() => {
-          setKeySavedMessage(false);
-          setShowKeyModal(false);
-        }, 1200);
-      } catch (err) {
-        console.error('Failed to save API key:', err);
-      }
-    }
-  };
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputQuery).trim();
@@ -115,7 +91,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
       const errorMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        text: 'I encountered an issue connecting to the AI knowledge base. Please try asking again.',
+        text: 'The assistant is momentarily unable to process this request. Please try again shortly.',
         isError: true,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
@@ -190,26 +166,17 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
             <div className="flex items-center gap-1.5">
               <h3 className="font-black text-sm tracking-tight text-white">SahyogSeva Assistant</h3>
               <span
-                className={`w-2 h-2 rounded-full ${isCloudConfigured ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}
-                title={isCloudConfigured ? 'Live Gemini 3.6 Connected' : 'Local Domain AI'}
+                className={`w-2 h-2 rounded-full ${isCloudConfigured ? 'bg-emerald-400 animate-pulse' : 'bg-emerald-400'}`}
+                title={isCloudConfigured ? 'Live AI Connected' : 'Cooperative Knowledge Engine'}
               ></span>
             </div>
             <p className="text-[10px] text-white/80 font-medium flex items-center gap-1">
-              {isCloudConfigured ? 'Gemini 3.6 Flash Live' : 'Cooperative Community AI'}
+              Cooperative Community AI
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowKeyModal((v) => !v)}
-            className={`p-1.5 rounded-xl transition cursor-pointer ${
-              showKeyModal ? 'bg-white/30 text-white' : 'hover:bg-white/10 text-white/80 hover:text-white'
-            }`}
-            title="Configure Gemini API Key"
-          >
-            <Key className="w-4 h-4" />
-          </button>
           <button
             onClick={handleClearChat}
             className="p-1.5 rounded-xl hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer"
@@ -226,47 +193,6 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
           </button>
         </div>
       </div>
-
-      {/* API Key Modal / In-App Key Setter */}
-      {showKeyModal && (
-        <div className="p-3.5 bg-slate-900 text-white border-b border-slate-700 animate-in slide-in-from-top duration-200 text-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-[11px] text-emerald-400 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" /> Gemini API Key Setup
-            </span>
-            <button
-              onClick={() => setShowKeyModal(false)}
-              className="text-slate-400 hover:text-white"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          <p className="text-[10px] text-slate-300 leading-tight">
-            Paste your Gemini API key below or set it in <code className="text-emerald-300">.env.local</code>.
-          </p>
-          <div className="flex items-center gap-1.5">
-            <input
-              type="password"
-              value={customKeyInput}
-              onChange={(e) => setCustomKeyInput(e.target.value)}
-              placeholder="AIzaSy... or API Key"
-              className="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-600 text-[11px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-            />
-            <button
-              onClick={handleSaveApiKey}
-              disabled={!customKeyInput.trim()}
-              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] disabled:opacity-50 transition cursor-pointer flex items-center gap-1"
-            >
-              {keySavedMessage ? <Check className="w-3.5 h-3.5" /> : 'Save'}
-            </button>
-          </div>
-          {keySavedMessage && (
-            <p className="text-[10px] text-emerald-400 font-bold animate-in fade-in">
-              Key saved! Live Gemini 3.6 Flash connected.
-            </p>
-          )}
-        </div>
-      )}
 
       {/* 2. Message History Container */}
       <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-[var(--color-bg,#f8fafc)] text-xs">

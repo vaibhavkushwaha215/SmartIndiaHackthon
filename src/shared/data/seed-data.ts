@@ -653,6 +653,14 @@ export const SEED_FEATURE_DEFINITIONS: import('../types').FeatureDefinition[] = 
     category: 'operations',
     environmentRestriction: 'all',
   },
+  {
+    key: 'genderPreference',
+    name: 'Worker Gender Preference',
+    description: 'Allow customers to request a preferred worker gender where applicable.',
+    enabled: false,
+    category: 'operations',
+    environmentRestriction: 'all',
+  },
 ];
 
 // ==========================================

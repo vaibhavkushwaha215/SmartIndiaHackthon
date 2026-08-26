@@ -1,27 +1,20 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FeatureKey, FeatureDefinition, FeatureFlagState } from '../types';
 import { SEED_FEATURE_DEFINITIONS } from '../data/seed-data';
+import {
+  platformConfig,
+  PLATFORM_EVENTS,
+  SAFE_BOOT_FEATURE_FLAGS,
+} from '../services/platform-config.service';
 
 export type { FeatureKey, FeatureDefinition, FeatureFlagState };
 
 /**
  * SahyogSeva - Centralized Plug & Play Feature Flags Registry
  * 
- * Every major feature is isolated and can be enabled, disabled,
- * or removed cleanly without breaking unrelated system functionality.
+ * Powered by Authoritative Supabase platform_settings configuration.
+ * LocalStorage is NOT authoritative for SuperAdmin configuration.
  */
-
-const STORAGE_KEY = 'sahyog_feature_flags';
-const EVENT_NAME = 'sahyog:feature_flags_updated';
-
-// Safe fail-closed default feature state
-const DEFAULT_FEATURE_STATE: FeatureFlagState = SEED_FEATURE_DEFINITIONS.reduce(
-  (acc, item) => {
-    acc[item.key] = item.enabled;
-    return acc;
-  },
-  {} as FeatureFlagState
-);
 
 /**
  * Legacy key alias mapping to maintain 100% backward compatibility
@@ -46,34 +39,26 @@ const LEGACY_KEY_MAP: Record<string, FeatureKey> = {
 };
 
 /**
- * Read current active feature flags from memory/localStorage
+ * Read current active feature flags from authoritative in-memory Supabase store
  */
 export function getActiveFeatureFlags(): FeatureFlagState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_FEATURE_STATE };
-    const parsed = JSON.parse(raw);
-    return { ...DEFAULT_FEATURE_STATE, ...parsed };
-  } catch {
-    // Fail-safe default
-    return { ...DEFAULT_FEATURE_STATE };
-  }
+  return platformConfig.getFeatureFlags();
 }
 
 /**
- * Save updated feature flag state and dispatch update event
+ * Save updated feature flag state directly to Supabase platform_settings
  */
-export function saveActiveFeatureFlags(state: Partial<FeatureFlagState>): FeatureFlagState {
-  try {
-    const current = getActiveFeatureFlags();
-    const updated = { ...current, ...state };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: updated }));
-    return updated;
-  } catch (e) {
-    console.error('Failed to save feature flags:', e);
-    return getActiveFeatureFlags();
+export async function saveActiveFeatureFlags(
+  state: Partial<FeatureFlagState>,
+  actor?: { id: string; name: string },
+  reason?: string
+): Promise<FeatureFlagState> {
+  for (const [k, enabled] of Object.entries(state)) {
+    if (enabled !== undefined) {
+      await platformConfig.updateFeatureFlag(k as FeatureKey, Boolean(enabled), actor, reason);
+    }
   }
+  return platformConfig.getFeatureFlags();
 }
 
 /**
@@ -81,19 +66,12 @@ export function saveActiveFeatureFlags(state: Partial<FeatureFlagState>): Featur
  */
 export function isFeatureEnabled(featureKey: FeatureKey | string): boolean {
   const canonicalKey = (LEGACY_KEY_MAP[featureKey] || featureKey) as FeatureKey;
-  const flags = getActiveFeatureFlags();
-  
-  if (canonicalKey in flags) {
-    return Boolean(flags[canonicalKey]);
-  }
-  
-  // Safe default: return true only if defined in default seed as true
-  return Boolean(DEFAULT_FEATURE_STATE[canonicalKey]);
+  return platformConfig.isFeatureEnabled(canonicalKey);
 }
 
 /**
  * React Hook for reactive feature flag evaluation.
- * Instantly re-renders when SuperAdmin toggles any flag in the control plane.
+ * Instantly re-renders when SuperAdmin toggles any flag in Supabase.
  */
 export function useFeature(featureKey: FeatureKey | string): boolean {
   const [enabled, setEnabled] = useState<boolean>(() => isFeatureEnabled(featureKey));
@@ -103,12 +81,12 @@ export function useFeature(featureKey: FeatureKey | string): boolean {
       setEnabled(isFeatureEnabled(featureKey));
     };
 
-    window.addEventListener(EVENT_NAME, handleUpdate);
-    window.addEventListener('storage', handleUpdate);
+    window.addEventListener(PLATFORM_EVENTS.FEATURE_FLAGS_UPDATED, handleUpdate);
+    window.addEventListener(PLATFORM_EVENTS.CONFIG_STATUS_CHANGED, handleUpdate);
 
     return () => {
-      window.removeEventListener(EVENT_NAME, handleUpdate);
-      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener(PLATFORM_EVENTS.FEATURE_FLAGS_UPDATED, handleUpdate);
+      window.removeEventListener(PLATFORM_EVENTS.CONFIG_STATUS_CHANGED, handleUpdate);
     };
   }, [featureKey]);
 
@@ -116,22 +94,26 @@ export function useFeature(featureKey: FeatureKey | string): boolean {
 }
 
 /**
- * Hook to get all feature definitions with current live state
+ * Hook to get all feature definitions with current live state from Supabase
  */
 export function useFeatureDefinitions(): {
   features: FeatureDefinition[];
-  toggleFeature: (key: FeatureKey, enabled: boolean) => void;
-  resetToDefaults: () => void;
+  toggleFeature: (key: FeatureKey, enabled: boolean, actor?: { id: string; name: string }) => Promise<void>;
+  resetToDefaults: (actor?: { id: string; name: string }) => Promise<void>;
 } {
-  const [flags, setFlags] = useState<FeatureFlagState>(getActiveFeatureFlags);
+  const [flags, setFlags] = useState<FeatureFlagState>(() => platformConfig.getFeatureFlags());
 
   useEffect(() => {
     const handleUpdate = (e: any) => {
-      setFlags(e.detail || getActiveFeatureFlags());
+      setFlags(e.detail || platformConfig.getFeatureFlags());
     };
 
-    window.addEventListener(EVENT_NAME, handleUpdate);
-    return () => window.removeEventListener(EVENT_NAME, handleUpdate);
+    window.addEventListener(PLATFORM_EVENTS.FEATURE_FLAGS_UPDATED, handleUpdate);
+    window.addEventListener(PLATFORM_EVENTS.CONFIG_STATUS_CHANGED, handleUpdate);
+    return () => {
+      window.removeEventListener(PLATFORM_EVENTS.FEATURE_FLAGS_UPDATED, handleUpdate);
+      window.removeEventListener(PLATFORM_EVENTS.CONFIG_STATUS_CHANGED, handleUpdate);
+    };
   }, []);
 
   const features: FeatureDefinition[] = useMemo(() => {
@@ -141,14 +123,15 @@ export function useFeatureDefinitions(): {
     }));
   }, [flags]);
 
-  const toggleFeature = useCallback((key: FeatureKey, enabled: boolean) => {
-    saveActiveFeatureFlags({ [key]: enabled });
-  }, []);
+  const toggleFeature = useCallback(
+    async (key: FeatureKey, enabled: boolean, actor?: { id: string; name: string }) => {
+      await platformConfig.updateFeatureFlag(key, enabled, actor);
+    },
+    []
+  );
 
-  const resetToDefaults = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: DEFAULT_FEATURE_STATE }));
-    setFlags(DEFAULT_FEATURE_STATE);
+  const resetToDefaults = useCallback(async (actor?: { id: string; name: string }) => {
+    await platformConfig.resetToCharterDefaults(actor);
   }, []);
 
   return { features, toggleFeature, resetToDefaults };

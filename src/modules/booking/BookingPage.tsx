@@ -6,6 +6,7 @@ import { logger } from '../../shared/services/logger';
 import { useAuth } from '../auth';
 import { useToast } from '../../shared/components/Toast';
 import { useI18n } from '../i18n';
+import { useFeature } from '../../shared/config/features.config';
 import { ERROR_CODES } from '../../shared/constants/error-codes';
 import { AddressFormModal } from '../../shared/components/AddressFormModal';
 import {
@@ -265,7 +266,7 @@ export const BookingPage: React.FC<BookingPageProps> = ({
         pincode: chosenAddr.pincode,
         locality: chosenAddr.area || chosenAddr.city,
         additionalDetails: additionalDetails.trim(),
-        genderPreference,
+        ...(isGenderPrefEnabled && genderPreference ? { genderPreference } : {}),
         priority: 'normal',
         amount: currentTotalAmount,
         isLateBooking: isLate,
@@ -288,7 +289,10 @@ export const BookingPage: React.FC<BookingPageProps> = ({
     }
   };
 
-  // Gender Preference Restrictions (Opposite gender disabled)
+  // Feature Flag: Gender Preference (Controlled by SuperAdmin)
+  const isGenderPrefEnabled = useFeature('genderPreference');
+
+  // Gender Preference Restrictions (Opposite gender disabled based on authenticated user profile)
   const userGender = currentUser?.gender?.toLowerCase();
   const isFemaleCustomer = userGender === 'female';
   const isMaleCustomer = userGender === 'male';
@@ -298,7 +302,7 @@ export const BookingPage: React.FC<BookingPageProps> = ({
     { num: 2, label: t('booking.steps.problem', 'Problems') },
     { num: 3, label: t('booking.steps.schedule', 'Schedule') },
     { num: 4, label: t('booking.steps.address', 'Address') },
-    { num: 5, label: t('booking.steps.preferences', 'Preferences') },
+    { num: 5, label: isGenderPrefEnabled ? t('booking.steps.preferences', 'Preferences') : t('booking.steps.details', 'Details') },
     { num: 6, label: t('booking.steps.escrow', 'Escrow') },
   ];
 
@@ -678,96 +682,106 @@ export const BookingPage: React.FC<BookingPageProps> = ({
           </div>
         )}
 
-        {/* STEP 5: PREFERENCES & DETAILS WITH GENDER RESTRICTION */}
+        {/* STEP 5: PREFERENCES & DETAILS (Gender preference controlled by SuperAdmin feature flag) */}
         {currentStep === 5 && (
           <div className="space-y-6 animate-in fade-in">
             <div>
-              <h2 className="text-lg font-black text-slate-900">{t('wizard.step5Title', 'Worker Preferences & Additional Notes')}</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Customize worker safety preferences and provide arrival instructions.</p>
+              <h2 className="text-lg font-black text-slate-900">
+                {isGenderPrefEnabled
+                  ? t('wizard.step5Title', 'Worker Preferences & Additional Notes')
+                  : t('wizard.step5DetailsOnlyTitle', 'Additional Instructions & Notes')}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {isGenderPrefEnabled
+                  ? 'Customize worker safety preferences and provide arrival instructions.'
+                  : 'Provide instructions, landmarks, or details for the visiting artisan.'}
+              </p>
             </div>
 
-            {/* Gender Preference Radio Group */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase mb-2">
-                {t('wizard.genderPrefLabel', 'Worker Gender Preference')}
-              </label>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Gender Preference Radio Group (Visible ONLY when genderPreference flag is enabled by SuperAdmin) */}
+            {isGenderPrefEnabled && (
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-2">
+                  {t('wizard.genderPrefLabel', 'Worker Gender Preference')}
+                </label>
                 
-                {/* 1. No Preference */}
-                <button
-                  type="button"
-                  onClick={() => setGenderPreference('no_preference')}
-                  className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
-                    genderPreference === 'no_preference'
-                      ? 'bg-emerald-50 border-emerald-600 text-emerald-950 shadow-xs'
-                      : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-                  }`}
-                >
-                  <div className="font-bold text-xs">{t('wizard.noPref', 'No Preference')}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">Dispatches nearest verified professional</div>
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  
+                  {/* 1. No Preference */}
+                  <button
+                    type="button"
+                    onClick={() => setGenderPreference('no_preference')}
+                    className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
+                      genderPreference === 'no_preference'
+                        ? 'bg-emerald-50 border-emerald-600 text-emerald-950 shadow-xs'
+                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                    }`}
+                  >
+                    <div className="font-bold text-xs">{t('wizard.noPref', 'No Preference')}</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Dispatches nearest verified professional</div>
+                  </button>
 
-                {/* 2. Female Professional */}
-                {(() => {
-                  const isFemaleDisabled = isMaleCustomer;
-                  return (
-                    <button
-                      type="button"
-                      disabled={isFemaleDisabled}
-                      onClick={() => !isFemaleDisabled && setGenderPreference('female')}
-                      className={`p-3.5 rounded-2xl border text-left transition ${
-                        isFemaleDisabled
-                          ? 'bg-slate-100 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed'
-                          : genderPreference === 'female'
-                          ? 'bg-emerald-50 border-emerald-600 text-emerald-950 shadow-xs cursor-pointer'
-                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 cursor-pointer'
-                      }`}
-                    >
-                      <div className="font-bold text-xs flex items-center justify-between">
-                        <span>{t('wizard.femalePref', 'Female Professional')}</span>
-                        {isFemaleDisabled && <span className="text-[10px] font-bold text-rose-500">Unavailable</span>}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        {isFemaleDisabled
-                          ? 'Based on your account preference, this option is unavailable.'
-                          : 'Dispatches verified female artisan'}
-                      </div>
-                    </button>
-                  );
-                })()}
+                  {/* 2. Female Professional */}
+                  {(() => {
+                    const isFemaleDisabled = isMaleCustomer;
+                    return (
+                      <button
+                        type="button"
+                        disabled={isFemaleDisabled}
+                        onClick={() => !isFemaleDisabled && setGenderPreference('female')}
+                        className={`p-3.5 rounded-2xl border text-left transition ${
+                          isFemaleDisabled
+                            ? 'bg-slate-100 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed'
+                            : genderPreference === 'female'
+                            ? 'bg-emerald-50 border-emerald-600 text-emerald-950 shadow-xs cursor-pointer'
+                            : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 cursor-pointer'
+                        }`}
+                      >
+                        <div className="font-bold text-xs flex items-center justify-between">
+                          <span>{t('wizard.femalePref', 'Female Professional')}</span>
+                          {isFemaleDisabled && <span className="text-[10px] font-bold text-rose-500">Unavailable</span>}
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">
+                          {isFemaleDisabled
+                            ? 'Based on your account preference, this option is unavailable.'
+                            : 'Dispatches verified female artisan'}
+                        </div>
+                      </button>
+                    );
+                  })()}
 
-                {/* 3. Male Professional */}
-                {(() => {
-                  const isMaleDisabled = isFemaleCustomer;
-                  return (
-                    <button
-                      type="button"
-                      disabled={isMaleDisabled}
-                      onClick={() => !isMaleDisabled && setGenderPreference('male')}
-                      className={`p-3.5 rounded-2xl border text-left transition ${
-                        isMaleDisabled
-                          ? 'bg-slate-100 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed'
-                          : genderPreference === 'male'
-                          ? 'bg-emerald-50 border-emerald-600 text-emerald-950 shadow-xs cursor-pointer'
-                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 cursor-pointer'
-                      }`}
-                    >
-                      <div className="font-bold text-xs flex items-center justify-between">
-                        <span>{t('wizard.malePref', 'Male Professional')}</span>
-                        {isMaleDisabled && <span className="text-[10px] font-bold text-rose-500">Unavailable</span>}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        {isMaleDisabled
-                          ? 'Based on your account preference, this option is unavailable.'
-                          : 'Dispatches verified male artisan'}
-                      </div>
-                    </button>
-                  );
-                })()}
+                  {/* 3. Male Professional */}
+                  {(() => {
+                    const isMaleDisabled = isFemaleCustomer;
+                    return (
+                      <button
+                        type="button"
+                        disabled={isMaleDisabled}
+                        onClick={() => !isMaleDisabled && setGenderPreference('male')}
+                        className={`p-3.5 rounded-2xl border text-left transition ${
+                          isMaleDisabled
+                            ? 'bg-slate-100 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed'
+                            : genderPreference === 'male'
+                            ? 'bg-emerald-50 border-emerald-600 text-emerald-950 shadow-xs cursor-pointer'
+                            : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 cursor-pointer'
+                        }`}
+                      >
+                        <div className="font-bold text-xs flex items-center justify-between">
+                          <span>{t('wizard.malePref', 'Male Professional')}</span>
+                          {isMaleDisabled && <span className="text-[10px] font-bold text-rose-500">Unavailable</span>}
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">
+                          {isMaleDisabled
+                            ? 'Based on your account preference, this option is unavailable.'
+                            : 'Dispatches verified male artisan'}
+                        </div>
+                      </button>
+                    );
+                  })()}
 
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Additional Notes */}
             <div>

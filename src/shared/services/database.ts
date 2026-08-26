@@ -8,7 +8,9 @@ import {
   BookingStatus,
   AreaDemandForecast,
   SavedAddress,
+  GenderPreference,
   FeatureKey,
+  FeatureFlagState,
   FeatureDefinition,
   SystemSettings,
   IntegrationStatusInfo,
@@ -20,6 +22,7 @@ import {
 } from '../types';
 import { ERROR_CODES, createAppError } from '../constants/error-codes';
 import { getServiceById, calculateServiceRequestPrice } from '../config/services.config';
+import { platformConfig } from './platform-config.service';
 import {
   SEED_USERS,
   SEED_WORKERS,
@@ -100,12 +103,6 @@ function initializeLocalStorage() {
   }
   if (!localStorage.getItem(STORAGE_KEYS.ADDRESSES)) {
     localStorage.setItem(STORAGE_KEYS.ADDRESSES, JSON.stringify(SEED_ADDRESSES));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SYSTEM_SETTINGS)) {
-    localStorage.setItem(STORAGE_KEYS.SYSTEM_SETTINGS, JSON.stringify(SEED_SYSTEM_SETTINGS));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SUPERADMIN_AUDIT)) {
-    localStorage.setItem(STORAGE_KEYS.SUPERADMIN_AUDIT, JSON.stringify(SEED_SUPERADMIN_AUDIT));
   }
 }
 
@@ -525,21 +522,26 @@ export const db = {
       ? calculateServiceRequestPrice(serviceObj, data.selectedProblems || [])
       : (data.amount || 299);
 
-    // Gender Preference Safety Validation
-    let sanitizedGenderPreference = data.genderPreference || 'no_preference';
-    const authUser = this.getAuthenticatedUser();
-    if (authUser && authUser.gender) {
-      if (authUser.gender === 'female' && sanitizedGenderPreference === 'male') {
-        sanitizedGenderPreference = 'female';
-      } else if (authUser.gender === 'male' && sanitizedGenderPreference === 'female') {
-        sanitizedGenderPreference = 'male';
+    // Gender Preference Safety Validation (Active only when SuperAdmin enables genderPreference feature flag)
+    let sanitizedGenderPreference: GenderPreference | undefined = undefined;
+    if (platformConfig.isFeatureEnabled('genderPreference') && data.genderPreference) {
+      sanitizedGenderPreference = data.genderPreference;
+      const authUser = this.getAuthenticatedUser();
+      if (authUser && authUser.gender) {
+        if (authUser.gender === 'female' && sanitizedGenderPreference === 'male') {
+          sanitizedGenderPreference = 'female';
+        } else if (authUser.gender === 'male' && sanitizedGenderPreference === 'female') {
+          sanitizedGenderPreference = 'male';
+        }
       }
     }
 
+    const { genderPreference: _rawGenderPref, ...cleanData } = data;
+
     const newRequest: ServiceRequest = {
-      ...data,
+      ...cleanData,
       amount: finalAmount,
-      genderPreference: sanitizedGenderPreference,
+      ...(sanitizedGenderPreference ? { genderPreference: sanitizedGenderPreference } : {}),
       id: `req-${Date.now()}`,
       requestStatus: 'OPEN',
       paymentStatus: 'HELD_IN_ESCROW',
@@ -1191,14 +1193,9 @@ export const db = {
     return SEED_FORECASTS;
   },
 
-  // ----------------- SUPERADMIN & SYSTEM CONFIGURATION -----------------
-  async getFeatureFlags(): Promise<Record<FeatureKey, boolean>> {
-    const raw = getLocalItem<Record<string, boolean>>(STORAGE_KEYS.FEATURE_FLAGS, {});
-    const defaults = SEED_FEATURE_DEFINITIONS.reduce(
-      (acc, f) => ({ ...acc, [f.key]: f.enabled }),
-      {} as Record<FeatureKey, boolean>
-    );
-    return { ...defaults, ...raw };
+  // ----------------- SUPERADMIN & FEATURE FLAGS -----------------
+  async getFeatureFlags(): Promise<FeatureFlagState> {
+    return platformConfig.getFeatureFlags();
   },
 
   async updateFeatureFlag(
@@ -1206,31 +1203,13 @@ export const db = {
     enabled: boolean,
     actor?: { id: string; name: string },
     reason?: string
-  ): Promise<Record<FeatureKey, boolean>> {
-    const current = await this.getFeatureFlags();
-    const prevVal = current[key];
-    const updated = { ...current, [key]: enabled };
-    setLocalItem(STORAGE_KEYS.FEATURE_FLAGS, updated);
-    window.dispatchEvent(new CustomEvent('sahyog:feature_flags_updated', { detail: updated }));
-
-    // Log audit entry without exposing secrets
-    if (actor) {
-      await this.logSuperAdminAction({
-        actorId: actor.id,
-        actorName: actor.name,
-        actionType: 'FEATURE_TOGGLE',
-        target: key,
-        previousValue: String(prevVal),
-        newValue: String(enabled),
-        reason: reason || `Toggled feature flag "${key}" to ${enabled ? 'ENABLED' : 'DISABLED'}`,
-      });
-    }
-
-    return updated;
+  ): Promise<FeatureFlagState> {
+    await platformConfig.updateFeatureFlag(key, enabled, actor, reason);
+    return platformConfig.getFeatureFlags();
   },
 
   async getSystemSettings(): Promise<SystemSettings> {
-    return getLocalItem<SystemSettings>(STORAGE_KEYS.SYSTEM_SETTINGS, SEED_SYSTEM_SETTINGS);
+    return platformConfig.getSystemSettings();
   },
 
   async updateSystemSettings(
@@ -1238,27 +1217,7 @@ export const db = {
     actor?: { id: string; name: string },
     reason?: string
   ): Promise<SystemSettings> {
-    const current = await this.getSystemSettings();
-    const updated = { ...current, ...newSettings };
-    setLocalItem(STORAGE_KEYS.SYSTEM_SETTINGS, updated);
-
-    // Audit log setting changes
-    if (actor) {
-      for (const [key, val] of Object.entries(newSettings)) {
-        await this.logSuperAdminAction({
-          actorId: actor.id,
-          actorName: actor.name,
-          actionType: key === 'maintenanceMode' ? 'MAINTENANCE_TOGGLE' : 'SETTING_CHANGE',
-          target: key,
-          previousValue: String((current as any)[key]),
-          newValue: String(val),
-          reason: reason || `Updated system configuration parameter "${key}"`,
-        });
-      }
-    }
-
-    window.dispatchEvent(new CustomEvent('sahyog:settings_updated', { detail: updated }));
-    return updated;
+    return platformConfig.updateSystemSettings(newSettings, actor, reason);
   },
 
   async getIntegrations(): Promise<IntegrationStatusInfo[]> {
@@ -1266,19 +1225,11 @@ export const db = {
   },
 
   async getSuperAdminAuditLogs(): Promise<SuperAdminAuditEntry[]> {
-    return getLocalItem<SuperAdminAuditEntry[]>(STORAGE_KEYS.SUPERADMIN_AUDIT, SEED_SUPERADMIN_AUDIT);
+    return platformConfig.getAuditLogs();
   },
 
   async logSuperAdminAction(entry: Omit<SuperAdminAuditEntry, 'id' | 'timestamp'>): Promise<SuperAdminAuditEntry> {
-    const logs = await this.getSuperAdminAuditLogs();
-    const newEntry: SuperAdminAuditEntry = {
-      id: `audit-sa-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      timestamp: new Date().toISOString(),
-      ...entry,
-    };
-    const updated = [newEntry, ...logs];
-    setLocalItem(STORAGE_KEYS.SUPERADMIN_AUDIT, updated);
-    return newEntry;
+    return platformConfig.logAuditAction(entry);
   },
 
   // ----------------- WORKER APPLICATIONS -----------------
