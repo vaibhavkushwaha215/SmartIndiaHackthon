@@ -14,7 +14,7 @@ export const ChatbotFloatingButton: React.FC<ChatbotFloatingButtonProps> = ({
   if (isOpen) return null;
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-4 md:left-6 z-40 group">
+    <div className="fixed bottom-20 md:bottom-6 left-4 md:left-6 z-50 group">
       <button
         onClick={onClick}
         aria-label="Open Sahyog Assistant AI Chatbot"
