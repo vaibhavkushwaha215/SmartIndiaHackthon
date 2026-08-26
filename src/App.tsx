@@ -46,6 +46,7 @@ const MainLayout: React.FC = () => {
   const { currentUser, isSuperAdmin, currentRole } = useAuth();
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [maintenanceMsg, setMaintenanceMsg] = useState('');
+  const isChatbotEnabled = useFeature('chatbot');
 
   // Live URL hash/path listener for address bar changes
   useEffect(() => {
@@ -318,7 +319,7 @@ const MainLayout: React.FC = () => {
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       <Footer />
       <PWAInstallBanner />
-      {useFeature('chatbot') && <SahyogAssistant currentPage={activeTab} />}
+      {isChatbotEnabled && <SahyogAssistant currentPage={activeTab} />}
     </div>
   );
 };
