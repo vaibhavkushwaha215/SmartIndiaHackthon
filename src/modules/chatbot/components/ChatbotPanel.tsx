@@ -40,6 +40,8 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
 
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isCloudConfigured, setIsCloudConfigured] = useState<boolean>(() => chatService.isCloudAiConfigured());
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToBottom = () => {
@@ -49,6 +51,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
+      setIsCloudConfigured(chatService.isCloudAiConfigured());
     }
   }, [messages, isOpen, isTyping]);
 
@@ -88,13 +91,14 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
       const errorMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        text: 'I encountered an issue connecting to the AI knowledge base. Please try asking again.',
+        text: 'The assistant is momentarily unable to process this request. Please try again shortly.',
         isError: true,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsTyping(false);
+      setIsCloudConfigured(chatService.isCloudAiConfigured());
     }
   };
 
@@ -113,14 +117,19 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
   const renderFormattedText = (text: string) => {
     const lines = text.split('\n');
     return lines.map((line, lIdx) => {
-      const parts = line.split(/(\*\*.*?\*\*|\*.*?\*)/g);
-      const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-');
-      const cleanLine = isBullet ? line.trim().substring(1).trim() : line;
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return <div key={lIdx} className="h-1.5" />;
+      }
+
+      const isBullet = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('* ');
+      const cleanLine = isBullet ? trimmed.replace(/^[•\-\*]\s*/, '') : trimmed;
+      const parts = cleanLine.split(/(\*\*.*?\*\*|\*.*?\*)/g);
 
       return (
-        <div key={lIdx} className={isBullet ? 'flex items-start gap-1.5 ml-1 mt-0.5' : line ? 'mt-1' : 'h-1.5'}>
-          {isBullet && <span className="text-[var(--color-primary)] font-black">•</span>}
-          <span>
+        <div key={lIdx} className={isBullet ? 'flex items-start gap-1.5 ml-1 mt-1' : 'mt-1'}>
+          {isBullet && <span className="text-[var(--color-primary)] font-bold shrink-0 leading-tight">•</span>}
+          <span className="flex-1">
             {parts.map((part, pIdx) => {
               if (part.startsWith('**') && part.endsWith('**')) {
                 return (
@@ -145,7 +154,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
   };
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 right-2 sm:right-6 z-50 w-[calc(100vw-1rem)] sm:w-96 max-w-sm max-h-[80vh] sm:max-h-[580px] h-[550px] bg-[var(--color-surface,white)] rounded-3xl shadow-2xl border border-[var(--color-border,#e2e8f0)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
+    <div className="fixed bottom-20 md:bottom-6 left-2 sm:left-6 z-50 w-[calc(100vw-1rem)] sm:w-96 max-w-sm max-h-[80vh] sm:max-h-[580px] h-[550px] bg-[var(--color-surface,white)] rounded-3xl shadow-2xl border border-[var(--color-border,#e2e8f0)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
       
       {/* 1. Header */}
       <div className={`bg-gradient-to-r ${currentTheme.colors.headerGradient || 'from-slate-950 via-slate-900 to-emerald-950'} p-4 text-white flex items-center justify-between shadow-md`}>
@@ -156,9 +165,14 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
           <div>
             <div className="flex items-center gap-1.5">
               <h3 className="font-black text-sm tracking-tight text-white">SahyogSeva Assistant</h3>
-              <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse" title="AI Ready"></span>
+              <span
+                className={`w-2 h-2 rounded-full ${isCloudConfigured ? 'bg-emerald-400 animate-pulse' : 'bg-emerald-400'}`}
+                title={isCloudConfigured ? 'Live AI Connected' : 'Cooperative Knowledge Engine'}
+              ></span>
             </div>
-            <p className="text-[11px] text-white/80 font-medium">Cooperative Community AI</p>
+            <p className="text-[10px] text-white/80 font-medium flex items-center gap-1">
+              Cooperative Community AI
+            </p>
           </div>
         </div>
 
@@ -226,16 +240,19 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
           );
         })}
 
-        {/* Typing animation bubble */}
+        {/* Thinking / Generation animation */}
         {isTyping && (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shrink-0 text-[10px] font-bold">
-              <Bot className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 animate-in fade-in duration-300">
+            <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shrink-0 text-[10px] font-bold shadow-xs">
+              <Bot className="w-3.5 h-3.5 animate-pulse" />
             </div>
-            <div className="p-3 bg-[var(--color-surface,white)] rounded-2xl rounded-bl-xs border border-[var(--color-border,#e2e8f0)] shadow-xs flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.2s]"></span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.4s]"></span>
+            <div className="px-3.5 py-2.5 bg-[var(--color-surface,white)] rounded-2xl rounded-bl-xs border border-[var(--color-border,#e2e8f0)] shadow-xs flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.2s]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-bounce [animation-delay:0.4s]"></span>
+              </div>
+              <span className="text-[10px] text-slate-500 font-medium">Sahyog AI is thinking...</span>
             </div>
           </div>
         )}

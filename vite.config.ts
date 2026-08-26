@@ -9,14 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: [
-        'assets/logos/logo-square.webp',
-        'assets/logos/icon-192.png',
-        'assets/logos/icon-512.png',
-        'assets/logos/icon-192.webp',
-        'assets/logos/icon-512.webp',
-        'robots.txt'
-      ],
+      includeAssets: ['robots.txt'],
       manifest: {
         name: 'SahyogSeva - Cooperative Doorstep Services',
         short_name: 'SahyogSeva',

@@ -8,15 +8,21 @@ import {
   BookingStatus,
   AreaDemandForecast,
   SavedAddress,
+  GenderPreference,
   FeatureKey,
+  FeatureFlagState,
   FeatureDefinition,
   SystemSettings,
   IntegrationStatusInfo,
   SuperAdminAuditEntry,
   WorkerApplication,
   WorkerEarningTransaction,
+  ServiceRequest,
+  ServiceRequestStatus,
 } from '../types';
 import { ERROR_CODES, createAppError } from '../constants/error-codes';
+import { getServiceById, calculateServiceRequestPrice } from '../config/services.config';
+import { platformConfig } from './platform-config.service';
 import {
   SEED_USERS,
   SEED_WORKERS,
@@ -31,12 +37,14 @@ import {
   SEED_SUPERADMIN_AUDIT,
   SEED_WORKER_APPLICATIONS,
   SEED_WORKER_EARNINGS,
+  SEED_SERVICE_REQUESTS,
 } from '../data/seed-data';
 
 const STORAGE_KEYS = {
   USERS: 'sahyog_users',
   WORKERS: 'sahyog_workers',
   BOOKINGS: 'sahyog_bookings',
+  SERVICE_REQUESTS: 'sahyog_service_requests',
   REVIEWS: 'sahyog_reviews',
   LOGS: 'sahyog_logs',
   ADDRESSES: 'sahyog_addresses',
@@ -84,6 +92,9 @@ function initializeLocalStorage() {
   if (!localStorage.getItem(STORAGE_KEYS.BOOKINGS)) {
     localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(SEED_BOOKINGS));
   }
+  if (!localStorage.getItem(STORAGE_KEYS.SERVICE_REQUESTS)) {
+    localStorage.setItem(STORAGE_KEYS.SERVICE_REQUESTS, JSON.stringify(SEED_SERVICE_REQUESTS));
+  }
   if (!localStorage.getItem(STORAGE_KEYS.REVIEWS)) {
     localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(SEED_REVIEWS));
   }
@@ -92,12 +103,6 @@ function initializeLocalStorage() {
   }
   if (!localStorage.getItem(STORAGE_KEYS.ADDRESSES)) {
     localStorage.setItem(STORAGE_KEYS.ADDRESSES, JSON.stringify(SEED_ADDRESSES));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SYSTEM_SETTINGS)) {
-    localStorage.setItem(STORAGE_KEYS.SYSTEM_SETTINGS, JSON.stringify(SEED_SYSTEM_SETTINGS));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SUPERADMIN_AUDIT)) {
-    localStorage.setItem(STORAGE_KEYS.SUPERADMIN_AUDIT, JSON.stringify(SEED_SUPERADMIN_AUDIT));
   }
 }
 
@@ -445,6 +450,437 @@ export const db = {
     return newBooking;
   },
 
+  // ----------------- SERVICE REQUESTS (SERVICE-FIRST DISPATCH) -----------------
+  async getServiceRequests(filter?: { customerId?: string; workerId?: string; status?: string }): Promise<ServiceRequest[]> {
+    // Run deadline check to auto-expire past deadline unassigned requests
+    this.checkAndExpireDeadlines();
+
+    const requests = getLocalItem<ServiceRequest[]>(STORAGE_KEYS.SERVICE_REQUESTS, SEED_SERVICE_REQUESTS);
+    const workers = await this.getWorkers();
+    const users = await this.getUsers();
+
+    const enriched = requests.map((r) => ({
+      ...r,
+      customer: users.find((u) => u.id === r.customerId),
+      worker: r.assignedWorkerId ? workers.find((w) => w.id === r.assignedWorkerId || w.user_id === r.assignedWorkerId) : undefined,
+    }));
+
+    if (filter?.customerId) {
+      return enriched.filter((r) => r.customerId === filter.customerId);
+    }
+    if (filter?.workerId) {
+      return enriched.filter((r) => r.assignedWorkerId === filter.workerId);
+    }
+    if (filter?.status) {
+      return enriched.filter((r) => r.requestStatus === filter.status);
+    }
+
+    return enriched;
+  },
+
+  async getServiceRequestById(id: string): Promise<ServiceRequest> {
+    const requests = await this.getServiceRequests();
+    const req = requests.find((r) => r.id === id);
+    if (!req) throw createAppError(ERROR_CODES.NOT_FOUND, `Service request #${id} not found`);
+    return req;
+  },
+
+  async createServiceRequest(
+    data: Omit<ServiceRequest, 'id' | 'createdAt' | 'updatedAt' | 'requestStatus' | 'paymentStatus' | 'assignmentDeadline'> & {
+      isLateBooking?: boolean;
+      assignmentDeadline?: string;
+    }
+  ): Promise<ServiceRequest> {
+    if (!data.customerId || !data.serviceId || !data.date || !data.address || !data.pincode) {
+      throw createAppError(ERROR_CODES.BAD_REQUEST, 'Missing required booking fields (service, date, address, pincode)');
+    }
+
+    const now = new Date();
+    const createdAt = now.toISOString();
+
+    // Calculate appointment start timestamp
+    const [startHourStr, startPeriod] = (data.slotStart || '09:00 AM').split(' ');
+    const [hStr, mStr] = (startHourStr || '09:00').split(':');
+    let h = parseInt(hStr || '9', 10);
+    const m = parseInt(mStr || '0', 10);
+    if (startPeriod === 'PM' && h < 12) h += 12;
+    if (startPeriod === 'AM' && h === 12) h = 0;
+
+    const appointmentDate = new Date(data.date);
+    appointmentDate.setHours(h, m, 0, 0);
+
+    const diffMinutes = Math.floor((appointmentDate.getTime() - now.getTime()) / (1000 * 60));
+    const isLate = Boolean(data.isLateBooking || diffMinutes < 60);
+
+    // Normal deadline = 1 hour before appointment; Late booking deadline = 30 minutes before appointment
+    const deadlineMins = isLate ? 30 : 60;
+    const deadlineDate = new Date(appointmentDate.getTime() - deadlineMins * 60 * 1000);
+
+    // Price Validation via calculateServiceRequestPrice single source of truth
+    const serviceObj = getServiceById(data.serviceId);
+    const finalAmount = serviceObj
+      ? calculateServiceRequestPrice(serviceObj, data.selectedProblems || [])
+      : (data.amount || 299);
+
+    // Gender Preference Safety Validation (Active only when SuperAdmin enables genderPreference feature flag)
+    let sanitizedGenderPreference: GenderPreference | undefined = undefined;
+    if (platformConfig.isFeatureEnabled('genderPreference') && data.genderPreference) {
+      sanitizedGenderPreference = data.genderPreference;
+      const authUser = this.getAuthenticatedUser();
+      if (authUser && authUser.gender) {
+        if (authUser.gender === 'female' && sanitizedGenderPreference === 'male') {
+          sanitizedGenderPreference = 'female';
+        } else if (authUser.gender === 'male' && sanitizedGenderPreference === 'female') {
+          sanitizedGenderPreference = 'male';
+        }
+      }
+    }
+
+    const { genderPreference: _rawGenderPref, ...cleanData } = data;
+
+    const newRequest: ServiceRequest = {
+      ...cleanData,
+      amount: finalAmount,
+      ...(sanitizedGenderPreference ? { genderPreference: sanitizedGenderPreference } : {}),
+      id: `req-${Date.now()}`,
+      requestStatus: 'OPEN',
+      paymentStatus: 'HELD_IN_ESCROW',
+      isLateBooking: isLate,
+      lateBookingConfirmedAt: isLate ? createdAt : undefined,
+      assignmentDeadline: deadlineDate.toISOString(),
+      createdAt,
+      updatedAt: createdAt,
+    };
+
+    const requests = getLocalItem<ServiceRequest[]>(STORAGE_KEYS.SERVICE_REQUESTS, SEED_SERVICE_REQUESTS);
+    requests.unshift(newRequest);
+    setLocalItem(STORAGE_KEYS.SERVICE_REQUESTS, requests);
+
+    // Also register corresponding legacy Booking entry for backward compatibility
+    const newBooking: Booking = {
+      id: `bk-${Date.now()}`,
+      customer_id: data.customerId,
+      worker_id: '',
+      date: data.date,
+      time_slot: data.timeSlotDisplay || '09:00 AM - 11:00 AM',
+      address: data.address,
+      status: 'pending',
+      amount: data.amount,
+      grossAmount: data.amount,
+      platformFee: 0,
+      workerEarnings: data.amount,
+      created_at: createdAt,
+      problem_description: (data.selectedProblems || []).join(', ') + (data.otherProblemDetails ? ` (${data.otherProblemDetails})` : ''),
+      service_request_id: newRequest.id,
+    };
+
+    const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
+    bookings.unshift(newBooking);
+    setLocalItem(STORAGE_KEYS.BOOKINGS, bookings);
+
+    // Emit event for reactive components
+    window.dispatchEvent(new CustomEvent('sahyog:request_created', { detail: newRequest }));
+
+    return newRequest;
+  },
+
+  /**
+   * ATOMIC ASSIGNMENT GUARD:
+   * First worker to accept wins the request. If already assigned, throws Conflict error.
+   */
+  async acceptServiceRequest(requestId: string, workerId: string): Promise<ServiceRequest> {
+    const requests = getLocalItem<ServiceRequest[]>(STORAGE_KEYS.SERVICE_REQUESTS, SEED_SERVICE_REQUESTS);
+    const index = requests.findIndex((r) => r.id === requestId);
+
+    if (index === -1) {
+      throw createAppError(ERROR_CODES.NOT_FOUND, `Request #${requestId} not found`);
+    }
+
+    const currentReq = requests[index];
+
+    // Race condition guard: check if already claimed
+    if (currentReq.assignedWorkerId && currentReq.assignedWorkerId !== workerId) {
+      throw createAppError(
+        ERROR_CODES.CONFLICT,
+        'This service request was just accepted by another cooperative professional.'
+      );
+    }
+
+    if (['COMPLETED', 'CANCELLED', 'EXPIRED', 'REFUNDED'].includes(currentReq.requestStatus)) {
+      throw createAppError(
+        ERROR_CODES.CONFLICT,
+        `Cannot accept request in status ${currentReq.requestStatus}.`
+      );
+    }
+
+    const now = new Date().toISOString();
+    const updated: ServiceRequest = {
+      ...currentReq,
+      assignedWorkerId: workerId,
+      assignedAt: now,
+      requestStatus: 'ASSIGNED',
+      updatedAt: now,
+    };
+
+    requests[index] = updated;
+    setLocalItem(STORAGE_KEYS.SERVICE_REQUESTS, requests);
+
+    // Sync with legacy Bookings
+    const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
+    const bIdx = bookings.findIndex((b) => b.service_request_id === requestId);
+    if (bIdx >= 0) {
+      bookings[bIdx] = {
+        ...bookings[bIdx],
+        worker_id: workerId,
+        status: 'accepted',
+      };
+      setLocalItem(STORAGE_KEYS.BOOKINGS, bookings);
+    }
+
+    // Emit reactive event
+    window.dispatchEvent(new CustomEvent('sahyog:request_assigned', { detail: updated }));
+
+    return updated;
+  },
+
+  async ignoreServiceRequest(requestId: string, workerId: string): Promise<ServiceRequest> {
+    const requests = getLocalItem<ServiceRequest[]>(STORAGE_KEYS.SERVICE_REQUESTS, SEED_SERVICE_REQUESTS);
+    const index = requests.findIndex((r) => r.id === requestId);
+    if (index === -1) throw createAppError(ERROR_CODES.NOT_FOUND, 'Request not found');
+
+    const req = requests[index];
+    const ignored = new Set(req.ignoredByWorkerIds || []);
+    ignored.add(workerId);
+
+    const updated: ServiceRequest = {
+      ...req,
+      ignoredByWorkerIds: Array.from(ignored),
+      updatedAt: new Date().toISOString(),
+    };
+
+    requests[index] = updated;
+    setLocalItem(STORAGE_KEYS.SERVICE_REQUESTS, requests);
+    window.dispatchEvent(new CustomEvent('sahyog:request_updated', { detail: updated }));
+    return updated;
+  },
+
+  async rejectServiceRequest(requestId: string, workerId: string): Promise<ServiceRequest> {
+    const requests = getLocalItem<ServiceRequest[]>(STORAGE_KEYS.SERVICE_REQUESTS, SEED_SERVICE_REQUESTS);
+    const index = requests.findIndex((r) => r.id === requestId);
+    if (index === -1) throw createAppError(ERROR_CODES.NOT_FOUND, 'Request not found');
+
+    const req = requests[index];
+    const rejected = new Set(req.rejectedByWorkerIds || []);
+    rejected.add(workerId);
+
+    const updated: ServiceRequest = {
+      ...req,
+      rejectedByWorkerIds: Array.from(rejected),
+      updatedAt: new Date().toISOString(),
+    };
+
+    requests[index] = updated;
+    setLocalItem(STORAGE_KEYS.SERVICE_REQUESTS, requests);
+    window.dispatchEvent(new CustomEvent('sahyog:request_updated', { detail: updated }));
+    return updated;
+  },
+
+  /**
+   * WORKER CANCELLATION RULES:
+   * > 3 hours before slot: No penalty
+   * <= 3 hours before slot: Penalty applied (₹100)
+   * < 30 mins before slot: Exception applies (no 3-hr penalty)
+   * Re-broadcasts request back to eligible worker pool if within deadline.
+   */
+  async cancelServiceRequestByWorker(requestId: string, workerId: string, reason: string = 'Worker cancelled'): Promise<ServiceRequest> {
+    const requests = getLocalItem<ServiceRequest[]>(STORAGE_KEYS.SERVICE_REQUESTS, SEED_SERVICE_REQUESTS);
+    const index = requests.findIndex((r) => r.id === requestId);
+    if (index === -1) throw createAppError(ERROR_CODES.NOT_FOUND, 'Request not found');
+
+    const req = requests[index];
+    const now = new Date();
+
+    // Parse appointment start
+    const [startHourStr, startPeriod] = (req.slotStart || '09:00 AM').split(' ');
+    const [hStr, mStr] = (startHourStr || '09:00').split(':');
+    let h = parseInt(hStr || '9', 10);
+    const m = parseInt(mStr || '0', 10);
+    if (startPeriod === 'PM' && h < 12) h += 12;
+    if (startPeriod === 'AM' && h === 12) h = 0;
+    const appointmentDate = new Date(req.date);
+    appointmentDate.setHours(h, m, 0, 0);
+
+    const diffHours = (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    let penalty = 0;
+    if (diffHours <= 3 && diffHours >= 0.5) {
+      // Within 3 hours but not within emergency 30 mins exception
+      penalty = 100; // ₹100 cooperative cancellation fee
+    }
+
+    const isPastDeadline = now.getTime() > new Date(req.assignmentDeadline).getTime();
+
+    const updated: ServiceRequest = {
+      ...req,
+      assignedWorkerId: undefined,
+      assignedAt: undefined,
+      requestStatus: isPastDeadline ? 'EXPIRED' : 'OPEN',
+      paymentStatus: isPastDeadline ? 'REFUNDED' : req.paymentStatus,
+      cancelledBy: 'worker',
+      cancellationReason: reason,
+      penaltyApplied: penalty,
+      updatedAt: now.toISOString(),
+    };
+
+    requests[index] = updated;
+    setLocalItem(STORAGE_KEYS.SERVICE_REQUESTS, requests);
+
+    // Sync legacy booking
+    const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
+    const bIdx = bookings.findIndex((b) => b.service_request_id === requestId);
+    if (bIdx >= 0) {
+      bookings[bIdx] = {
+        ...bookings[bIdx],
+        worker_id: '',
+        status: isPastDeadline ? 'cancelled' : 'pending',
+      };
+      setLocalItem(STORAGE_KEYS.BOOKINGS, bookings);
+    }
+
+    window.dispatchEvent(new CustomEvent('sahyog:request_cancelled', { detail: updated }));
+    return updated;
+  },
+
+  async cancelServiceRequestByCustomer(requestId: string, customerId: string, reason: string = 'Customer cancelled'): Promise<ServiceRequest> {
+    const requests = getLocalItem<ServiceRequest[]>(STORAGE_KEYS.SERVICE_REQUESTS, SEED_SERVICE_REQUESTS);
+    const index = requests.findIndex((r) => r.id === requestId);
+    if (index === -1) throw createAppError(ERROR_CODES.NOT_FOUND, 'Request not found');
+
+    const req = requests[index];
+    const now = new Date().toISOString();
+
+    const updated: ServiceRequest = {
+      ...req,
+      requestStatus: 'CANCELLED',
+      paymentStatus: 'REFUNDED',
+      cancelledBy: 'customer',
+      cancellationReason: reason,
+      cancelledAt: now,
+      updatedAt: now,
+    };
+
+    requests[index] = updated;
+    setLocalItem(STORAGE_KEYS.SERVICE_REQUESTS, requests);
+
+    // Sync legacy booking
+    const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
+    const bIdx = bookings.findIndex((b) => b.service_request_id === requestId);
+    if (bIdx >= 0) {
+      bookings[bIdx] = {
+        ...bookings[bIdx],
+        status: 'cancelled',
+      };
+      setLocalItem(STORAGE_KEYS.BOOKINGS, bookings);
+    }
+
+    window.dispatchEvent(new CustomEvent('sahyog:request_cancelled', { detail: updated }));
+    return updated;
+  },
+
+  async updateServiceRequestStatus(requestId: string, newStatus: ServiceRequestStatus): Promise<ServiceRequest> {
+    const requests = getLocalItem<ServiceRequest[]>(STORAGE_KEYS.SERVICE_REQUESTS, SEED_SERVICE_REQUESTS);
+    const index = requests.findIndex((r) => r.id === requestId);
+    if (index === -1) throw createAppError(ERROR_CODES.NOT_FOUND, 'Request not found');
+
+    const req = requests[index];
+    const now = new Date().toISOString();
+
+    const updated: ServiceRequest = {
+      ...req,
+      requestStatus: newStatus,
+      paymentStatus: newStatus === 'COMPLETED' ? 'RELEASED' : newStatus === 'CANCELLED' || newStatus === 'EXPIRED' ? 'REFUNDED' : req.paymentStatus,
+      updatedAt: now,
+    };
+
+    requests[index] = updated;
+    setLocalItem(STORAGE_KEYS.SERVICE_REQUESTS, requests);
+
+    // Sync legacy booking status
+    const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
+    const bIdx = bookings.findIndex((b) => b.service_request_id === requestId);
+    if (bIdx >= 0) {
+      let legacyStatus: BookingStatus = 'pending';
+      if (newStatus === 'ASSIGNED') legacyStatus = 'accepted';
+      else if (newStatus === 'IN_PROGRESS' || newStatus === 'EN_ROUTE' || newStatus === 'ARRIVED') legacyStatus = 'in_progress';
+      else if (newStatus === 'COMPLETED') legacyStatus = 'completed';
+      else if (newStatus === 'CANCELLED' || newStatus === 'EXPIRED') legacyStatus = 'cancelled';
+
+      bookings[bIdx] = {
+        ...bookings[bIdx],
+        status: legacyStatus,
+      };
+      setLocalItem(STORAGE_KEYS.BOOKINGS, bookings);
+    }
+
+    window.dispatchEvent(new CustomEvent('sahyog:request_updated', { detail: updated }));
+    return updated;
+  },
+
+  /**
+   * Evaluates all unassigned requests against their assignment deadline.
+   * Auto-cancels and refunds any request exceeding the deadline.
+   */
+  checkAndExpireDeadlines(): ServiceRequest[] {
+    const requests = getLocalItem<ServiceRequest[]>(STORAGE_KEYS.SERVICE_REQUESTS, SEED_SERVICE_REQUESTS);
+    const now = Date.now();
+    let hasChanges = false;
+
+    const updatedList = requests.map((req) => {
+      if ((req.requestStatus === 'OPEN' || req.requestStatus === 'MATCHING') && !req.assignedWorkerId) {
+        const deadlineTime = new Date(req.assignmentDeadline).getTime();
+        if (now > deadlineTime) {
+          hasChanges = true;
+          return {
+            ...req,
+            requestStatus: 'EXPIRED' as ServiceRequestStatus,
+            paymentStatus: 'REFUNDED' as const,
+            cancellationReason: 'No cooperative artisan was assigned before the appointment deadline.',
+            cancelledBy: 'system' as const,
+            cancelledAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+        }
+      }
+      return req;
+    });
+
+    if (hasChanges) {
+      setLocalItem(STORAGE_KEYS.SERVICE_REQUESTS, updatedList);
+
+      // Sync legacy bookings
+      const bookings = getLocalItem<Booking[]>(STORAGE_KEYS.BOOKINGS, SEED_BOOKINGS);
+      let bChanged = false;
+      const syncedBookings = bookings.map((b) => {
+        if (b.service_request_id) {
+          const matchingReq = updatedList.find((r) => r.id === b.service_request_id);
+          if (matchingReq && matchingReq.requestStatus === 'EXPIRED' && b.status !== 'cancelled') {
+            bChanged = true;
+            return { ...b, status: 'cancelled' as const };
+          }
+        }
+        return b;
+      });
+
+      if (bChanged) {
+        setLocalItem(STORAGE_KEYS.BOOKINGS, syncedBookings);
+      }
+
+      window.dispatchEvent(new CustomEvent('sahyog:request_cancelled'));
+    }
+
+    return updatedList;
+  },
+
   /**
    * Helper to retrieve currently authenticated session user from localStorage
    */
@@ -757,14 +1193,9 @@ export const db = {
     return SEED_FORECASTS;
   },
 
-  // ----------------- SUPERADMIN & SYSTEM CONFIGURATION -----------------
-  async getFeatureFlags(): Promise<Record<FeatureKey, boolean>> {
-    const raw = getLocalItem<Record<string, boolean>>(STORAGE_KEYS.FEATURE_FLAGS, {});
-    const defaults = SEED_FEATURE_DEFINITIONS.reduce(
-      (acc, f) => ({ ...acc, [f.key]: f.enabled }),
-      {} as Record<FeatureKey, boolean>
-    );
-    return { ...defaults, ...raw };
+  // ----------------- SUPERADMIN & FEATURE FLAGS -----------------
+  async getFeatureFlags(): Promise<FeatureFlagState> {
+    return platformConfig.getFeatureFlags();
   },
 
   async updateFeatureFlag(
@@ -772,31 +1203,13 @@ export const db = {
     enabled: boolean,
     actor?: { id: string; name: string },
     reason?: string
-  ): Promise<Record<FeatureKey, boolean>> {
-    const current = await this.getFeatureFlags();
-    const prevVal = current[key];
-    const updated = { ...current, [key]: enabled };
-    setLocalItem(STORAGE_KEYS.FEATURE_FLAGS, updated);
-    window.dispatchEvent(new CustomEvent('sahyog:feature_flags_updated', { detail: updated }));
-
-    // Log audit entry without exposing secrets
-    if (actor) {
-      await this.logSuperAdminAction({
-        actorId: actor.id,
-        actorName: actor.name,
-        actionType: 'FEATURE_TOGGLE',
-        target: key,
-        previousValue: String(prevVal),
-        newValue: String(enabled),
-        reason: reason || `Toggled feature flag "${key}" to ${enabled ? 'ENABLED' : 'DISABLED'}`,
-      });
-    }
-
-    return updated;
+  ): Promise<FeatureFlagState> {
+    await platformConfig.updateFeatureFlag(key, enabled, actor, reason);
+    return platformConfig.getFeatureFlags();
   },
 
   async getSystemSettings(): Promise<SystemSettings> {
-    return getLocalItem<SystemSettings>(STORAGE_KEYS.SYSTEM_SETTINGS, SEED_SYSTEM_SETTINGS);
+    return platformConfig.getSystemSettings();
   },
 
   async updateSystemSettings(
@@ -804,27 +1217,7 @@ export const db = {
     actor?: { id: string; name: string },
     reason?: string
   ): Promise<SystemSettings> {
-    const current = await this.getSystemSettings();
-    const updated = { ...current, ...newSettings };
-    setLocalItem(STORAGE_KEYS.SYSTEM_SETTINGS, updated);
-
-    // Audit log setting changes
-    if (actor) {
-      for (const [key, val] of Object.entries(newSettings)) {
-        await this.logSuperAdminAction({
-          actorId: actor.id,
-          actorName: actor.name,
-          actionType: key === 'maintenanceMode' ? 'MAINTENANCE_TOGGLE' : 'SETTING_CHANGE',
-          target: key,
-          previousValue: String((current as any)[key]),
-          newValue: String(val),
-          reason: reason || `Updated system configuration parameter "${key}"`,
-        });
-      }
-    }
-
-    window.dispatchEvent(new CustomEvent('sahyog:settings_updated', { detail: updated }));
-    return updated;
+    return platformConfig.updateSystemSettings(newSettings, actor, reason);
   },
 
   async getIntegrations(): Promise<IntegrationStatusInfo[]> {
@@ -832,19 +1225,11 @@ export const db = {
   },
 
   async getSuperAdminAuditLogs(): Promise<SuperAdminAuditEntry[]> {
-    return getLocalItem<SuperAdminAuditEntry[]>(STORAGE_KEYS.SUPERADMIN_AUDIT, SEED_SUPERADMIN_AUDIT);
+    return platformConfig.getAuditLogs();
   },
 
   async logSuperAdminAction(entry: Omit<SuperAdminAuditEntry, 'id' | 'timestamp'>): Promise<SuperAdminAuditEntry> {
-    const logs = await this.getSuperAdminAuditLogs();
-    const newEntry: SuperAdminAuditEntry = {
-      id: `audit-sa-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      timestamp: new Date().toISOString(),
-      ...entry,
-    };
-    const updated = [newEntry, ...logs];
-    setLocalItem(STORAGE_KEYS.SUPERADMIN_AUDIT, updated);
-    return newEntry;
+    return platformConfig.logAuditAction(entry);
   },
 
   // ----------------- WORKER APPLICATIONS -----------------

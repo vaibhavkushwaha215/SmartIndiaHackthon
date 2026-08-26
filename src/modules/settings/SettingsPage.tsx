@@ -30,7 +30,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
+import { LanguageSelector, useI18n } from '../i18n';
 import { SuperAdminDashboard } from '../superadmin';
 
 const INDIAN_STATES = [
@@ -408,41 +408,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ initialTab = 'langua
           {activeTab === 'language' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Language & Regional Preferences</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Select your primary language for navigation and booking receipts.</p>
+                <h3 className="text-lg font-bold text-slate-900">{t('settings.languageTab', 'Language & Regional Preferences')}</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{t('settings.selectLanguagePrompt', 'Select your primary language for navigation and booking receipts.')}</p>
               </div>
 
               {isFeatureEnabled('LANGUAGE_SWITCHER') && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <button
-                    onClick={() => updateLanguage('en')}
-                    className={`p-4 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
-                      !isHindi
-                        ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-text)] shadow-xs ring-2 ring-[var(--color-primary)]/20'
-                        : 'border-[var(--color-border)] hover:bg-[var(--color-bg)] text-[var(--color-text)]'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-bold text-sm text-[var(--color-text)]">English (EN)</div>
-                      <div className="text-xs text-[var(--color-text-muted)]">Standard English Interface</div>
-                    </div>
-                    {!isHindi && <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)]" />}
-                  </button>
-
-                  <button
-                    onClick={() => updateLanguage('hi')}
-                    className={`p-4 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
-                      isHindi
-                        ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-text)] shadow-xs ring-2 ring-[var(--color-primary)]/20'
-                        : 'border-[var(--color-border)] hover:bg-[var(--color-bg)] text-[var(--color-text)]'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-bold text-sm text-[var(--color-text)]">हिंदी (HI)</div>
-                      <div className="text-xs text-[var(--color-text-muted)]">सहयोग सेवा हिंदी इंटरफ़ेस</div>
-                    </div>
-                    {isHindi && <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)]" />}
-                  </button>
+                <div className="space-y-2">
+                  <LanguageSelector variant="chips" />
                 </div>
               )}
 

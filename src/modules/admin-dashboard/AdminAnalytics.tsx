@@ -140,7 +140,7 @@ export const AdminAnalytics: React.FC = () => {
 
                 <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-linear-to-r from-emerald-500 to-teal-600 transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all duration-500"
                     style={{ width: `${widthPct}%` }}
                   />
                 </div>

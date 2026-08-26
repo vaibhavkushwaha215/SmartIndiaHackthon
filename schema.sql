@@ -76,12 +76,29 @@ CREATE TABLE IF NOT EXISTS public.logs (
     details TEXT
 );
 
--- 6. Create System Configuration Table (Generic for Feature Flags & Settings)
-CREATE TABLE IF NOT EXISTS public.system_config (
-    key TEXT PRIMARY KEY,
+-- 6. Create Platform Configuration Table (Authoritative SuperAdmin Settings & Feature Flags)
+CREATE TABLE IF NOT EXISTS public.platform_settings (
+    id TEXT PRIMARY KEY,
+    key TEXT UNIQUE NOT NULL,
     value JSONB NOT NULL,
-    updated_by TEXT,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    value_type TEXT NOT NULL CHECK (value_type IN ('boolean', 'number', 'string', 'json')),
+    category TEXT NOT NULL CHECK (category IN ('feature_flag', 'system_setting', 'integration', 'maintenance')),
+    description TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_by TEXT
+);
+
+-- 7. Create SuperAdmin Audit Logs Table (Immutable Governance Trail)
+CREATE TABLE IF NOT EXISTS public.superadmin_audit_logs (
+    id TEXT PRIMARY KEY,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    actor_id TEXT NOT NULL,
+    actor_name TEXT NOT NULL,
+    action_type TEXT NOT NULL CHECK (action_type IN ('FEATURE_TOGGLE', 'SETTING_CHANGE', 'MAINTENANCE_TOGGLE', 'INTEGRATION_UPDATE', 'CHARTER_UPDATE')),
+    target TEXT NOT NULL,
+    previous_value TEXT,
+    new_value TEXT,
+    reason TEXT
 );
 
 -- Enable Row Level Security (RLS)
@@ -90,26 +107,110 @@ ALTER TABLE public.workers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.superadmin_audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Anonymous/Public Read Policies for Cooperative Prototype
-CREATE POLICY "Allow public read on users" ON public.users FOR SELECT USING (true);
-CREATE POLICY "Allow public insert/update on users" ON public.users FOR ALL USING (true);
+-- Platform Settings RLS Policies:
+-- 1. Read: Public read-only RESTRICTED to runtime-required settings (feature flags, system parameters, maintenance)
+-- Internal integrations and secret configurations are strictly inaccessible to public/unprivileged callers.
+CREATE POLICY "Allow public read on runtime platform_settings" 
+ON public.platform_settings FOR SELECT 
+USING (
+  category IN ('feature_flag', 'system_setting', 'maintenance')
+  AND key NOT LIKE 'secret.%'
+  AND key NOT LIKE 'integration.%'
+);
 
-CREATE POLICY "Allow public read on workers" ON public.workers FOR SELECT USING (true);
-CREATE POLICY "Allow public update on workers" ON public.workers FOR ALL USING (true);
+-- 2. Read: SuperAdmin can inspect all configuration keys including integrations
+CREATE POLICY "Allow SuperAdmin read on all platform_settings" 
+ON public.platform_settings FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE users.id = auth.uid()::text AND users.role = 'SuperAdmin'
+  )
+  OR (auth.jwt() ->> 'role' = 'SuperAdmin')
+  OR (auth.jwt() -> 'user_metadata' ->> 'role' = 'SuperAdmin')
+  OR (auth.jwt() -> 'app_metadata' ->> 'role' = 'SuperAdmin')
+);
 
-CREATE POLICY "Allow public read on bookings" ON public.bookings FOR SELECT USING (true);
-CREATE POLICY "Allow public write on bookings" ON public.bookings FOR ALL USING (true);
+-- 3. Write: Strict SuperAdmin authorization only
+CREATE POLICY "Allow SuperAdmin write on platform_settings" 
+ON public.platform_settings FOR ALL 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE users.id = auth.uid()::text AND users.role = 'SuperAdmin'
+  )
+  OR (auth.jwt() ->> 'role' = 'SuperAdmin')
+  OR (auth.jwt() -> 'user_metadata' ->> 'role' = 'SuperAdmin')
+  OR (auth.jwt() -> 'app_metadata' ->> 'role' = 'SuperAdmin')
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE users.id = auth.uid()::text AND users.role = 'SuperAdmin'
+  )
+  OR (auth.jwt() ->> 'role' = 'SuperAdmin')
+  OR (auth.jwt() -> 'user_metadata' ->> 'role' = 'SuperAdmin')
+  OR (auth.jwt() -> 'app_metadata' ->> 'role' = 'SuperAdmin')
+);
 
-CREATE POLICY "Allow public read on reviews" ON public.reviews FOR SELECT USING (true);
-CREATE POLICY "Allow public write on reviews" ON public.reviews FOR ALL USING (true);
+-- SuperAdmin Audit Logs RLS Policies:
+-- 1. Read: SuperAdmin and Admin governance inspection
+CREATE POLICY "Allow SuperAdmin and Admin read on superadmin_audit_logs" 
+ON public.superadmin_audit_logs FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE users.id = auth.uid()::text AND users.role IN ('SuperAdmin', 'Admin')
+  )
+  OR (auth.jwt() ->> 'role' IN ('SuperAdmin', 'Admin'))
+  OR (auth.jwt() -> 'user_metadata' ->> 'role' IN ('SuperAdmin', 'Admin'))
+  OR (auth.jwt() -> 'app_metadata' ->> 'role' IN ('SuperAdmin', 'Admin'))
+);
 
-CREATE POLICY "Allow public read on logs" ON public.logs FOR SELECT USING (true);
-CREATE POLICY "Allow public insert on logs" ON public.logs FOR INSERT WITH CHECK (true);
+-- 2. Insert: SuperAdmin action logging
+CREATE POLICY "Allow SuperAdmin insert on superadmin_audit_logs" 
+ON public.superadmin_audit_logs FOR INSERT 
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE users.id = auth.uid()::text AND users.role = 'SuperAdmin'
+  )
+  OR (auth.jwt() ->> 'role' = 'SuperAdmin')
+  OR (auth.jwt() -> 'user_metadata' ->> 'role' = 'SuperAdmin')
+  OR (auth.jwt() -> 'app_metadata' ->> 'role' = 'SuperAdmin')
+);
 
-CREATE POLICY "Allow public read on system_config" ON public.system_config FOR SELECT USING (true);
-CREATE POLICY "Allow public write on system_config" ON public.system_config FOR ALL USING (true);
+-- 3. Update / Delete: Strictly prohibited for audit immutability
+
+-- Seed Authoritative Platform Settings
+INSERT INTO public.platform_settings (id, key, value, value_type, category, description, updated_by) VALUES
+('feature.customerModule', 'feature.customerModule', 'true'::jsonb, 'boolean', 'feature_flag', 'Customer Directory & Booking module', 'system_bootstrap'),
+('feature.workerModule', 'feature.workerModule', 'true'::jsonb, 'boolean', 'feature_flag', 'Worker Dashboard & Job Feed', 'system_bootstrap'),
+('feature.adminModule', 'feature.adminModule', 'true'::jsonb, 'boolean', 'feature_flag', 'Cooperative Admin Analytics Portal', 'system_bootstrap'),
+('feature.demandForecasting', 'feature.demandForecasting', 'true'::jsonb, 'boolean', 'feature_flag', 'Predictive demand intelligence model', 'system_bootstrap'),
+('feature.multilingual', 'feature.multilingual', 'true'::jsonb, 'boolean', 'feature_flag', '5-Language regional translation engine', 'system_bootstrap'),
+('feature.chatbot', 'feature.chatbot', 'true'::jsonb, 'boolean', 'feature_flag', 'SahyogSeva AI conversational assistant', 'system_bootstrap'),
+('feature.payments', 'feature.payments', 'true'::jsonb, 'boolean', 'feature_flag', '100% Cooperative Escrow and settlements', 'system_bootstrap'),
+('feature.workerApplications', 'feature.workerApplications', 'true'::jsonb, 'boolean', 'feature_flag', 'Artisan self-onboarding verification portal', 'system_bootstrap'),
+('feature.workerReviewsVisibility', 'feature.workerReviewsVisibility', 'true'::jsonb, 'boolean', 'feature_flag', 'Worker ratings and reviews visibility in customer view', 'system_bootstrap'),
+('feature.emergencyBooking', 'feature.emergencyBooking', 'true'::jsonb, 'boolean', 'feature_flag', '24/7 Priority Emergency SOS Dispatch', 'system_bootstrap'),
+('feature.fairMatching', 'feature.fairMatching', 'true'::jsonb, 'boolean', 'feature_flag', 'Gini index egalitarian dispatch optimizer', 'system_bootstrap'),
+('feature.autoDispatch', 'feature.autoDispatch', 'true'::jsonb, 'boolean', 'feature_flag', 'Real-time broadcast notification dispatcher', 'system_bootstrap'),
+('feature.genderPreference', 'feature.genderPreference', 'false'::jsonb, 'boolean', 'feature_flag', 'Allow customers to request a preferred worker gender', 'system_bootstrap'),
+('system.maintenanceMode', 'system.maintenanceMode', 'false'::jsonb, 'boolean', 'system_setting', 'Platform-wide maintenance restriction mode', 'system_bootstrap'),
+('system.maintenanceMessage', 'system.maintenanceMessage', '"Platform maintenance in progress. Direct booking may be temporarily restricted."'::jsonb, 'string', 'system_setting', 'Maintenance banner message', 'system_bootstrap'),
+('system.platformCommissionRate', 'system.platformCommissionRate', '0.00'::jsonb, 'number', 'system_setting', 'Cooperative charter commission percentage', 'system_bootstrap'),
+('system.dispatchRadiusKm', 'system.dispatchRadiusKm', '15'::jsonb, 'number', 'system_setting', 'Maximum radius in km for artisan dispatch', 'system_bootstrap'),
+('system.emergencyMaxResponseMinutes', 'system.emergencyMaxResponseMinutes', '30'::jsonb, 'number', 'system_setting', 'Target emergency doorstep arrival SLA', 'system_bootstrap'),
+('system.workerRegistrationOpen', 'system.workerRegistrationOpen', 'true'::jsonb, 'boolean', 'system_setting', 'Allow new artisan onboarding registrations', 'system_bootstrap'),
+('system.customerRegistrationOpen', 'system.customerRegistrationOpen', 'true'::jsonb, 'boolean', 'system_setting', 'Allow new customer registrations', 'system_bootstrap'),
+('system.autoRefundUnassignedHours', 'system.autoRefundUnassignedHours', '1'::jsonb, 'number', 'system_setting', 'Auto refund deadline before slot time', 'system_bootstrap'),
+('system.cancellationFeeIncurredHours', 'system.cancellationFeeIncurredHours', '3'::jsonb, 'number', 'system_setting', 'Hours before slot when cancellation fee applies', 'system_bootstrap'),
+('system.cancellationPenaltyAmount', 'system.cancellationPenaltyAmount', '100'::jsonb, 'number', 'system_setting', 'Worker cancellation cooperative penalty in INR', 'system_bootstrap')
+ON CONFLICT (key) DO NOTHING;
 
 -- Seed Workers & Users
 INSERT INTO public.users (id, name, role, phone, language_pref, avatar_url) VALUES

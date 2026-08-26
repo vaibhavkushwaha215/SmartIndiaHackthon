@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../auth';
 import { db } from '../../shared/services/database';
 import { FeatureFlagsPanel } from './FeatureFlagsPanel';
@@ -7,6 +7,7 @@ import { IntegrationsPanel } from './IntegrationsPanel';
 import { SuperAdminAuditLogs } from './SuperAdminAuditLogs';
 import { useFeatureDefinitions } from '../../shared/config/features.config';
 import { useTheme } from '../../shared/context/ThemeContext';
+import { platformConfig, PLATFORM_EVENTS } from '../../shared/services/platform-config.service';
 import {
   ShieldCheck,
   Layers,
@@ -49,6 +50,14 @@ export const SuperAdminPortal: React.FC<SuperAdminPortalProps> = ({ onExit }) =>
     isMaintenance: false,
   });
 
+  const [configStatus, setConfigStatus] = useState(() => platformConfig.getStatus());
+
+  useEffect(() => {
+    const handleStatus = () => setConfigStatus(platformConfig.getStatus());
+    window.addEventListener(PLATFORM_EVENTS.CONFIG_STATUS_CHANGED, handleStatus);
+    return () => window.removeEventListener(PLATFORM_EVENTS.CONFIG_STATUS_CHANGED, handleStatus);
+  }, []);
+
   const [systemErrors, setSystemErrors] = useState<Array<{
     id: string;
     timestamp: string;
@@ -69,6 +78,8 @@ export const SuperAdminPortal: React.FC<SuperAdminPortalProps> = ({ onExit }) =>
 
   const [simulatedErrorActive, setSimulatedErrorActive] = useState(false);
 
+  const activeFlagsCount = useMemo(() => features.filter((f) => f.enabled).length, [features]);
+
   useEffect(() => {
     Promise.all([
       db.getUsers(),
@@ -80,11 +91,11 @@ export const SuperAdminPortal: React.FC<SuperAdminPortalProps> = ({ onExit }) =>
         totalUsers: users.length,
         totalWorkers: workers.length,
         totalBookings: bookings.length,
-        activeFlags: features.filter((f) => f.enabled).length,
+        activeFlags: activeFlagsCount,
         isMaintenance: settings.maintenanceMode,
       });
     });
-  }, [features]);
+  }, [activeFlagsCount]);
 
   const triggerErrorSimulation = () => {
     if (simulatedErrorActive) {
@@ -136,6 +147,17 @@ export const SuperAdminPortal: React.FC<SuperAdminPortalProps> = ({ onExit }) =>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   OPERATIONAL
                 </span>
+                {configStatus.source === 'SUPABASE' ? (
+                  <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
+                    SUPABASE LIVE
+                  </span>
+                ) : (
+                  <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1" title="Supabase not configured or unreachable; operating with immutable Safe Boot Defaults">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    SAFE BOOT DEFAULTS
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-slate-400">
                 Cooperative Platform Governance • SuperAdmin clearance

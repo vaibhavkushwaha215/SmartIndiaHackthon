@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { useToast } from '../../shared/components/Toast';
 import { ShieldCheck, Phone, Lock, ArrowRight, UserPlus, Wrench, Eye, EyeOff, HelpCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '../i18n';
+import { navigate } from '../../shared/services/router';
 
 interface LoginPageProps {
   onNavigateToRegister: () => void;
@@ -15,7 +16,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onNavigateToApplyWorker,
   onLoginSuccess = () => {},
 }) => {
-  const { t } = useTranslation();
+  const { t } = useI18n();
   const { login } = useAuth();
   const { showError, showSuccess, showInfo } = useToast();
 
@@ -27,7 +28,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone || phone.trim().length !== 10) {
-      showError(102, 'Please enter a valid 10-digit mobile number');
+      showError(102, t('auth.invalid_phone', 'Please enter a valid 10-digit mobile number'));
       return;
     }
     if (!password) {
@@ -38,7 +39,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setIsSubmitting(true);
     try {
       const user = await login({ phone: phone.trim(), password });
-      showSuccess(`Welcome back, ${user.name}!`);
+      showSuccess(t('common.welcome', { name: user.name }));
       onLoginSuccess(user.role);
     } catch (err: any) {
       const code = err.code || 101;
@@ -65,10 +66,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <ShieldCheck className="w-6 h-6" />
           </div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-            Sign In to SahyogSeva
+            {t('auth.signInTitle', 'Sign In to SahyogSeva')}
           </h2>
           <p className="text-xs text-slate-500">
-            Access verified community household services or artisan operations.
+            {t('auth.signInSubtitle', 'Cooperative Electrician & Artisan Network')}
           </p>
         </div>
 
@@ -76,7 +77,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              10-Digit Mobile Number
+              {t('auth.phone_label', '10-Digit Mobile Number')}
             </label>
             <div className="relative">
               <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -94,7 +95,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Password
+                {t('auth.password_label', 'Password')}
               </label>
               <button
                 type="button"
@@ -131,7 +132,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             disabled={isSubmitting}
             className="w-full py-3 px-4 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
-            <span>{isSubmitting ? 'Signing In...' : 'Sign In'}</span>
+            <span>{isSubmitting ? t('common.loading', 'Signing In...') : t('nav.login', 'Sign In')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
@@ -139,39 +140,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         {/* Secondary Links */}
         <div className="pt-2 border-t border-slate-100 space-y-2.5 text-center text-xs">
           <div className="flex items-center justify-center gap-1.5 text-[var(--color-text-secondary)]">
-            <span>New customer?</span>
             <button
               onClick={onNavigateToRegister}
               className="font-bold text-[var(--color-primary)] hover:underline cursor-pointer flex items-center gap-1"
             >
               <UserPlus className="w-3.5 h-3.5" />
-              <span>Create Customer Account</span>
+              <span>{t('auth.needAccount', 'Need a customer account? Register Now →')}</span>
             </button>
           </div>
 
           <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-left">
             <div>
-              <div className="font-bold text-slate-900">Are you a trade artisan?</div>
-              <div className="text-[11px] text-slate-500">Join our verified cooperative provider network</div>
+              <div className="font-bold text-slate-900">{t('roles.worker', 'Artisan')} Network</div>
+              <div className="text-[11px] text-slate-500">{t('auth.charterBadge', '0% Commission Cooperative Charter')}</div>
             </div>
             <button
               onClick={onNavigateToApplyWorker}
               className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold transition flex items-center gap-1 cursor-pointer shrink-0"
             >
               <Wrench className="w-3 h-3 text-amber-300" />
-              <span>Apply as Worker</span>
+              <span>{t('nav.applyWorker', 'Apply as Worker')}</span>
             </button>
           </div>
 
           <div className="pt-2">
             <button
               onClick={() => {
-                window.location.hash = '';
-                window.location.pathname = '/';
+                navigate('/');
               }}
               className="text-slate-400 hover:text-slate-600 text-xs font-semibold hover:underline cursor-pointer"
             >
-              ← Return to Home / Browse Services
+              ← {t('common.returnHome', 'Return to Homepage')}
             </button>
           </div>
         </div>

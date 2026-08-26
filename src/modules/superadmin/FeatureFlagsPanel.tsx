@@ -54,16 +54,10 @@ export const FeatureFlagsPanel: React.FC = () => {
   });
 
   const handleToggle = async (key: FeatureKey, nextState: boolean) => {
-    toggleFeature(key, nextState);
-    
-    // Persist to database/localStorage with audit logging
     if (currentUser) {
-      await db.updateFeatureFlag(
-        key,
-        nextState,
-        { id: currentUser.id, name: currentUser.name },
-        `SuperAdmin toggle via Control Plane UI`
-      );
+      await toggleFeature(key, nextState, { id: currentUser.id, name: currentUser.name });
+    } else {
+      await toggleFeature(key, nextState);
     }
 
     if (nextState) {
@@ -73,8 +67,12 @@ export const FeatureFlagsPanel: React.FC = () => {
     }
   };
 
-  const handleReset = () => {
-    resetToDefaults();
+  const handleReset = async () => {
+    if (currentUser) {
+      await resetToDefaults({ id: currentUser.id, name: currentUser.name });
+    } else {
+      await resetToDefaults();
+    }
     setIsResetConfirmOpen(false);
     showSuccess('All feature flags have been reset to factory charter defaults.');
   };

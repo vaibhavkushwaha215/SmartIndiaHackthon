@@ -2,28 +2,31 @@ import { ChatbotContext } from '../types';
 import { queryKnowledgeEngine } from './knowledgeEngine';
 
 /**
- * SahyogSeva AI Service Abstraction Layer
+ * SahyogSeva AI Service
  * 
- * Secure, plug-and-play architecture:
- * UI -> gemini.service.ts -> Gemini API (if VITE_GEMINI_API_KEY is configured) or KnowledgeEngine fallback.
- * 
- * NEVER hardcodes any secrets in the codebase.
+ * Powered by Google Gemini Flash Live API (gemini-3.6-flash) with fallback to local domain knowledge engine.
  */
 class GeminiChatService {
   private getApiKey(): string | null {
     try {
-      const key = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-      if (key && typeof key === 'string' && key.trim().length > 10 && !key.includes('your-')) {
-        return key.trim();
+      const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+      if (
+        envKey &&
+        typeof envKey === 'string' &&
+        envKey.trim().length > 10 &&
+        !envKey.includes('paste-your-key') &&
+        !envKey.includes('your-')
+      ) {
+        return envKey.trim();
       }
     } catch {
-      // In environments where import.meta.env is restricted
+      // In environments where env is restricted
     }
     return null;
   }
 
   public isCloudAiConfigured(): boolean {
-    return this.getApiKey() !== null;
+    return Boolean(this.getApiKey());
   }
 
   /**
@@ -36,15 +39,17 @@ class GeminiChatService {
       try {
         const response = await this.callGeminiApi(userMessage, apiKey, context);
         if (response && response.trim().length > 0) {
-          return response;
+          return response.trim();
         }
-      } catch (err) {
-        console.warn('[SahyogSeva AI] Gemini Cloud API unavailable, smoothly switching to local knowledge engine:', err);
+      } catch (err: any) {
+        console.error('[SahyogSeva AI] Gemini Live API call failed, falling back to local knowledge engine:', err?.message || err);
       }
+    } else {
+      console.info('[SahyogSeva AI] VITE_GEMINI_API_KEY is not configured or is a placeholder. Answering via local domain knowledge engine.');
     }
 
-    // High-performance domain-grounded fallback
-    await new Promise((resolve) => setTimeout(resolve, 350));
+    // High-performance domain-grounded fallback (instant & reliable)
+    await new Promise((resolve) => setTimeout(resolve, 250));
     return queryKnowledgeEngine(userMessage, context);
   }
 
@@ -53,17 +58,22 @@ class GeminiChatService {
     apiKey: string,
     context?: ChatbotContext
   ): Promise<string> {
-    const systemPrompt = `You are "SahyogSeva Assistant", an AI helper for SahyogSeva, an Indian cooperative platform connecting verified local trade workers (electricians, plumbers, carpenters, cleaning, appliance repair, painters) with households.
-Key principles:
-1. 100% police background verified workers, 0% platform commission taken from artisans (workers retain 100% of earnings).
-2. Users pay zero advance fee; payments are held in escrow and settled via Cash or UPI after doorstep work is completed.
-3. Emergency 30-min SOS dispatch is available for urgent electrical and plumbing faults.
-4. Current user role: ${context?.currentRole || 'Customer'}. Current location/page: ${context?.currentPage || 'Home'}.
-5. IMPORTANT: You are an informational assistant. NEVER claim to have completed a booking, transaction, or account change yourself; always instruct the user to tap the relevant button in the app.
-Keep your response polite, concise, structured with bullet points where helpful, and in English (or Hindi if requested).`;
+    const systemPrompt = `You are "Sahyog Assistant" (सहयोग सहायक), the friendly and knowledgeable AI assistant for SahyogSeva (सहयोग सेवा) — India's premier cooperative gig-services platform for doorstep artisan services.
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+Platform Rules & Knowledge:
+1. Services offered: Electricians, Plumbers, Carpenters, Domestic Helpers & Maid services, Appliance Repair (AC, Refrigerator, Washing Machine), House Painting, Cleaning & Pest Control.
+2. Verified Artisans: 100% police background verified with photo ID badges.
+3. Cooperative Model: 0% platform commission taken from artisans (workers keep 100% of their earnings).
+4. Fair Escrow Payments: Zero advance payment required from customers. Secure post-service payment via Cash or UPI after satisfactory job completion.
+5. Rapid Response: 30-minute rapid emergency arrival available for electrical hazards and major plumbing leaks.
+6. Current User: ${context?.userName || 'Customer'} (${context?.currentRole || 'Customer'}), on page: ${context?.currentPage || 'Home'}.
+7. Guidelines:
+   - Be friendly, polite, and concise. Use clear bullet points and bold formatting.
+   - Answer in English or Hindi (matching user's query language).
+   - If asked how to book, guide them step-by-step to tap the 'Book Service' button on the relevant worker card.
+   - Never claim you have directly booked or altered their database record.`;
 
+    const models = ['gemini-3.6-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
     const payload = {
       contents: [
         {
@@ -76,30 +86,57 @@ Keep your response polite, concise, structured with bullet points where helpful,
         },
       ],
       generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 500,
+        temperature: 0.4,
+        maxOutputTokens: 800,
       },
     };
 
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    let lastError: any = null;
 
-    if (!response.ok) {
-      throw new Error(`Gemini API responded with HTTP status ${response.status}`);
+    for (const model of models) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorBodyText = await response.text().catch(() => '<unable to read response body>');
+          console.error(`[SahyogSeva AI] Gemini API [${model}] returned HTTP ${response.status}:`, errorBodyText);
+          lastError = new Error(`HTTP ${response.status}: ${errorBodyText}`);
+          continue; // Fallback to next model
+        }
+
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text && text.trim().length > 0) {
+          return text;
+        } else {
+          console.warn(`[SahyogSeva AI] Gemini API [${model}] returned empty candidate text:`, data);
+        }
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          console.error(`[SahyogSeva AI] Gemini API [${model}] request timed out after 30 seconds.`);
+          lastError = new Error(`Request timed out after 30 seconds for model ${model}`);
+        } else {
+          console.error(`[SahyogSeva AI] Network error calling Gemini API [${model}]:`, err);
+          lastError = err;
+        }
+      }
     }
 
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      throw new Error('Empty text payload received from Gemini endpoint.');
-    }
-
-    return text;
+    throw lastError || new Error('All Gemini API models failed to return a response.');
   }
 }
 

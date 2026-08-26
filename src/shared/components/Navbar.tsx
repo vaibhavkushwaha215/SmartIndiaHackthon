@@ -28,6 +28,8 @@ import {
 import { UserRole } from '../types';
 import { isFeatureEnabled, FeatureKey } from '../config/features.config';
 
+import { LanguageSelector, useI18n } from '../../modules/i18n';
+
 interface NavbarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
@@ -43,20 +45,14 @@ interface NavItemConfig {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
-  const { t, i18n } = useTranslation();
-  const { currentUser, currentRole, isSuperAdmin, logout, quickSwitchUser, switchRole, updateLanguage } = useAuth();
+  const { t, language } = useI18n();
+  const isHindi = language === 'hi';
+  const { currentUser, currentRole, isSuperAdmin, logout, quickSwitchUser, switchRole } = useAuth();
   const { showSuccess } = useToast();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSwitchHovered, setIsSwitchHovered] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-
-  const isHindi = i18n.language === 'hi';
-
-  const toggleLanguage = () => {
-    const nextLang = i18n.language === 'en' ? 'hi' : 'en';
-    updateLanguage(nextLang);
-  };
 
   const handleAllServicesClick = () => {
     onTabChange('booking');
@@ -67,19 +63,19 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   };
 
   const navItems: NavItemConfig[] = [
-    { id: 'booking', label: isHindi ? 'सभी सेवाएं' : 'All Services', icon: Wrench, roles: ['Customer', 'Worker', 'Admin'], featureKey: 'customerModule', isAllServices: true },
-    { id: 'my-bookings', label: t('nav.my_bookings', 'My Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin'], featureKey: 'customerModule' },
-    { id: 'worker-dashboard', label: t('nav.worker_dashboard', 'Worker Dashboard'), icon: Wrench, roles: ['Worker', 'Admin'], featureKey: 'workerModule' },
-    { id: 'admin-dashboard', label: t('nav.admin_dashboard', 'Admin Portal'), icon: Shield, roles: ['Admin'], featureKey: 'adminModule' },
-    { id: 'demand-forecast', label: t('nav.demand_forecast', 'Demand Forecast'), icon: Activity, roles: ['Admin', 'Worker', 'Customer'], featureKey: 'demandForecasting' },
-    { id: 'settings', label: isHindi ? 'सेटिंग्स' : 'Settings', icon: Settings, roles: ['Customer', 'Worker', 'Admin'] },
+    { id: 'booking', label: t('nav.services', 'All Services'), icon: Wrench, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'], featureKey: 'customerModule', isAllServices: true },
+    { id: 'my-bookings', label: t('nav.my_bookings', 'My Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
+    { id: 'worker-dashboard', label: t('nav.worker_dashboard', 'Worker Dashboard'), icon: Wrench, roles: ['Worker', 'Admin', 'SuperAdmin'], featureKey: 'workerModule' },
+    { id: 'admin-dashboard', label: t('nav.admin_dashboard', 'Admin Portal'), icon: Shield, roles: ['Admin', 'SuperAdmin'], featureKey: 'adminModule' },
+    { id: 'demand-forecast', label: t('nav.demand_forecast', 'Demand Forecast'), icon: Activity, roles: ['Admin', 'SuperAdmin'], featureKey: 'demandForecasting' },
+    { id: 'settings', label: t('nav.settings', 'Settings'), icon: Settings, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'] },
   ];
 
   const visibleNavItems = navItems.filter((item) => {
     // Feature flag check
     if (item.featureKey && !isFeatureEnabled(item.featureKey)) return false;
     // Role check
-    return (currentRole === 'Admin' || isSuperAdmin) ? true : item.roles.includes(currentRole);
+    return item.roles.includes(currentRole) || (isSuperAdmin && item.roles.includes('SuperAdmin'));
   });
 
   return (
@@ -95,16 +91,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
               <span>Zero Advance Payment • Pay Cash / UPI After Service</span>
             </div>
             <div className="flex items-center gap-3 font-semibold">
-              <span className="text-emerald-300">
+              <span className="text-emerald-300 flex items-center gap-1.5">
+                <PhoneCall className="w-3 h-3" />
                 Emergency 24x7: <strong>1800-SAHYOG</strong>
               </span>
-              <button
-                onClick={toggleLanguage}
-                className="flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-white transition cursor-pointer"
-              >
-                <Globe className="w-3.5 h-3.5" />
-                <span>{isHindi ? 'English (EN)' : 'हिंदी (HI)'}</span>
-              </button>
             </div>
           </div>
         </div>
@@ -185,15 +175,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
             {/* Right Action Bar */}
             <div className="flex items-center gap-2 sm:gap-3">
               
-              {/* Mobile Language Switcher */}
-              <button
-                onClick={toggleLanguage}
-                className="md:hidden flex items-center gap-1 bg-[var(--color-surface,white)] hover:bg-[var(--color-primary-light)] text-[var(--color-text)] font-bold px-2.5 py-1.5 rounded-xl border border-[var(--color-border)] text-xs transition cursor-pointer"
-                title="Toggle Language"
-              >
-                <Globe className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-                <span>{isHindi ? 'EN' : 'HI'}</span>
-              </button>
+              {/* Language Selector */}
+              <LanguageSelector variant="dropdown" />
 
               {/* Quick Role Switcher Pill */}
               {currentUser && (
@@ -209,7 +192,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                   className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs shadow-xs transition cursor-pointer"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>{isHindi ? 'साइन इन करें' : 'Sign In'}</span>
+                  <span>{t('nav.login', 'Sign In')}</span>
                 </button>
               ) : (
                 <div className="relative">
@@ -271,10 +254,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                           >
                             <div className="flex items-center gap-2.5">
                               <Settings className="w-4 h-4 text-slate-400" />
-                              <span>{isHindi ? 'सेटिंग्स और भाषा' : 'Settings & Language'}</span>
+                              <span>{t('accountMenu.settingsAndLanguage', 'Settings & Language')}</span>
                             </div>
-                            <span className="text-xs font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] px-1.5 py-0.5 rounded">
-                              {isHindi ? 'HI' : 'EN'}
+                            <span className="text-xs font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] px-1.5 py-0.5 rounded uppercase">
+                              {language}
                             </span>
                           </button>
 
@@ -287,7 +270,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                             className="w-full text-left px-4 py-2.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] flex items-center gap-2.5 transition cursor-pointer"
                           >
                             <PhoneCall className="w-4 h-4 text-slate-400" />
-                            <span>{isHindi ? 'संपर्क और हेल्पलाइन' : 'Contact Us & Helpline'}</span>
+                            <span>{t('accountMenu.contactAndHelpline', 'Contact Us & Helpline')}</span>
                           </button>
 
                           {/* 3. Switch Account (Hover Flyout) */}
@@ -302,7 +285,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                             >
                               <div className="flex items-center gap-2.5">
                                 <Users className="w-4 h-4 text-[var(--color-primary)]" />
-                                <span>{isHindi ? 'खाता बदलें' : 'Switch Account'}</span>
+                                <span>{t('accountMenu.switchAccount', 'Switch Account')}</span>
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                             </button>
@@ -311,7 +294,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                             {isSwitchHovered && (
                               <div className="absolute right-full top-0 mr-1 w-56 bg-[var(--color-surface,white)] rounded-xl shadow-2xl border border-[var(--color-border,#e2e8f0)] py-1.5 z-40 animate-in fade-in slide-in-from-right-2">
                                 <div className="px-3 py-1 text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
-                                  {isHindi ? 'प्रोफ़ाइल चुनें' : 'Switch Account Profile'}
+                                  {t('accountMenu.switchProfile', 'Switch Account Profile')}
                                 </div>
 
                                 {/* Option 1: Customer (Ramesh Kumar) */}
@@ -321,13 +304,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                     onTabChange('booking');
                                     setIsUserMenuOpen(false);
                                     setIsSwitchHovered(false);
-                                    showSuccess('Switched to Customer: Ramesh Kumar');
+                                    showSuccess(t('accountMenu.switchedTo', { name: 'Customer (Ramesh)' }));
                                   }}
                                   className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[var(--color-primary-light)] transition cursor-pointer ${
                                     currentRole === 'Customer' ? 'bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold' : 'text-[var(--color-text)]'
                                   }`}
                                 >
-                                  <span>👤 Customer (Ramesh)</span>
+                                  <span>👤 {t('roles.customer', 'Customer')} (Ramesh)</span>
                                   {currentRole === 'Customer' && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-primary)]" />}
                                 </button>
 
@@ -338,14 +321,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                     onTabChange('worker-dashboard');
                                     setIsUserMenuOpen(false);
                                     setIsSwitchHovered(false);
-                                    showSuccess('Switched to Worker: Rajesh Sharma');
+                                    showSuccess(t('accountMenu.switchedTo', { name: 'Worker (Rajesh)' }));
                                   }}
                                   className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[var(--color-primary-light)] transition cursor-pointer ${
                                     currentRole === 'Worker' ? 'bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold' : 'text-[var(--color-text)]'
                                   }`}
                                 >
                                   <span className="flex items-center gap-1">
-                                    ⚡ Worker (Rajesh) <span className="text-[10px] text-[var(--color-primary)] font-bold bg-[var(--color-primary-light)] px-1 rounded">Verified</span>
+                                    ⚡ {t('roles.worker', 'Worker')} (Rajesh) <span className="text-[10px] text-[var(--color-primary)] font-bold bg-[var(--color-primary-light)] px-1 rounded">{t('common.verified', 'Verified')}</span>
                                   </span>
                                   {currentRole === 'Worker' && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-primary)]" />}
                                 </button>
@@ -357,13 +340,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                     onTabChange('admin-dashboard');
                                     setIsUserMenuOpen(false);
                                     setIsSwitchHovered(false);
-                                    showSuccess('Switched to Admin Portal');
+                                    showSuccess(t('accountMenu.switchedTo', { name: 'Admin Portal' }));
                                   }}
                                   className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-[var(--color-primary-light)] transition cursor-pointer ${
                                     currentRole === 'Admin' ? 'bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold' : 'text-[var(--color-text)]'
                                   }`}
                                 >
-                                  <span>🛡️ Admin Portal</span>
+                                  <span>🛡️ {t('nav.admin_dashboard', 'Admin Portal')}</span>
                                   {currentRole === 'Admin' && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-primary)]" />}
                                 </button>
 
@@ -398,7 +381,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                                 className="w-full py-2 px-3 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
                               >
                                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                                <span>{isHindi ? 'कारीगर बनें? आवेदन करें!' : 'Not a worker? Apply Now!'}</span>
+                                <span>{t('accountMenu.notWorkerApply', 'Not a worker? Apply Now!')}</span>
                               </button>
                             </div>
                           )}
@@ -409,13 +392,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                               onClick={async () => {
                                 setIsUserMenuOpen(false);
                                 await logout();
-                                showSuccess(isHindi ? 'सफलतापूर्वक लॉग आउट किया गया।' : 'Logged out successfully.');
+                                showSuccess(t('accountMenu.loggedOutSuccess', 'Logged out successfully.'));
                                 onTabChange('booking');
                               }}
                               className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition cursor-pointer font-semibold"
                             >
                               <LogOut className="w-3.5 h-3.5" />
-                              <span>{isHindi ? 'लॉग आउट' : 'Log Out'}</span>
+                              <span>{t('accountMenu.logout', 'Log Out')}</span>
                             </button>
                           </div>
                         </div>

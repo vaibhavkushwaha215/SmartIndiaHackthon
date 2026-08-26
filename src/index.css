@@ -119,11 +119,22 @@
 }
 
 [data-theme="slate"] .text-slate-600 {
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
 }
 
 [data-theme="slate"] .text-slate-500 {
-  color: #64748b !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="slate"] .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="slate"] .text-emerald-900,
+[data-theme="slate"] .text-emerald-800,
+[data-theme="slate"] .text-emerald-700,
+[data-theme="slate"] .text-emerald-600 {
+  color: var(--color-accent) !important;
 }
 
 /* Inputs & Form controls in dark mode */

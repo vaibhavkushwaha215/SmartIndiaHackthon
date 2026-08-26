@@ -1,7 +1,7 @@
 import React from 'react';
 import { BookingStatus, UserRole } from '../types';
 import { ShieldCheck, Clock, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '../../modules/i18n';
 
 interface StatusBadgeProps {
   status: BookingStatus;
@@ -9,7 +9,7 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = '' }) => {
-  const { t } = useTranslation();
+  const { t } = useI18n();
 
   const config = {
     pending: {
@@ -20,12 +20,12 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
     accepted: {
       bg: 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200/80 dark:border-blue-800',
       icon: CheckCircle2,
-      label: 'Accepted',
+      label: t('status.confirmed', 'Accepted'),
     },
     in_progress: {
       bg: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800',
       icon: Clock,
-      label: 'In Progress',
+      label: t('worker.activeServiceInProgress', 'In Progress'),
     },
     confirmed: {
       bg: 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200/80 dark:border-blue-800',
@@ -67,16 +67,16 @@ interface VerifiedBadgeProps {
 }
 
 export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ cooperativeId, className = '', size = 'md' }) => {
-  const { t } = useTranslation();
+  const { t } = useI18n();
 
   if (size === 'sm') {
     return (
       <span
-        title={cooperativeId ? `Affiliation: ${cooperativeId}` : 'Verified Cooperative Member'}
+        title={cooperativeId ? `Affiliation: ${cooperativeId}` : t('common.verified', 'Verified Member')}
         className={`inline-flex items-center gap-1 bg-[var(--color-primary-light,#ecfdf5)] dark:bg-emerald-950/80 text-[var(--color-primary,#059669)] dark:text-emerald-300 text-xs font-bold px-2 py-0.5 rounded-md border border-[var(--color-border,#e2e8f0)] dark:border-emerald-800 ${className}`}
       >
         <ShieldCheck className="w-3 h-3 text-[var(--color-primary,#059669)] dark:text-emerald-400" />
-        {t('booking.verified_badge', 'Verified')}
+        {t('common.verified', 'Verified')}
       </span>
     );
   }
@@ -84,7 +84,7 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({ cooperativeId, cla
   return (
     <div className={`inline-flex items-center gap-1.5 bg-[var(--color-primary-light,#ecfdf5)] dark:bg-slate-800 text-[var(--color-text,#0f172a)] dark:text-slate-100 border border-[var(--color-border,#e2e8f0)] dark:border-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold ${className}`}>
       <ShieldCheck className="w-4 h-4 text-[var(--color-primary,#059669)] dark:text-emerald-400" />
-      <span>{t('booking.verified_badge', 'Verified Cooperative Member')}</span>
+      <span>{t('common.verified', 'Verified Member')}</span>
     </div>
   );
 };
@@ -95,6 +95,8 @@ interface RoleBadgeProps {
 }
 
 export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, className = '' }) => {
+  const { t } = useI18n();
+
   const colors = {
     Customer: 'bg-[var(--color-primary-light,#ecfdf5)] text-[var(--color-primary,#059669)] border-[var(--color-border,#e2e8f0)] dark:bg-indigo-950/80 dark:text-indigo-300 dark:border-indigo-800',
     Worker: 'bg-[var(--color-primary-light,#ecfdf5)] text-[var(--color-primary,#059669)] border-[var(--color-border,#e2e8f0)] dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800',
@@ -102,9 +104,17 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, className = '' }) =>
     SuperAdmin: 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-900/90 dark:text-purple-200 dark:border-purple-700 font-extrabold shadow-xs',
   }[role];
 
+  const roleLabel = role === 'Customer'
+    ? t('roles.customer', 'Customer')
+    : role === 'Worker'
+    ? t('roles.worker', 'Worker')
+    : role === 'Admin'
+    ? t('roles.admin', 'Admin')
+    : t('roles.superadmin', 'SuperAdmin');
+
   return (
     <span className={`px-2.5 py-0.5 text-xs font-bold rounded-md uppercase tracking-wider border ${colors} ${className}`}>
-      {role}
+      {roleLabel}
     </span>
   );
 };

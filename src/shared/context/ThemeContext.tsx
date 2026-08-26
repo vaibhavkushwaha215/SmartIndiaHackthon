@@ -40,6 +40,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--color-text-secondary', theme.colors.textSecondary);
       root.style.setProperty('--color-text-muted', theme.colors.textMuted);
       root.style.setProperty('--color-border', theme.colors.border);
+      root.style.setProperty('--color-header-gradient', theme.colors.headerGradient);
 
       if (theme.isDark) {
         root.classList.add('dark');

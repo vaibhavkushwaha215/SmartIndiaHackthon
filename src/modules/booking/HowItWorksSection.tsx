@@ -1,32 +1,25 @@
 import React from 'react';
 import { ShieldCheck, Banknote, Clock, Award, Sparkles } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '../i18n';
 
 export const HowItWorksSection: React.FC = () => {
-  const { i18n } = useTranslation();
-  const isHindi = i18n.language === 'hi';
+  const { t } = useI18n();
 
   const steps = [
     {
       step: '1',
-      title: isHindi ? 'सेवा और समय चुनें' : 'Pick Service & Slot',
-      desc: isHindi
-        ? 'अपनी आवश्यकता चुनें, पसंदीदा तारीख व समय स्लॉट तय करें और पता दर्ज करें।'
-        : 'Choose what you need fixed, select your preferred date & time slot, and set your home address.',
+      title: t('home.howItWorks.step1Title', 'Pick Service & Slot'),
+      desc: t('home.howItWorks.step1Desc', 'Choose what you need fixed, select your preferred date & time slot, and set your home address.'),
     },
     {
       step: '2',
-      title: isHindi ? 'सत्यापित प्रो आगमन' : 'Verified Pro Arrives',
-      desc: isHindi
-        ? 'सत्यापित सहकारी कारीगर आवश्यक उपकरणों के साथ आपके द्वार पर पहुंचेंगे।'
-        : 'Your neighborhood professional reaches your doorstep with standard tools. Share 4-digit code to start.',
+      title: t('home.howItWorks.step2Title', 'Verified Pro Arrives'),
+      desc: t('home.howItWorks.step2Desc', 'Your neighborhood professional reaches your doorstep with standard tools. Share 4-digit code to start.'),
     },
     {
       step: '3',
-      title: isHindi ? 'कार्य के बाद भुगतान' : 'Pay Cash After Work',
-      desc: isHindi
-        ? 'कार्य का निरीक्षण करें। 100% संतुष्ट होने पर ही नकद या UPI द्वारा भुगतान करें।'
-        : 'Inspect completed work. Once 100% satisfied, pay via Cash or UPI directly with 30-day guarantee.',
+      title: t('home.howItWorks.step3Title', 'Pay Cash After Work'),
+      desc: t('home.howItWorks.step3Desc', 'Inspect completed work. Once 100% satisfied, pay via Cash or UPI directly with 30-day guarantee.'),
     },
   ];
 
@@ -36,13 +29,13 @@ export const HowItWorksSection: React.FC = () => {
       <div className="bg-[#091424] text-white rounded-3xl p-5 sm:p-8 md:p-12 shadow-xl border border-slate-800 space-y-8">
         <div className="text-center max-w-xl mx-auto space-y-2">
           <span className="inline-flex items-center gap-1 bg-emerald-950 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full border border-emerald-700/50">
-            <Sparkles className="w-3 h-3" /> SEAMLESS & TRUSTWORTHY
+            <Sparkles className="w-3 h-3" /> {t('home.howItWorks.badge', 'SEAMLESS & TRUSTWORTHY')}
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            How SahyogSeva Works For You
+            {t('home.howItWorks.title', 'How SahyogSeva Works For You')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-400">
-            Designed specifically for local neighborhoods with 100% transparency and pay-after-service safety.
+            {t('home.howItWorks.subtitle', 'Designed specifically for local neighborhoods with 100% transparency and pay-after-service safety.')}
           </p>
         </div>
 

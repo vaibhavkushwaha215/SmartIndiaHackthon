@@ -1,7 +1,7 @@
 import { ErrorCode } from '../constants/error-codes';
 
 export type UserRole = 'Customer' | 'Worker' | 'Admin' | 'SuperAdmin';
-export type LanguagePreference = 'en' | 'hi';
+export type LanguagePreference = 'en' | 'hi' | 'te' | 'kn' | 'ta';
 export type BookingStatus = 'pending' | 'accepted' | 'in_progress' | 'confirmed' | 'completed' | 'cancelled';
 export type AddressType = 'House' | 'Apartment' | 'Business' | 'Other';
 export type WorkerApplicationStatus = 'Pending' | 'Under Review' | 'Approved' | 'Rejected';
@@ -59,7 +59,9 @@ export type FeatureKey =
   | 'payments'
   | 'notifications'
   | 'multilingual'
-  | 'emergencyBooking';
+  | 'emergencyBooking'
+  | 'workerReviewsVisibility'
+  | 'genderPreference';
 
 export type FeatureCategory = 'core' | 'operations' | 'ai' | 'finance' | 'communication';
 
@@ -111,12 +113,29 @@ export interface SuperAdminAuditEntry {
   timestamp: string;
   actorId: string;
   actorName: string;
-  actionType: 'FEATURE_TOGGLE' | 'SETTING_CHANGE' | 'MAINTENANCE_TOGGLE' | 'INTEGRATION_UPDATE';
+  actionType: 'FEATURE_TOGGLE' | 'SETTING_CHANGE' | 'MAINTENANCE_TOGGLE' | 'INTEGRATION_UPDATE' | 'CHARTER_UPDATE';
   target: string;
   previousValue: string;
   newValue: string;
   reason?: string;
 }
+
+export type ServiceRequestStatus =
+  | 'DRAFT'
+  | 'PENDING_PAYMENT'
+  | 'OPEN'
+  | 'MATCHING'
+  | 'ASSIGNED'
+  | 'EN_ROUTE'
+  | 'ARRIVED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'EXPIRED'
+  | 'REFUNDED';
+
+export type GenderPreference = 'no_preference' | 'male' | 'female';
+export type RequestPriority = 'normal' | 'emergency';
 
 export interface User {
   id: string;
@@ -125,6 +144,7 @@ export interface User {
   phone: string;
   language_pref: LanguagePreference;
   avatar_url?: string;
+  gender?: 'male' | 'female' | 'other';
   password_hash?: string; // Plain text in prototype, bcrypt in production
 }
 
@@ -141,6 +161,9 @@ export interface Worker {
   completed_jobs_count?: number;
   bio?: string;
   category?: string; // e.g. "ELECTRICAL", "PLUMBING", "APPLIANCE", "CARPENTRY", "CLEANING", "PAINTING", "PEST_GARDENING"
+  services?: string[]; // IDs of services provided, e.g. ['srv-elec-1', 'srv-elec-2']
+  pincodes?: string[]; // Serviced postal codes, e.g. ['110001', '110002', '110024']
+  gender?: 'male' | 'female' | 'other';
   isAvailable?: boolean;
   verificationStatus?: 'Verified' | 'Pending' | 'Rejected' | 'Suspended';
   joinedDate?: string;
@@ -171,6 +194,46 @@ export interface SavedAddress {
   canDeliverSunday?: boolean;
 }
 
+export interface ServiceRequest {
+  id: string;
+  customerId: string;
+  serviceCategoryId: string;
+  serviceId: string;
+  serviceName?: string;
+  selectedProblems: string[];
+  otherProblemDetails?: string;
+  date: string; // YYYY-MM-DD
+  slotStart: string; // "09:00"
+  slotEnd: string; // "11:00"
+  timeSlotDisplay: string;
+  address: string;
+  pincode: string;
+  locality?: string;
+  additionalDetails?: string;
+  genderPreference?: GenderPreference;
+  priority: RequestPriority;
+  amount: number;
+  paymentStatus: 'HELD_IN_ESCROW' | 'RELEASED' | 'REFUNDED';
+  requestStatus: ServiceRequestStatus;
+  assignedWorkerId?: string;
+  assignedAt?: string;
+  assignmentDeadline: string; // ISO string
+  isLateBooking?: boolean;
+  lateBookingConfirmedAt?: string;
+  ignoredByWorkerIds?: string[];
+  rejectedByWorkerIds?: string[];
+  cancelledBy?: 'customer' | 'worker' | 'system';
+  cancellationReason?: string;
+  cancelledAt?: string;
+  penaltyApplied?: number;
+  createdAt: string;
+  updatedAt: string;
+
+  // Joined / Populated properties for UI
+  customer?: User;
+  worker?: Worker;
+}
+
 export interface Booking {
   id: string;
   customer_id: string;
@@ -186,6 +249,7 @@ export interface Booking {
   platformFee?: number;
   workerEarnings?: number;
   matchedViaFairMatch?: boolean;
+  service_request_id?: string;
   // Joined fields for UI convenience
   worker?: Worker;
   customer?: User;

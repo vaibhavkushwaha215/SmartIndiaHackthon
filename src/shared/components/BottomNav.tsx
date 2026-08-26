@@ -1,5 +1,4 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '../../modules/i18n';
 import { useAuth } from '../../modules/auth';
 import { Wrench, CalendarDays, Shield, ShieldCheck, Activity, FileText, Settings } from 'lucide-react';
 import { isFeatureEnabled, FeatureKey } from '../config/features.config';
@@ -19,21 +18,21 @@ interface BottomNavItem {
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
-  const { t } = useTranslation();
+  const { t } = useI18n();
   const { currentRole, isSuperAdmin } = useAuth();
 
   const navItems: BottomNavItem[] = [
-    { id: 'booking', label: t('nav.all_services', 'Services'), icon: Wrench, roles: ['Customer', 'Worker', 'Admin'], featureKey: 'customerModule' },
-    { id: 'my-bookings', label: t('nav.my_bookings', 'Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin'], featureKey: 'customerModule' },
-    { id: 'worker-dashboard', label: t('nav.worker_dashboard', 'Worker'), icon: Wrench, roles: ['Worker', 'Admin'], featureKey: 'workerModule' },
-    { id: 'admin-dashboard', label: t('nav.admin_dashboard', 'Admin'), icon: Shield, roles: ['Admin'], featureKey: 'adminModule' },
-    { id: 'demand-forecast', label: t('nav.demand_forecast', 'Forecast'), icon: Activity, roles: ['Admin', 'Worker', 'Customer'], featureKey: 'demandForecasting' },
-    { id: 'settings', label: t('nav.settings', 'Settings'), icon: Settings, roles: ['Customer', 'Worker', 'Admin'] },
+    { id: 'booking', label: t('nav.services', 'Services'), icon: Wrench, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
+    { id: 'my-bookings', label: t('nav.my_bookings', 'Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
+    { id: 'worker-dashboard', label: t('roles.worker', 'Worker'), icon: Wrench, roles: ['Worker', 'Admin', 'SuperAdmin'], featureKey: 'workerModule' },
+    { id: 'admin-dashboard', label: t('roles.admin', 'Admin'), icon: Shield, roles: ['Admin', 'SuperAdmin'], featureKey: 'adminModule' },
+    { id: 'demand-forecast', label: t('nav.demand_forecast', 'Forecast'), icon: Activity, roles: ['Admin', 'SuperAdmin'], featureKey: 'demandForecasting' },
+    { id: 'settings', label: t('nav.settings', 'Settings'), icon: Settings, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'] },
   ];
 
   const visibleItems = navItems.filter((item) => {
     if (item.featureKey && !isFeatureEnabled(item.featureKey)) return false;
-    return (currentRole === 'Admin' || isSuperAdmin) ? true : item.roles.includes(currentRole);
+    return item.roles.includes(currentRole) || (isSuperAdmin && item.roles.includes('SuperAdmin'));
   });
 
   return (

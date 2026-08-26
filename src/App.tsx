@@ -7,57 +7,44 @@ import { isFeatureEnabled, useFeature } from './shared/config/features.config';
 import { db } from './shared/services/database';
 import { AlertTriangle, Wrench, ShieldCheck } from 'lucide-react';
 import { ThemeProvider } from './shared/context/ThemeContext';
+import { I18nProvider } from './modules/i18n';
 
 // Module Imports
-import { WorkerList, MyBookings } from './modules/booking';
+import { WorkerList, MyBookings, BookingPage } from './modules/booking';
 import { WorkerDashboard, WorkerJobs, WorkerEarnings } from './modules/worker-profile';
 import { AdminDashboard } from './modules/admin-dashboard';
 import { LoginPage, RegisterPage, ApplyWorkerPage } from './modules/auth';
 import { DemandForecast } from './modules/demand-forecast';
 import { LogsViewer } from './modules/logging';
 import { SettingsPage } from './modules/settings';
-import { NotFound404, AdminUnauthorized } from './modules/superadmin';
+import { SuperAdminPortal, NotFound404, AdminUnauthorized } from './modules/superadmin';
 import { SahyogAssistant } from './modules/chatbot';
+import { getServiceById } from './shared/config/services.config';
 
-function parseRouteFromLocation(): string {
-  const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
-  const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
-
-  const route = hash || path;
-  if (route === 'superadmin') return 'superadmin';
-  if (route === 'login' || route === 'signin' || route === 'sign-in') return 'login';
-  if (route === 'register' || route === 'signup' || route === 'sign-up') return 'register';
-  if (route === 'apply-worker' || route === 'apply' || route === 'join') return 'apply-worker';
-  if (route === 'worker/jobs' || route === 'worker-jobs') return 'worker-jobs';
-  if (route === 'worker/earnings' || route === 'worker-earnings') return 'worker-earnings';
-  if (route === 'worker/dashboard' || route === 'worker-dashboard') return 'worker-dashboard';
-  if (route === 'admin/workers' || route === 'admin-workers') return 'admin-workers';
-  if (route === 'admin/analytics' || route === 'admin-analytics') return 'admin-analytics';
-  if (route === 'admin/dashboard' || route === 'admin-dashboard') return 'admin-dashboard';
-  if (route === 'my-bookings' || route === 'bookings') return 'my-bookings';
-  if (route === 'demand-forecast') return 'demand-forecast';
-  if (route === 'logs') return 'logs';
-  if (route === 'settings') return 'settings';
-  return 'booking';
-}
+import { parseRouteFromLocation, navigate, AppRoute, getServiceIdFromUrl, getRequestIdFromUrl } from './shared/services/router';
 
 const MainLayout: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>(parseRouteFromLocation);
+  const [activeTab, setActiveTab] = useState<AppRoute>(parseRouteFromLocation);
   const { currentUser, isSuperAdmin, currentRole } = useAuth();
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [maintenanceMsg, setMaintenanceMsg] = useState('');
+  const isChatbotEnabled = useFeature('chatbot');
 
-  // Live URL hash/path listener for address bar changes
+  const handleNavigate = (pathOrRoute: string) => {
+    navigate(pathOrRoute);
+  };
+
+  // Live URL listener for popstate & hash changes
   useEffect(() => {
     const handleLocationChange = () => {
       setActiveTab(parseRouteFromLocation());
     };
 
-    window.addEventListener('hashchange', handleLocationChange);
     window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
     return () => {
-      window.removeEventListener('hashchange', handleLocationChange);
       window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
     };
   }, []);
 
@@ -79,19 +66,28 @@ const MainLayout: React.FC = () => {
     return () => window.removeEventListener('sahyog:settings_updated', handleSettingsUpdate);
   }, []);
 
+  // -------------------------------------------------------------
+  // DEDICATED STANDALONE SUPERADMIN PORTAL (Strictly for SuperAdmin)
+  // -------------------------------------------------------------
+  if (activeTab === 'superadmin' && isSuperAdmin) {
+    return (
+      <SuperAdminPortal
+        onExit={() => {
+          handleNavigate('/');
+        }}
+      />
+    );
+  }
+
   const renderActiveModule = () => {
     switch (activeTab) {
-      // SuperAdmin 3-Tier Security Gate (Unifies with standard layout)
+      // SuperAdmin 3-Tier Security Gate
       case 'superadmin':
-        if (isSuperAdmin) {
-          return <SettingsPage initialTab="superadmin" />;
-        }
         if (currentRole === 'Admin') {
           return (
             <AdminUnauthorized
               onGoToAdmin={() => {
-                window.location.hash = '#admin/dashboard';
-                setActiveTab('admin-dashboard');
+                handleNavigate('/admin/dashboard');
               }}
             />
           );
@@ -99,8 +95,7 @@ const MainLayout: React.FC = () => {
         return (
           <NotFound404
             onGoHome={() => {
-              window.location.hash = '';
-              setActiveTab('booking');
+              handleNavigate('/');
             }}
           />
         );
@@ -110,23 +105,20 @@ const MainLayout: React.FC = () => {
         return (
           <LoginPage
             onNavigateToRegister={() => {
-              window.location.hash = '#register';
-              setActiveTab('register');
+              handleNavigate('/register');
             }}
             onNavigateToApplyWorker={() => {
-              window.location.hash = '#apply-worker';
-              setActiveTab('apply-worker');
+              handleNavigate('/apply-worker');
             }}
             onLoginSuccess={(role) => {
               if (role === 'Worker') {
-                window.location.hash = '#worker/dashboard';
-                setActiveTab('worker-dashboard');
-              } else if (role === 'Admin' || role === 'SuperAdmin') {
-                window.location.hash = '#admin/dashboard';
-                setActiveTab('admin-dashboard');
+                handleNavigate('/worker/dashboard');
+              } else if (role === 'Admin') {
+                handleNavigate('/admin/dashboard');
+              } else if (role === 'SuperAdmin') {
+                handleNavigate('/superadmin');
               } else {
-                window.location.hash = '';
-                setActiveTab('booking');
+                handleNavigate('/');
               }
             }}
           />
@@ -136,16 +128,13 @@ const MainLayout: React.FC = () => {
         return (
           <RegisterPage
             onNavigateToLogin={() => {
-              window.location.hash = '#login';
-              setActiveTab('login');
+              handleNavigate('/login');
             }}
             onNavigateToApplyWorker={() => {
-              window.location.hash = '#apply-worker';
-              setActiveTab('apply-worker');
+              handleNavigate('/apply-worker');
             }}
             onRegisterSuccess={() => {
-              window.location.hash = '';
-              setActiveTab('booking');
+              handleNavigate('/');
             }}
           />
         );
@@ -154,8 +143,7 @@ const MainLayout: React.FC = () => {
         return (
           <ApplyWorkerPage
             onNavigateToLogin={() => {
-              window.location.hash = '#login';
-              setActiveTab('login');
+              handleNavigate('/login');
             }}
           />
         );
@@ -168,8 +156,8 @@ const MainLayout: React.FC = () => {
               <h3 className="font-extrabold text-slate-900">Worker Clearance Required</h3>
               <p className="text-xs text-slate-500">Sign in with a verified artisan account to access the Worker Command Center.</p>
               <button
-                onClick={() => { window.location.hash = '#login'; setActiveTab('login'); }}
-                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold"
+                onClick={() => { handleNavigate('/login'); }}
+                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer"
               >
                 Sign In to Worker Account
               </button>
@@ -179,25 +167,23 @@ const MainLayout: React.FC = () => {
         return (
           <WorkerDashboard
             onNavigateToJobs={() => {
-              window.location.hash = '#worker/jobs';
-              setActiveTab('worker-jobs');
+              handleNavigate('/worker/jobs');
             }}
             onNavigateToEarnings={() => {
-              window.location.hash = '#worker/earnings';
-              setActiveTab('worker-earnings');
+              handleNavigate('/worker/earnings');
             }}
           />
         );
 
       case 'worker-jobs':
         if (currentRole !== 'Worker' && currentRole !== 'Admin' && !isSuperAdmin) {
-          return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
+          return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
         }
         return <WorkerJobs />;
 
       case 'worker-earnings':
         if (currentRole !== 'Worker' && currentRole !== 'Admin' && !isSuperAdmin) {
-          return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
+          return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
         }
         return <WorkerEarnings />;
 
@@ -209,8 +195,8 @@ const MainLayout: React.FC = () => {
               <h3 className="font-extrabold text-slate-900">Admin Authorization Required</h3>
               <p className="text-xs text-slate-500">This area is reserved for cooperative administration staff.</p>
               <button
-                onClick={() => { window.location.hash = ''; setActiveTab('booking'); }}
-                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold"
+                onClick={() => { handleNavigate('/'); }}
+                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer"
               >
                 Return to Safe Area
               </button>
@@ -220,44 +206,35 @@ const MainLayout: React.FC = () => {
         return (
           <AdminDashboard
             initialSubTab="overview"
-            onNavigateToForecast={() => setActiveTab('demand-forecast')}
-            onNavigateToLogs={() => setActiveTab('logs')}
-            onNavigateToSettings={() => {
-              window.location.hash = '#settings';
-              setActiveTab('settings');
-            }}
+            onNavigateToForecast={() => handleNavigate('/demand-forecast')}
+            onNavigateToLogs={() => handleNavigate('/logs')}
+            onNavigateToSettings={() => handleNavigate('/settings')}
           />
         );
 
       case 'admin-workers':
         if (currentRole !== 'Admin' && !isSuperAdmin) {
-          return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
+          return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
         }
         return (
           <AdminDashboard
             initialSubTab="workers"
-            onNavigateToForecast={() => setActiveTab('demand-forecast')}
-            onNavigateToLogs={() => setActiveTab('logs')}
-            onNavigateToSettings={() => {
-              window.location.hash = '#settings';
-              setActiveTab('settings');
-            }}
+            onNavigateToForecast={() => handleNavigate('/demand-forecast')}
+            onNavigateToLogs={() => handleNavigate('/logs')}
+            onNavigateToSettings={() => handleNavigate('/settings')}
           />
         );
 
       case 'admin-analytics':
         if (currentRole !== 'Admin' && !isSuperAdmin) {
-          return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
+          return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
         }
         return (
           <AdminDashboard
             initialSubTab="analytics"
-            onNavigateToForecast={() => setActiveTab('demand-forecast')}
-            onNavigateToLogs={() => setActiveTab('logs')}
-            onNavigateToSettings={() => {
-              window.location.hash = '#settings';
-              setActiveTab('settings');
-            }}
+            onNavigateToForecast={() => handleNavigate('/demand-forecast')}
+            onNavigateToLogs={() => handleNavigate('/logs')}
+            onNavigateToSettings={() => handleNavigate('/settings')}
           />
         );
 
@@ -274,25 +251,51 @@ const MainLayout: React.FC = () => {
             </div>
           );
         }
-        return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
+        return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
+
+      // Dedicated Routed Booking Experience (/book/:serviceId)
+      case 'book-service': {
+        const serviceId = getServiceIdFromUrl();
+        const service = serviceId ? getServiceById(serviceId) : undefined;
+        if (!service) {
+          return <NotFound404 onGoHome={() => handleNavigate('/')} />;
+        }
+        return (
+          <BookingPage
+            service={service}
+            onBackToServices={() => handleNavigate('/')}
+            onBookingSuccess={(createdReq) => handleNavigate(`/bookings/${createdReq.id}`)}
+          />
+        );
+      }
+
+      // Dedicated Request Status View (/bookings/:requestId)
+      case 'booking-status': {
+        const requestId = getRequestIdFromUrl();
+        return <MyBookings highlightedRequestId={requestId || undefined} />;
+      }
 
       case 'my-bookings':
-        if (!isFeatureEnabled('customerModule')) return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
+        if (!isFeatureEnabled('customerModule')) return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
         return <MyBookings />;
 
       case 'demand-forecast':
-        if (!isFeatureEnabled('demandForecasting')) return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
+        if (currentRole !== 'Admin' && currentRole !== 'SuperAdmin' && !isSuperAdmin) {
+          return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
+        }
+        if (!isFeatureEnabled('demandForecasting')) return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
         return <DemandForecast />;
 
       case 'logs':
-        if (!isFeatureEnabled('adminModule')) return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
+        if (!isFeatureEnabled('adminModule')) return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
         return <LogsViewer />;
 
       case 'settings':
         return <SettingsPage />;
 
+      case 'not-found':
       default:
-        return <WorkerList onNavigateToBookings={() => setActiveTab('my-bookings')} />;
+        return <NotFound404 onGoHome={() => handleNavigate('/')} />;
     }
   };
 
@@ -307,16 +310,16 @@ const MainLayout: React.FC = () => {
         </div>
       )}
 
-      <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Navbar activeTab={activeTab} onTabChange={handleNavigate} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 lg:pb-12">
         {renderActiveModule()}
       </main>
 
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNav activeTab={activeTab} onTabChange={handleNavigate} />
       <Footer />
       <PWAInstallBanner />
-      {useFeature('chatbot') && <SahyogAssistant currentPage={activeTab} />}
+      {isChatbotEnabled && <SahyogAssistant currentPage={activeTab} />}
     </div>
   );
 };
@@ -324,11 +327,13 @@ const MainLayout: React.FC = () => {
 export function App() {
   return (
     <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <MainLayout />
-        </AuthProvider>
-      </ToastProvider>
+      <I18nProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <MainLayout />
+          </AuthProvider>
+        </ToastProvider>
+      </I18nProvider>
     </ThemeProvider>
   );
 }
