@@ -113,14 +113,19 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
   const renderFormattedText = (text: string) => {
     const lines = text.split('\n');
     return lines.map((line, lIdx) => {
-      const parts = line.split(/(\*\*.*?\*\*|\*.*?\*)/g);
-      const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-');
-      const cleanLine = isBullet ? line.trim().substring(1).trim() : line;
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return <div key={lIdx} className="h-1.5" />;
+      }
+
+      const isBullet = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('* ');
+      const cleanLine = isBullet ? trimmed.replace(/^[•\-\*]\s*/, '') : trimmed;
+      const parts = cleanLine.split(/(\*\*.*?\*\*|\*.*?\*)/g);
 
       return (
-        <div key={lIdx} className={isBullet ? 'flex items-start gap-1.5 ml-1 mt-0.5' : line ? 'mt-1' : 'h-1.5'}>
-          {isBullet && <span className="text-[var(--color-primary)] font-black">•</span>}
-          <span>
+        <div key={lIdx} className={isBullet ? 'flex items-start gap-1.5 ml-1 mt-1' : 'mt-1'}>
+          {isBullet && <span className="text-[var(--color-primary)] font-bold shrink-0 leading-tight">•</span>}
+          <span className="flex-1">
             {parts.map((part, pIdx) => {
               if (part.startsWith('**') && part.endsWith('**')) {
                 return (

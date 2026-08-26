@@ -5,7 +5,6 @@ import { queryKnowledgeEngine } from './knowledgeEngine';
  * SahyogSeva AI Service
  * 
  * Powered by Google Gemini Flash API with instantaneous fallback to local domain knowledge engine.
- * Guaranteed never to hang the UI: strict 4000ms timeout on network requests.
  */
 class GeminiChatService {
   private getApiKey(): string | null {
@@ -41,12 +40,12 @@ class GeminiChatService {
           return response.trim();
         }
       } catch (err) {
-        console.warn('[SahyogSeva AI] Gemini Cloud API unavailable or timed out, smoothly answering via local knowledge engine:', err);
+        console.warn('[SahyogSeva AI] Cloud API unavailable or timed out, smoothly answering via local knowledge engine:', err);
       }
     }
 
     // High-performance domain-grounded fallback (instant & reliable)
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 200));
     return queryKnowledgeEngine(userMessage, context);
   }
 
@@ -55,25 +54,25 @@ class GeminiChatService {
     apiKey: string,
     context?: ChatbotContext
   ): Promise<string> {
-    const systemPrompt = `You are "Sahyog Assistant" (सहयोग सहायक), the friendly and knowledgeable AI assistant for SahyogSeva (सहयोग सेवा) — India's premier cooperative gig-services platform for doorstep artisan services.
+    const systemPrompt = `You are "Sahyog Assistant" (सहयोग सहायक), the helpful AI assistant for SahyogSeva (सहयोग सेवा) — India's premier cooperative gig-services platform for doorstep artisan services.
 
-Platform Highlights & Rules:
+Platform Rules & Knowledge:
 1. Services offered: Electricians, Plumbers, Carpenters, Domestic Helpers & Maid services, Appliance Repair (AC, Refrigerator, Washing Machine), House Painting, Cleaning & Pest Control.
-2. Verified Artisans: 100% police background verified with photo ID badge and skill certifications.
-3. Cooperative Model: 0% platform commission taken from artisans (workers retain 100% of their earnings).
+2. Verified Artisans: 100% police background verified with photo ID badges.
+3. Cooperative Model: 0% platform commission taken from artisans (workers keep 100% of their earnings).
 4. Fair Escrow Payments: Zero advance payment required from customers. Secure post-service payment via Cash or UPI after satisfactory job completion.
 5. Rapid Response: 30-minute rapid emergency arrival available for electrical hazards and major plumbing leaks.
-6. Current Context:
-   - User Name: ${context?.userName || 'Customer'}
-   - User Role: ${context?.currentRole || 'Customer'}
-   - Current Section/Page: ${context?.currentPage || 'Home'}
-7. Response Guidelines:
-   - Be helpful, polite, concise, and structured (use emojis, bullet points, and bold text for key terms).
-   - Answer in English by default, or in Hindi / Hinglish if the user asks in Hindi.
-   - If user asks how to book or apply, guide them step-by-step to use the app buttons.
-   - Never claim you have directly booked the job in their system; direct them to tap 'Book Now' on the worker's card.`;
+6. Current User: ${context?.userName || 'Customer'} (${context?.currentRole || 'Customer'}), on page: ${context?.currentPage || 'Home'}.
+7. Guidelines:
+   - Be friendly, polite, and concise. Use clear bullet points and bold formatting.
+   - Answer in English or Hindi (depending on user's query language).
+   - If asked how to book, guide them to tap the 'Book Service' button on any worker card.`;
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const endpoints = [
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`
+    ];
 
     const payload = {
       contents: [
@@ -92,36 +91,42 @@ Platform Highlights & Rules:
       },
     };
 
-    // Strict 3.5-second timeout to prevent UI hanging
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    let lastError: any = null;
 
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-goog-api-key': apiKey,
-        },
-        body: JSON.stringify(payload),
-      });
+    for (const endpoint of endpoints) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7500);
 
-      if (!response.ok) {
-        const errBody = await response.text().catch(() => '');
-        throw new Error(`HTTP ${response.status}: ${errBody}`);
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-goog-api-key': apiKey,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            return text;
+          }
+        } else {
+          const errBody = await response.text().catch(() => '');
+          lastError = new Error(`HTTP ${response.status}: ${errBody}`);
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        lastError = err;
       }
-
-      const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) {
-        throw new Error('Empty text payload received from Gemini endpoint.');
-      }
-
-      return text;
-    } finally {
-      clearTimeout(timeoutId);
     }
+
+    throw lastError || new Error('Failed to generate response from Gemini API');
   }
 }
 
