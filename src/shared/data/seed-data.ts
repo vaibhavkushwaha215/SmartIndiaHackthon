@@ -554,7 +554,7 @@ export const SEED_FEATURE_DEFINITIONS: import('../types').FeatureDefinition[] = 
     key: 'chatbot',
     name: 'Sahyog AI Voice & Chat Assistant',
     description: 'Multilingual conversational AI for instant vernacular service booking & support.',
-    enabled: false,
+    enabled: true,
     category: 'ai',
     isExperimental: true,
     environmentRestriction: 'all',

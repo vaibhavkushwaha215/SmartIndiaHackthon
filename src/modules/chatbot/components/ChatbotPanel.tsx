@@ -145,7 +145,7 @@ export const ChatbotPanel: React.FC<ChatbotPanelProps> = ({
   };
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 right-2 sm:right-6 z-50 w-[calc(100vw-1rem)] sm:w-96 max-w-sm max-h-[80vh] sm:max-h-[580px] h-[550px] bg-[var(--color-surface,white)] rounded-3xl shadow-2xl border border-[var(--color-border,#e2e8f0)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
+    <div className="fixed bottom-20 md:bottom-6 left-2 sm:left-6 z-50 w-[calc(100vw-1rem)] sm:w-96 max-w-sm max-h-[80vh] sm:max-h-[580px] h-[550px] bg-[var(--color-surface,white)] rounded-3xl shadow-2xl border border-[var(--color-border,#e2e8f0)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
       
       {/* 1. Header */}
       <div className={`bg-gradient-to-r ${currentTheme.colors.headerGradient || 'from-slate-950 via-slate-900 to-emerald-950'} p-4 text-white flex items-center justify-between shadow-md`}>
