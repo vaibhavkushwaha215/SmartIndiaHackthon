@@ -84,7 +84,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     <div className="max-w-7xl mx-auto space-y-6">
       
       {/* Control Center Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-purple-950 via-slate-900 to-indigo-950 p-6 sm:p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-slate-900 bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 p-6 sm:p-8 text-white shadow-xl border border-purple-500/20">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">

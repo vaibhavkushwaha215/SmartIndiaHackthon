@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Phone, Mail, MapPin, Heart, Smartphone, Download, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useI18n } from '../../modules/i18n';
 
 const InstallAppFooterButton: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -119,8 +120,8 @@ const InstallAppFooterButton: React.FC = () => {
 };
 
 export const Footer: React.FC = () => {
-  const { i18n } = useTranslation();
-  const isHindi = i18n.language === 'hi';
+  const { t, language } = useI18n();
+  const isHindi = language === 'hi';
 
   return (
     <footer className="bg-[#091424] text-slate-300 pt-16 pb-12 border-t border-slate-800">
@@ -141,26 +142,26 @@ export const Footer: React.FC = () => {
                 }}
               />
               <div className="font-extrabold text-xl text-white tracking-tight">
-                SahyogSeva <span className="text-emerald-400 text-xs font-semibold">COMMUNITY</span>
+                SahyogSeva <span className="text-emerald-400 text-xs font-semibold">COOPERATIVE</span>
               </div>
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
-              Empowering local community professionals and providing homeowners with dependable, transparent, and fair-priced doorstep services.
+              {t('footer.brandDesc', 'Empowering local community professionals and providing homeowners with dependable, transparent, and fair-priced doorstep services.')}
             </p>
 
             <div className="space-y-2 text-xs text-slate-300 pt-2 font-medium">
               <div className="flex items-center gap-2 text-emerald-400">
                 <Phone className="w-4 h-4" />
-                <span>Helpline: <strong>1800-SAHYOG</strong> (9 AM - 10 PM)</span>
+                <span>{t('footer.helpline', 'Helpline')}: <strong>1800-SAHYOG</strong> {t('footer.hours', '(9 AM - 10 PM)')}</span>
               </div>
               <div className="flex items-center gap-2 text-slate-400">
                 <Mail className="w-4 h-4" />
-                <span>support@sahyogseva.coop</span>
+                <span>{t('footer.email', 'support@sahyogseva.coop')}</span>
               </div>
               <div className="flex items-center gap-2 text-slate-400">
                 <MapPin className="w-4 h-4" />
-                <span>Hyperlocal Operations across 10+ Major Metropolitan Hubs</span>
+                <span>{t('footer.hyperlocal', 'Hyperlocal Operations across 10+ Major Metropolitan Hubs')}</span>
               </div>
             </div>
 
@@ -172,36 +173,35 @@ export const Footer: React.FC = () => {
 
           {/* Services Column */}
           <div className="space-y-3 text-xs">
-            <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>SERVICES</div>
+            <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>{t('footer.servicesCol', 'SERVICES')}</div>
             <ul className="space-y-2 text-slate-400">
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Electrician & Wireman</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Plumber & Pipe Repairs</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Domestic Help & Maid</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Carpenter & Assembly</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">AC & Appliance Repair</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('services.electrician', 'Electrician & Wireman')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('services.plumber', 'Plumber & Pipe Repairs')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('services.cleaning', 'Domestic Help & Maid')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('services.carpenter', 'Carpenter & Assembly')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('services.applianceRepair', 'AC & Appliance Repair')}</li>
             </ul>
           </div>
 
           {/* Specialized Care */}
           <div className="space-y-3 text-xs">
-            <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>SPECIALIZED CARE</div>
+            <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>{t('footer.cooperativeCol', 'COOPERATIVE')}</div>
             <ul className="space-y-2 text-slate-400">
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Home Deep Cleaning</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Painter & Wall Finish</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Pest Control Services</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Solar Inverter Setup</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('footer.charter', 'Artisan Charter')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('footer.fairWages', 'Fair Wages Guarantee')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('footer.governance', 'Cooperative Governance')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('footer.grievance', 'Grievance Redressal')}</li>
             </ul>
           </div>
 
-          {/* Popular Localities */}
+          {/* Legal Column */}
           <div className="space-y-3 text-xs">
-            <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>POPULAR LOCALITIES</div>
+            <div className="text-white font-bold tracking-wider uppercase text-xs" role="heading" aria-level={2}>{t('footer.legalCol', 'TRUST & LEGAL')}</div>
             <ul className="space-y-2 text-slate-400">
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Indiranagar (Bengaluru)</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Koramangala (Bengaluru)</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Lajpat Nagar (South Delhi)</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Dwarka (West Delhi)</li>
-              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">Bandra West (Mumbai)</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('footer.terms', 'Terms of Service')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('footer.privacy', 'Privacy Policy')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('footer.escrowSecurity', 'Escrow & Payment Safety')}</li>
+              <li className="hover:text-[var(--color-primary)] transition cursor-pointer">{t('footer.insurance', 'Workmanship Warranty')}</li>
             </ul>
           </div>
 
@@ -210,7 +210,7 @@ export const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div>
-            © 2026 SahyogSeva Community Services. Designed for local trust and fair empowerment.
+            © 2026 SahyogSeva. {t('footer.allRightsReserved', 'All Rights Reserved. Registered Worker Cooperative Enterprise.')}
           </div>
           <div className="flex items-center gap-1.5 text-slate-400">
             <span>Made for Indian Neighborhoods</span>

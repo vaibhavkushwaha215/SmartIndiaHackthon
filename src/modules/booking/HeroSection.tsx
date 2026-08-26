@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../auth';
 import { useTheme } from '../../shared/context/ThemeContext';
 import { ShieldCheck, Banknote, Clock, Award, ArrowRight, MapPin, CheckCircle2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '../i18n';
 
 interface HeroSectionProps {
   selectedArea: string;
@@ -15,12 +15,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onExploreClick,
   onTrackClick,
 }) => {
-  const { i18n } = useTranslation();
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const { currentTheme } = useTheme();
-  const isHindi = i18n.language === 'hi';
 
-  const userName = currentUser?.name?.split(' ')[0] || (isHindi ? 'रमेश' : 'Ramesh');
+  const userName = currentUser?.name?.split(' ')[0] || 'Ramesh';
+  const areaName = selectedArea === 'ALL' ? 'Indiranagar, Bengaluru' : selectedArea;
 
   return (
     <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${currentTheme.colors.headerGradient || 'from-slate-950 via-slate-900 to-emerald-950'} text-white p-5 sm:p-8 md:p-12 shadow-2xl border border-white/10 transition-all duration-300`}>
@@ -38,25 +38,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="inline-flex max-w-full items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 border border-white/10 text-xs font-semibold text-white/90 backdrop-blur-sm">
             <MapPin className="w-3.5 h-3.5 text-[var(--color-accent)] shrink-0" />
             <span className="truncate">
-              {isHindi
-                ? `सेवा क्षेत्र: ${selectedArea === 'ALL' ? 'Indiranagar, Bengaluru' : selectedArea} • सत्यापित स्थानीय विशेषज्ञ`
-                : `Serving ${selectedArea === 'ALL' ? 'Indiranagar, Bengaluru' : selectedArea} • Verified Local Experts`}
+              {t('home.hero.servingArea', { area: areaName })}
             </span>
           </div>
 
           {/* Dynamic Welcome Heading */}
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight break-words">
-            {isHindi ? `नमस्ते, ${userName}!` : `Namaste, ${userName}!`} <br />
+            {t('home.hero.greeting', { name: userName })} <br />
             <span className="text-[var(--color-accent)]">
-              {isHindi ? '30 मिनट में घर पर सेवा।' : 'Doorstep Services in 30 Minutes.'}
+              {t('home.hero.doorstepTagline')}
             </span>
           </h1>
 
           {/* Subtitle */}
           <p className="text-xs sm:text-sm text-white/80 max-w-xl leading-relaxed">
-            {isHindi
-              ? 'पृष्ठभूमि-सत्यापित इलेक्ट्रीशियन, तकनीशियन और घरेलू सहायक बुक करें। शून्य अग्रिम शुल्क — कार्य संतुष्टि के बाद ही नकद या UPI द्वारा भुगतान करें।'
-              : 'Book background-verified electricians, plumbers, domestic helpers, carpenters & technicians. Pay zero advance — pay cash or UPI only after complete service.'}
+            {t('home.hero.heroDesc')}
           </p>
 
           {/* Action CTA Buttons */}
@@ -65,7 +61,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               onClick={onExploreClick}
               className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-primary)] text-slate-950 font-bold text-xs sm:text-sm shadow-lg transition-all flex items-center gap-2 cursor-pointer hover:scale-105"
             >
-              <span>{isHindi ? 'सभी सेवाएं देखें' : 'Explore All Services'}</span>
+              <span>{t('home.hero.exploreServices')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
@@ -73,7 +69,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               onClick={onTrackClick}
               className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm border border-white/20 backdrop-blur-sm transition cursor-pointer"
             >
-              {isHindi ? 'सक्रिय बुकिंग ट्रैक करें' : 'Track Active Bookings'}
+              {t('home.hero.trackBookings')}
             </button>
           </div>
 
@@ -81,19 +77,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-6 border-t border-emerald-800/60 text-xs font-semibold text-emerald-100/90">
             <div className="flex items-center gap-1.5 min-w-0">
               <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="truncate">Police Verified</span>
+              <span className="truncate">{t('home.hero.policeVerified')}</span>
             </div>
             <div className="flex items-center gap-1.5 min-w-0">
               <Banknote className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="truncate">Pay After Work</span>
+              <span className="truncate">{t('home.hero.payAfterWork')}</span>
             </div>
             <div className="flex items-center gap-1.5 min-w-0">
               <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="truncate">30m Arrival</span>
+              <span className="truncate">{t('home.hero.arrival30m')}</span>
             </div>
             <div className="flex items-center gap-1.5 min-w-0">
               <Award className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="truncate">30-Day Warranty</span>
+              <span className="truncate">{t('home.hero.warranty30d')}</span>
             </div>
           </div>
         </div>
@@ -118,13 +114,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               SahyogSeva Cooperative
             </div>
             <div className="text-xs text-emerald-300 font-semibold italic">
-              {isHindi ? '"हम साथ हैं, सेवा के लिए"' : '"Together We Serve, Together We Rise"'}
+              {t('home.hero.coopMotto')}
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-600/40 px-3 py-1.5 rounded-full text-xs text-emerald-200">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Zero Brokerage • 100% Escrow Protection</span>
+            <span>{t('home.hero.zeroBrokerage')}</span>
           </div>
         </div>
 

@@ -1,9 +1,13 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import enTranslation from './en.json';
-import hiTranslation from './hi.json';
+import enTranslation from '../../modules/i18n/locales/en.json';
+import hiTranslation from '../../modules/i18n/locales/hi.json';
+import teTranslation from '../../modules/i18n/locales/te.json';
+import knTranslation from '../../modules/i18n/locales/kn.json';
+import taTranslation from '../../modules/i18n/locales/ta.json';
+import { LanguageCode } from '../../modules/i18n/types';
 
-const savedLang = localStorage.getItem('sahyog_lang') || 'en';
+const savedLang = (localStorage.getItem('sahyog_lang') as LanguageCode) || 'en';
 
 i18n
   .use(initReactI18next)
@@ -11,6 +15,9 @@ i18n
     resources: {
       en: { translation: enTranslation },
       hi: { translation: hiTranslation },
+      te: { translation: teTranslation },
+      kn: { translation: knTranslation },
+      ta: { translation: taTranslation },
     },
     lng: savedLang,
     fallbackLng: 'en',
@@ -19,8 +26,12 @@ i18n
     },
   });
 
-export const changeLanguage = (lang: 'en' | 'hi') => {
-  localStorage.setItem('sahyog_lang', lang);
+export const changeLanguage = (lang: LanguageCode) => {
+  try {
+    localStorage.setItem('sahyog_lang', lang);
+  } catch {
+    // Ignore
+  }
   i18n.changeLanguage(lang);
 };
 

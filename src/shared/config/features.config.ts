@@ -36,7 +36,7 @@ const LEGACY_KEY_MAP: Record<string, FeatureKey> = {
   AUDIT_LOGS: 'adminModule',
   EMERGENCY_SOS: 'emergencyBooking',
   WORKER_APPLICATION: 'workerApplications',
-  REVIEWS_AND_RATINGS: 'customerModule',
+  REVIEWS_AND_RATINGS: 'workerReviewsVisibility',
   PAYMENT_CONFIRMATION: 'payments',
   LANGUAGE_SWITCHER: 'multilingual',
   LOCATION_AUTO_DETECT: 'customerModule',

@@ -17,7 +17,9 @@ import {
   DollarSign,
   ArrowUpDown,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '../i18n';
+import { useAuth } from '../auth';
+import { isFeatureEnabled } from '../../shared/config/features.config';
 
 interface WorkerDetailModalProps {
   worker: Worker | null;
@@ -96,7 +98,9 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
   onClose,
   onBookNow,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useI18n();
+  const { currentRole } = useAuth();
+  const canSeeReviews = isFeatureEnabled('workerReviewsVisibility') || currentRole === 'Admin' || currentRole === 'SuperAdmin';
   const [activeSection, setActiveSection] = useState<'info' | 'skills' | 'experience' | 'tariff' | 'reviews'>('info');
   const [reviewSort, setReviewSort] = useState<'all' | 'positive' | 'helpful' | 'critical'>('all');
   const [reviews, setReviews] = useState<ReviewWithHelpful[]>(INITIAL_SAMPLE_REVIEWS);
@@ -172,7 +176,7 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
       subtitle="Verified by State Electrical Cooperative Federation • Zero Commission Model"
     >
       <div className="flex flex-col md:flex-row gap-6 md:gap-8">
-        
+
         {/* Left Side: Navigation Tabs */}
         <div className="md:w-56 shrink-0 flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 border-b md:border-b-0 md:border-r border-slate-100 pr-0 md:pr-6">
           <div className="hidden md:block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">
@@ -181,11 +185,10 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
 
           <button
             onClick={() => scrollToSection('info')}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center gap-2.5 ${
-              activeSection === 'info'
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center gap-2.5 ${activeSection === 'info'
                 ? 'bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <User className="w-4 h-4 text-emerald-600" />
             <span>Worker Info</span>
@@ -193,11 +196,10 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
 
           <button
             onClick={() => scrollToSection('skills')}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center gap-2.5 ${
-              activeSection === 'skills'
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center gap-2.5 ${activeSection === 'skills'
                 ? 'bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <Wrench className="w-4 h-4 text-indigo-600" />
             <span>Skills & Diagnostics</span>
@@ -205,11 +207,10 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
 
           <button
             onClick={() => scrollToSection('experience')}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center gap-2.5 ${
-              activeSection === 'experience'
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center gap-2.5 ${activeSection === 'experience'
                 ? 'bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>Experience & Verification</span>
@@ -217,37 +218,37 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
 
           <button
             onClick={() => scrollToSection('tariff')}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center gap-2.5 ${
-              activeSection === 'tariff'
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center gap-2.5 ${activeSection === 'tariff'
                 ? 'bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200 shadow-2xs'
                 : 'text-slate-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <DollarSign className="w-4 h-4 text-emerald-600" />
             <span>Fair Tariff & Escrow</span>
           </button>
 
-          <button
-            onClick={() => scrollToSection('reviews')}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center justify-between ${
-              activeSection === 'reviews'
-                ? 'bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200 shadow-2xs'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <Award className="w-4 h-4 text-amber-500" />
-              <span>Reviews</span>
-            </div>
-            <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">
-              {reviews.length}
-            </span>
-          </button>
+          {canSeeReviews && (
+            <button
+              onClick={() => scrollToSection('reviews')}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition whitespace-nowrap cursor-pointer flex items-center justify-between ${activeSection === 'reviews'
+                  ? 'bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200 shadow-2xs'
+                  : 'text-slate-600 hover:bg-slate-50'
+                }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Award className="w-4 h-4 text-amber-500" />
+                <span>Reviews</span>
+              </div>
+              <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">
+                {reviews.length}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Right Side: Spacious Content */}
         <div className="flex-1 space-y-6 md:pr-2 pb-4 scroll-smooth">
-          
+
           {/* Section 1: Worker Info */}
           <div id="modal-sec-info" className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 bg-emerald-50/70 p-5 rounded-2xl border border-emerald-200/80">
@@ -265,13 +266,15 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
                   <span>{worker.area}</span>
                 </div>
-                <div className="flex items-center gap-2.5 pt-1">
-                  <StarRating rating={worker.rating_avg} size="sm" showNumber />
-                  <span className="text-slate-300">•</span>
-                  <span className="text-xs font-bold text-slate-700">
-                    {worker.completed_jobs_count || 342}+ jobs completed
-                  </span>
-                </div>
+                {canSeeReviews && (
+                  <div className="flex items-center gap-2.5 pt-1">
+                    <StarRating rating={worker.rating_avg} size="sm" showNumber />
+                    <span className="text-slate-300">•</span>
+                    <span className="text-xs font-bold text-slate-700">
+                      {worker.completed_jobs_count || 342}+ jobs completed
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="sm:text-right w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-emerald-200">
                 <div className="text-xs text-slate-500 font-semibold">{t('booking.rate_per_hr')}</div>
@@ -338,89 +341,88 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
           </div>
 
           {/* Section 5: Verified Reviews with Positive / Helpful / Critical Sorting */}
-          <div id="modal-sec-reviews" className="space-y-4 pt-2 border-t border-slate-100">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-500" />
-                Verified Cooperative Reviews ({reviews.length})
-              </h5>
+          {canSeeReviews && (
+            <div id="modal-sec-reviews" className="space-y-4 pt-2 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-500" />
+                  Verified Cooperative Reviews ({reviews.length})
+                </h5>
 
-              {/* Sorting Filter Chips */}
-              <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
-                <span className="text-[10px] font-bold text-slate-400 uppercase px-2 flex items-center gap-1">
-                  <ArrowUpDown className="w-3 h-3" /> Sort:
-                </span>
-                {(['all', 'positive', 'helpful', 'critical'] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => setReviewSort(mode)}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition cursor-pointer ${
-                      reviewSort === mode
-                        ? 'bg-white text-slate-900 shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                {/* Sorting Filter Chips */}
+                <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase px-2 flex items-center gap-1">
+                    <ArrowUpDown className="w-3 h-3" /> Sort:
+                  </span>
+                  {(['all', 'positive', 'helpful', 'critical'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setReviewSort(mode)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition cursor-pointer ${reviewSort === mode
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                    >
+                      {mode === 'all' ? 'All' : mode}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sorted Reviews List */}
+              <div className="space-y-3">
+                {sortedReviews.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="p-4 bg-white rounded-2xl border border-slate-200 text-xs space-y-2.5 shadow-2xs hover:border-slate-300 transition"
                   >
-                    {mode === 'all' ? 'All' : mode}
-                  </button>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 flex items-center gap-2">
+                        <User className="w-4 h-4 text-slate-400" />
+                        {rev.customer_name || 'Verified Customer'}
+                      </span>
+                      <StarRating rating={rev.rating} size="sm" showNumber />
+                    </div>
+
+                    <p className="text-slate-600 italic leading-relaxed text-xs sm:text-sm">"{rev.comment}"</p>
+
+                    {/* Helpful Upvote & Downvote */}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-400">
+                      <span className="text-[11px] text-emerald-700 font-semibold">✓ Verified Cooperative Service</span>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-slate-500 font-medium">Helpful?</span>
+
+                        {/* Upvote Button */}
+                        <button
+                          onClick={() => handleVote(rev.id, 'up')}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition cursor-pointer text-xs ${rev.userVoted === 'up'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold'
+                              : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                            }`}
+                        >
+                          <ThumbsUp className="w-3.5 h-3.5" />
+                          <span>{rev.helpfulVotes}</span>
+                        </button>
+
+                        {/* Downvote Button */}
+                        <button
+                          onClick={() => handleVote(rev.id, 'down')}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition cursor-pointer text-xs ${rev.userVoted === 'down'
+                              ? 'bg-rose-50 text-rose-800 border-rose-300 font-bold'
+                              : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                            }`}
+                        >
+                          <ThumbsDown className="w-3.5 h-3.5" />
+                          <span>{rev.unhelpfulVotes}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
-
-            {/* Sorted Reviews List */}
-            <div className="space-y-3">
-              {sortedReviews.map((rev) => (
-                <div
-                  key={rev.id}
-                  className="p-4 bg-white rounded-2xl border border-slate-200 text-xs space-y-2.5 shadow-2xs hover:border-slate-300 transition"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 flex items-center gap-2">
-                      <User className="w-4 h-4 text-slate-400" />
-                      {rev.customer_name || 'Verified Customer'}
-                    </span>
-                    <StarRating rating={rev.rating} size="sm" showNumber />
-                  </div>
-
-                  <p className="text-slate-600 italic leading-relaxed text-xs sm:text-sm">"{rev.comment}"</p>
-
-                  {/* Helpful Upvote & Downvote */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-400">
-                    <span className="text-[11px] text-emerald-700 font-semibold">✓ Verified Cooperative Service</span>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-slate-500 font-medium">Helpful?</span>
-                      
-                      {/* Upvote Button */}
-                      <button
-                        onClick={() => handleVote(rev.id, 'up')}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition cursor-pointer text-xs ${
-                          rev.userVoted === 'up'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold'
-                            : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
-                        }`}
-                      >
-                        <ThumbsUp className="w-3.5 h-3.5" />
-                        <span>{rev.helpfulVotes}</span>
-                      </button>
-
-                      {/* Downvote Button */}
-                      <button
-                        onClick={() => handleVote(rev.id, 'down')}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition cursor-pointer text-xs ${
-                          rev.userVoted === 'down'
-                            ? 'bg-rose-50 text-rose-800 border-rose-300 font-bold'
-                            : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
-                        }`}
-                      >
-                        <ThumbsDown className="w-3.5 h-3.5" />
-                        <span>{rev.unhelpfulVotes}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
         </div>
       </div>

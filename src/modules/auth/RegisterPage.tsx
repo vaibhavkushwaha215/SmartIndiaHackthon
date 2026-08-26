@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { useToast } from '../../shared/components/Toast';
 import { UserPlus, User, Phone, Lock, MapPin, Building, ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { useI18n } from '../i18n';
+import { navigate } from '../../shared/services/router';
 
 interface RegisterPageProps {
   onNavigateToLogin: () => void;
@@ -14,6 +16,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
   onNavigateToApplyWorker,
   onRegisterSuccess = () => {},
 }) => {
+  const { t } = useI18n();
   const { register } = useAuth();
   const { showError, showSuccess } = useToast();
 
@@ -31,19 +34,19 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      showError(400, 'Please enter your full name');
+      showError(400, t('auth.error_name', 'Please enter your full name'));
       return;
     }
     if (formData.phone.trim().length !== 10) {
-      showError(102, 'Please enter a valid 10-digit mobile number');
+      showError(102, t('auth.invalid_phone', 'Please enter a valid 10-digit mobile number'));
       return;
     }
     if (!formData.password || formData.password.length < 6) {
-      showError(400, 'Password must be at least 6 characters long');
+      showError(400, t('auth.error_password', 'Password must be at least 6 characters long'));
       return;
     }
     if (formData.pincode && formData.pincode.length !== 6) {
-      showError(304, 'Pincode must be exactly 6 digits');
+      showError(304, t('auth.error_pincode', 'Pincode must be exactly 6 digits'));
       return;
     }
 
@@ -55,11 +58,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
         password: formData.password,
         role: 'Customer',
       });
-      showSuccess(`Account created successfully! Welcome to SahyogSeva, ${formData.name}.`);
+      showSuccess(t('auth.register_success', 'Account created successfully!'));
       onRegisterSuccess();
     } catch (err: any) {
       const code = err.code || 103;
-      showError(code, err.message || 'Registration failed');
+      showError(code, err.message || t('auth.register_failed', 'Registration failed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,10 +78,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             <UserPlus className="w-6 h-6" />
           </div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-            Create Customer Account
+            {t('auth.registerTitle', 'Create Customer Account')}
           </h2>
           <p className="text-xs text-slate-500">
-            Book certified, police-verified local professionals with escrow guarantee.
+            {t('auth.registerSubtitle', 'Join the ethical cooperative services platform')}
           </p>
         </div>
 
@@ -86,7 +89,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Full Name *
+              {t('auth.name_label', 'Full Name')} *
             </label>
             <div className="relative">
               <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -102,7 +105,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              10-Digit Mobile Number *
+              {t('auth.phone_label', '10-Digit Mobile Number')} *
             </label>
             <div className="relative">
               <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -119,7 +122,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Password (min 6 characters) *
+              {t('auth.password_label', 'Password')} *
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -139,73 +142,67 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                 City / Region
               </label>
               <div className="relative">
-                <Building className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                <Building className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="text"
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="e.g. New Delhi"
-                  className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-600"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                6-Digit Pincode
+                Neighborhood / Area
               </label>
               <div className="relative">
-                <MapPin className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="text"
-                  maxLength={6}
-                  value={formData.pincode}
-                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value.replace(/\D/g, '') })}
-                  placeholder="e.g. 110024"
-                  className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  value={formData.area}
+                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                  placeholder="e.g. Indiranagar"
+                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-600"
                 />
               </div>
             </div>
           </div>
 
+          <div className="flex items-center gap-2 p-3 bg-emerald-50/60 rounded-xl border border-emerald-200/60 text-xs text-emerald-800 font-medium">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{t('auth.charterBadge', '0% Commission Cooperative Charter')}</span>
+          </div>
+
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 px-4 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+            className="w-full py-3 px-4 rounded-xl bg-indigo-900 hover:bg-indigo-950 text-white font-bold text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
-            <span>{isSubmitting ? 'Creating Account...' : 'Register as Customer'}</span>
+            <span>{isSubmitting ? t('common.loading', 'Creating Account...') : t('common.submit', 'Register Customer Account')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        {/* Footer Links */}
-        <div className="pt-2 border-t border-slate-100 space-y-2 text-center text-xs">
-          <div className="flex items-center justify-center gap-1 text-[var(--color-text-secondary)]">
-            <span>Already have an account?</span>
+        {/* Secondary Links */}
+        <div className="pt-2 border-t border-slate-100 space-y-2.5 text-center text-xs">
+          <div>
             <button
               onClick={onNavigateToLogin}
-              className="font-bold text-[var(--color-primary)] hover:underline cursor-pointer"
+              className="font-bold text-indigo-700 hover:underline cursor-pointer"
             >
-              Sign In
+              {t('auth.haveAccount', 'Already have an account? Sign In →')}
             </button>
           </div>
 
-          <button
-            onClick={onNavigateToApplyWorker}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer block mx-auto"
-          >
-            Looking to offer services? <u>Apply as a Cooperative Worker</u>
-          </button>
-
-          <div className="pt-2">
+          <div className="pt-1">
             <button
               onClick={() => {
-                window.location.hash = '';
-                window.location.pathname = '/';
+                navigate('/');
               }}
               className="text-slate-400 hover:text-slate-600 text-xs font-semibold hover:underline cursor-pointer"
             >
-              ← Return to Home / Browse Services
+              ← {t('common.returnHome', 'Return to Homepage')}
             </button>
           </div>
         </div>

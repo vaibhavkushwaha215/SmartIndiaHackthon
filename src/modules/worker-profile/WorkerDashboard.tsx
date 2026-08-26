@@ -24,6 +24,8 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
+import { useI18n } from '../i18n';
+
 interface WorkerDashboardProps {
   onNavigateToJobs?: () => void;
   onNavigateToEarnings?: () => void;
@@ -33,6 +35,7 @@ export const WorkerDashboard: React.FC<WorkerDashboardProps> = ({
   onNavigateToJobs,
   onNavigateToEarnings,
 }) => {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
 
@@ -310,7 +313,7 @@ export const WorkerDashboard: React.FC<WorkerDashboardProps> = ({
 
       {/* 4. Active Job Spotlight */}
       {activeJob && (
-        <div className="bg-linear-to-r from-slate-900 to-indigo-950 rounded-3xl p-6 text-white shadow-lg space-y-4">
+        <div className="bg-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 rounded-3xl p-6 text-white shadow-lg space-y-4 border border-indigo-500/20">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <span className="bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-extrabold px-3 py-1 rounded-full uppercase flex items-center gap-1">

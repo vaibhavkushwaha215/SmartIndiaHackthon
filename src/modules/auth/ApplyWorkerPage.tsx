@@ -103,7 +103,7 @@ export const ApplyWorkerPage: React.FC<ApplyWorkerPageProps> = ({
     <div className="max-w-4xl mx-auto space-y-8 py-4">
       
       {/* Top Banner */}
-      <div className="rounded-3xl bg-linear-to-r from-emerald-900 via-teal-950 to-slate-900 p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="rounded-3xl bg-slate-900 bg-gradient-to-r from-emerald-900 via-teal-950 to-slate-900 p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-emerald-500/20">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">

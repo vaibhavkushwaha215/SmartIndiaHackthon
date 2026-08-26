@@ -22,10 +22,10 @@ import {
   Calendar,
   Layers,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '../i18n';
 
 export const DemandForecast: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useI18n();
   const [forecastData, setForecastData] = useState<AreaDemandForecast[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -58,7 +58,7 @@ export const DemandForecast: React.FC = () => {
             <span>{t('forecast.badge', 'Preview Feature • Predictive Dispatch AI')}</span>
           </div>
           <span className="bg-white text-amber-900 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-            Mocked / Prototype Data
+            Prototype Data
           </span>
         </div>
 
@@ -74,8 +74,8 @@ export const DemandForecast: React.FC = () => {
       <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-3 text-xs text-amber-900 shadow-xs">
         <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
         <div>
-          <span className="font-bold text-amber-950">Active Cooperative Mobilization Alert: </span>
-          {t('forecast.high_demand_alert', 'Cooperative mobilization recommended for South & West Delhi. 30% surge expected during morning peak hours (09:00 AM - 01:00 PM).')}
+          <span className="font-bold text-amber-950">{t('forecast.table_status', 'Cooperative Alert')}: </span>
+          {t('forecast.high_demand_alert', 'Cooperative mobilization recommended for high demand zones.')}
         </div>
       </div>
 
@@ -88,11 +88,11 @@ export const DemandForecast: React.FC = () => {
               <span>{t('forecast.chart_title', 'Predicted Bookings by Area (Next 7 Days)')}</span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Projected booking volume vs. currently active registered electricians.
+              {t('forecast.predictedBookings', 'Projected booking volume vs. currently active registered electricians.')}
             </p>
           </div>
           <div className="flex items-center gap-4 text-xs font-bold text-slate-700">
-            <span className="text-emerald-700">Total Forecasted: {totalPredictedJobs} Jobs</span>
+            <span className="text-emerald-700">Total: {totalPredictedJobs} Jobs</span>
           </div>
         </div>
 
@@ -130,7 +130,7 @@ export const DemandForecast: React.FC = () => {
               />
               <Bar
                 dataKey="predicted_jobs"
-                name="Predicted Job Requests"
+                name={t('forecast.table_demand', 'Predicted Demand')}
                 fill="#f59e0b"
                 radius={[6, 6, 0, 0]}
               >
@@ -140,7 +140,7 @@ export const DemandForecast: React.FC = () => {
               </Bar>
               <Bar
                 dataKey="active_workers"
-                name="Active Available Workers"
+                name={t('forecast.table_workers', 'Active Workers')}
                 fill="#10b981"
                 radius={[6, 6, 0, 0]}
               />
@@ -153,7 +153,7 @@ export const DemandForecast: React.FC = () => {
       <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
         <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
           <Layers className="w-4 h-4 text-indigo-600" />
-          <span>Regional Demand & Peak Load Analysis</span>
+          <span>{t('forecast.chart_title', 'Regional Demand & Peak Load Analysis')}</span>
         </h3>
 
         <div className="overflow-x-auto">
@@ -171,9 +171,9 @@ export const DemandForecast: React.FC = () => {
               {forecastData.map((row) => (
                 <tr key={row.area} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3.5 px-3 font-bold text-slate-900">{row.area}</td>
-                  <td className="py-3.5 px-3 font-bold text-amber-700">{row.predicted_jobs} requests</td>
+                  <td className="py-3.5 px-3 font-bold text-amber-700">{row.predicted_jobs}</td>
                   <td className="py-3.5 px-3 text-slate-600">{row.peak_time}</td>
-                  <td className="py-3.5 px-3 font-semibold text-emerald-800">{row.active_workers} electricians</td>
+                  <td className="py-3.5 px-3 font-semibold text-emerald-800">{row.active_workers}</td>
                   <td className="py-3.5 px-3">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-md font-bold text-[10px] uppercase ${
@@ -184,7 +184,7 @@ export const DemandForecast: React.FC = () => {
                           : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                       }`}
                     >
-                      {row.demand_level} Demand
+                      {row.demand_level === 'High' ? t('forecast.high', 'High') : row.demand_level === 'Medium' ? t('forecast.moderate', 'Moderate') : t('forecast.balanced', 'Balanced')}
                     </span>
                   </td>
                 </tr>

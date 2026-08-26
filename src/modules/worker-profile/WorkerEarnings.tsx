@@ -15,7 +15,10 @@ import {
   Percent,
 } from 'lucide-react';
 
+import { useI18n } from '../i18n';
+
 export const WorkerEarnings: React.FC = () => {
+  const { t } = useI18n();
   const { currentUser } = useAuth();
   const [transactions, setTransactions] = useState<WorkerEarningTransaction[]>([]);
 
@@ -38,18 +41,18 @@ export const WorkerEarnings: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* Top Banner */}
-      <div className="rounded-3xl bg-linear-to-r from-emerald-900 via-teal-950 to-slate-900 p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="rounded-3xl bg-slate-900 bg-gradient-to-r from-emerald-900 via-teal-950 to-slate-900 p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-emerald-500/20">
         <div>
           <div className="flex items-center gap-2">
             <span className="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5" /> 0% Cooperative Commission Charter
+              <ShieldCheck className="w-3.5 h-3.5" /> {t('auth.charterBadge', '0% Cooperative Commission Charter')}
             </span>
           </div>
           <h2 className="text-2xl font-black tracking-tight text-white mt-1">
-            Artisan Earnings & Escrow Ledger
+            {t('worker.earningsTitle', 'Artisan Earnings & Escrow Ledger')}
           </h2>
           <p className="text-xs text-emerald-200/80 max-w-xl">
-            You retain 100% of your listed hourly rate. Payments are held in protected cooperative escrow and settled upon job completion.
+            {t('worker.earningsSubtitle', 'You retain 100% of your listed hourly rate. Payments are held in protected cooperative escrow and settled upon job completion.')}
           </p>
         </div>
 

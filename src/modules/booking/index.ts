@@ -1,5 +1,6 @@
 export { WorkerList } from './WorkerList';
 export { MyBookings } from './MyBookings';
+export { BookingPage } from './BookingPage';
 export { BookingWizard } from './BookingWizard';
 export { PaymentConfirmModal } from './PaymentConfirmModal';
 export { ReviewModal } from './ReviewModal';
