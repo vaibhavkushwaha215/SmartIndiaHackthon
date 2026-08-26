@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../auth';
 import { db } from '../../shared/services/database';
 import { FeatureFlagsPanel } from './FeatureFlagsPanel';
@@ -69,6 +69,8 @@ export const SuperAdminPortal: React.FC<SuperAdminPortalProps> = ({ onExit }) =>
 
   const [simulatedErrorActive, setSimulatedErrorActive] = useState(false);
 
+  const activeFlagsCount = useMemo(() => features.filter((f) => f.enabled).length, [features]);
+
   useEffect(() => {
     Promise.all([
       db.getUsers(),
@@ -80,11 +82,11 @@ export const SuperAdminPortal: React.FC<SuperAdminPortalProps> = ({ onExit }) =>
         totalUsers: users.length,
         totalWorkers: workers.length,
         totalBookings: bookings.length,
-        activeFlags: features.filter((f) => f.enabled).length,
+        activeFlags: activeFlagsCount,
         isMaintenance: settings.maintenanceMode,
       });
     });
-  }, [features]);
+  }, [activeFlagsCount]);
 
   const triggerErrorSimulation = () => {
     if (simulatedErrorActive) {

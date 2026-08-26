@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../auth';
 import { db } from '../../shared/services/database';
 import { AccessDenied } from './AccessDenied';
@@ -46,6 +46,8 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     isMaintenance: false,
   });
 
+  const activeFlagsCount = useMemo(() => features.filter((f) => f.enabled).length, [features]);
+
   useEffect(() => {
     if (!isSuperAdmin) return;
 
@@ -59,11 +61,11 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         totalUsers: users.length,
         totalWorkers: workers.length,
         totalBookings: bookings.length,
-        activeFlags: features.filter((f) => f.enabled).length,
+        activeFlags: activeFlagsCount,
         isMaintenance: settings.maintenanceMode,
       });
     });
-  }, [isSuperAdmin, features]);
+  }, [isSuperAdmin, activeFlagsCount]);
 
   // Strict Security Clearance Verification
   if (!isSuperAdmin) {

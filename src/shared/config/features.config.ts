@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FeatureKey, FeatureDefinition, FeatureFlagState } from '../types';
 import { SEED_FEATURE_DEFINITIONS } from '../data/seed-data';
 
@@ -134,20 +134,22 @@ export function useFeatureDefinitions(): {
     return () => window.removeEventListener(EVENT_NAME, handleUpdate);
   }, []);
 
-  const features: FeatureDefinition[] = SEED_FEATURE_DEFINITIONS.map((def) => ({
-    ...def,
-    enabled: flags[def.key] ?? def.enabled,
-  }));
+  const features: FeatureDefinition[] = useMemo(() => {
+    return SEED_FEATURE_DEFINITIONS.map((def) => ({
+      ...def,
+      enabled: flags[def.key] ?? def.enabled,
+    }));
+  }, [flags]);
 
-  const toggleFeature = (key: FeatureKey, enabled: boolean) => {
+  const toggleFeature = useCallback((key: FeatureKey, enabled: boolean) => {
     saveActiveFeatureFlags({ [key]: enabled });
-  };
+  }, []);
 
-  const resetToDefaults = () => {
+  const resetToDefaults = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: DEFAULT_FEATURE_STATE }));
     setFlags(DEFAULT_FEATURE_STATE);
-  };
+  }, []);
 
   return { features, toggleFeature, resetToDefaults };
 }
