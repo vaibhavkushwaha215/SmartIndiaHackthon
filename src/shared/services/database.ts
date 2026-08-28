@@ -498,7 +498,7 @@ export const db = {
     const now = new Date();
     const createdAt = now.toISOString();
 
-    // Calculate appointment start timestamp
+    // Calculate appointment start timestamp safely with timezone handling
     const [startHourStr, startPeriod] = (data.slotStart || '09:00 AM').split(' ');
     const [hStr, mStr] = (startHourStr || '09:00').split(':');
     let h = parseInt(hStr || '9', 10);
@@ -506,15 +506,23 @@ export const db = {
     if (startPeriod === 'PM' && h < 12) h += 12;
     if (startPeriod === 'AM' && h === 12) h = 0;
 
-    const appointmentDate = new Date(data.date);
-    appointmentDate.setHours(h, m, 0, 0);
+    const dateParts = (data.date || '').split('-').map(Number);
+    let appointmentDate: Date;
+    if (dateParts.length === 3 && !isNaN(dateParts[0]) && !isNaN(dateParts[1]) && !isNaN(dateParts[2])) {
+      appointmentDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], h, m, 0, 0);
+    } else {
+      appointmentDate = new Date(data.date);
+      appointmentDate.setHours(h, m, 0, 0);
+    }
 
     const diffMinutes = Math.floor((appointmentDate.getTime() - now.getTime()) / (1000 * 60));
     const isLate = Boolean(data.isLateBooking || diffMinutes < 60);
 
-    // Normal deadline = 1 hour before appointment; Late booking deadline = 30 minutes before appointment
-    const deadlineMins = isLate ? 30 : 60;
-    const deadlineDate = new Date(appointmentDate.getTime() - deadlineMins * 60 * 1000);
+    // Guaranteed minimum matching window: at least 30 minutes from creation time
+    const minimumDeadlineMs = now.getTime() + 30 * 60 * 1000;
+    const slotDeadlineMs = appointmentDate.getTime() - (isLate ? 15 : 60) * 60 * 1000;
+    const finalDeadlineTimeMs = Math.max(slotDeadlineMs, minimumDeadlineMs);
+    const deadlineDate = new Date(finalDeadlineTimeMs);
 
     // Price Validation via calculateServiceRequestPrice single source of truth
     const serviceObj = getServiceById(data.serviceId);

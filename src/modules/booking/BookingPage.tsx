@@ -63,10 +63,39 @@ export const BookingPage: React.FC<BookingPageProps> = ({
   const [selectedProblems, setSelectedProblems] = useState<string[]>([]);
   const [otherProblemDetails, setOtherProblemDetails] = useState<string>('');
   
-  // Date & Slot
+  // Helper to check if a slot has already started/passed
+  const isSlotInPast = (dateStr: string, slotStr: string): boolean => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dateStr < todayStr) return true;
+    if (dateStr > todayStr) return false;
+
+    const [startPart] = slotStr.split(' - ');
+    const [timeStr, period] = (startPart || '').split(' ');
+    const [hStr, mStr] = (timeStr || '9:00').split(':');
+    let h = parseInt(hStr || '9', 10);
+    const m = parseInt(mStr || '0', 10);
+    if (period === 'PM' && h < 12) h += 12;
+    if (period === 'AM' && h === 12) h = 0;
+
+    const slotTime = new Date();
+    slotTime.setHours(h, m, 0, 0);
+
+    return slotTime.getTime() <= Date.now();
+  };
+
+  // Determine initial date and slot
   const todayStr = new Date().toISOString().split('T')[0];
-  const [date, setDate] = useState<string>(todayStr);
-  const [timeSlot, setTimeSlot] = useState<string>(AVAILABLE_SLOTS[0]);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  const firstAvailableTodaySlot = AVAILABLE_SLOTS.find((s) => !isSlotInPast(todayStr, s));
+  const initialDate = firstAvailableTodaySlot ? todayStr : tomorrowStr;
+  const initialSlot = firstAvailableTodaySlot || AVAILABLE_SLOTS[0];
+
+  // Date & Slot
+  const [date, setDate] = useState<string>(initialDate);
+  const [timeSlot, setTimeSlot] = useState<string>(initialSlot);
   const [isLateBookingConfirmed, setIsLateBookingConfirmed] = useState<boolean>(false);
   const [lateConfirmedTimestamp, setLateConfirmedTimestamp] = useState<number | null>(null);
 
@@ -520,9 +549,14 @@ export const BookingPage: React.FC<BookingPageProps> = ({
                 min={todayStr}
                 value={date}
                 onChange={(e) => {
-                  setDate(e.target.value);
+                  const newDate = e.target.value;
+                  setDate(newDate);
                   setIsLateBookingConfirmed(false);
                   setLateConfirmedTimestamp(null);
+                  if (isSlotInPast(newDate, timeSlot)) {
+                    const firstValid = AVAILABLE_SLOTS.find((s) => !isSlotInPast(newDate, s));
+                    if (firstValid) setTimeSlot(firstValid);
+                  }
                 }}
                 className="w-full sm:w-64 px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
               />
@@ -534,23 +568,31 @@ export const BookingPage: React.FC<BookingPageProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {AVAILABLE_SLOTS.map((slot) => {
                   const isSelected = timeSlot === slot;
+                  const isPast = isSlotInPast(date, slot);
                   return (
                     <button
                       key={slot}
                       type="button"
+                      disabled={isPast}
                       onClick={() => {
+                        if (isPast) return;
                         setTimeSlot(slot);
                         setIsLateBookingConfirmed(false);
                         setLateConfirmedTimestamp(null);
                       }}
-                      className={`flex items-center justify-between p-3.5 rounded-2xl text-xs font-bold border transition cursor-pointer ${
-                        isSelected
-                          ? 'bg-emerald-50 border-emerald-600 text-emerald-950 shadow-xs'
-                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                      className={`flex items-center justify-between p-3.5 rounded-2xl text-xs font-bold border transition ${
+                        isPast
+                          ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200 line-through'
+                          : isSelected
+                          ? 'bg-emerald-50 border-emerald-600 text-emerald-950 shadow-xs cursor-pointer'
+                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 cursor-pointer'
                       }`}
                     >
-                      <span>{slot}</span>
-                      {isSelected && <Check className="w-4 h-4 text-emerald-600" />}
+                      <span className="flex items-center gap-1.5">
+                        <span>{slot}</span>
+                        {isPast && <span className="text-[10px] no-underline font-normal text-slate-400">(Passed)</span>}
+                      </span>
+                      {isSelected && !isPast && <Check className="w-4 h-4 text-emerald-600" />}
                     </button>
                   );
                 })}

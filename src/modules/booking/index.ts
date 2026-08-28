@@ -5,3 +5,5 @@ export { BookingWizard } from './BookingWizard';
 export { PaymentConfirmModal } from './PaymentConfirmModal';
 export { ReviewModal } from './ReviewModal';
 export { WorkerDetailModal } from './WorkerDetailModal';
+export { ServicesPage } from './ServicesPage';
+export { HomePage } from './HomePage';

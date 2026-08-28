@@ -10,7 +10,7 @@ import { ThemeProvider } from './shared/context/ThemeContext';
 import { I18nProvider } from './modules/i18n';
 
 // Module Imports
-import { WorkerList, MyBookings, BookingPage } from './modules/booking';
+import { WorkerList, MyBookings, BookingPage, ServicesPage, HomePage } from './modules/booking';
 import { WorkerDashboard, WorkerJobs, WorkerEarnings } from './modules/worker-profile';
 import { AdminDashboard } from './modules/admin-dashboard';
 import { LoginPage, RegisterPage, ApplyWorkerPage } from './modules/auth';
@@ -235,7 +235,7 @@ const MainLayout: React.FC = () => {
           />
         );
 
-      // Customer Directory & Booking
+      // Customer Home/Landing Page
       case 'booking':
         if (!isFeatureEnabled('customerModule')) {
           return (
@@ -248,7 +248,22 @@ const MainLayout: React.FC = () => {
             </div>
           );
         }
-        return <WorkerList onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
+        return <HomePage onNavigateToBookings={() => handleNavigate('/my-bookings')} />;
+
+      // Dedicated Services Directory (/services)
+      case 'services':
+        if (!isFeatureEnabled('customerModule')) {
+          return (
+            <div className="p-12 text-center text-slate-500 font-medium bg-white rounded-3xl border border-slate-200 shadow-xs max-w-lg mx-auto my-8">
+              <Wrench className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <h3 className="font-extrabold text-slate-900">Service Directory Offline</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                The customer booking module is currently paused by platform operations.
+              </p>
+            </div>
+          );
+        }
+        return <ServicesPage />;
 
       // Dedicated Routed Booking Experience (/book/:serviceId)
       case 'book-service': {
@@ -260,7 +275,7 @@ const MainLayout: React.FC = () => {
         return (
           <BookingPage
             service={service}
-            onBackToServices={() => handleNavigate('/')}
+            onBackToServices={() => handleNavigate('/services')}
             onBookingSuccess={(createdReq) => handleNavigate(`/bookings/${createdReq.id}`)}
           />
         );

@@ -41,7 +41,6 @@ interface NavItemConfig {
   icon: any;
   roles: UserRole[];
   featureKey?: FeatureKey;
-  isAllServices?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
@@ -54,16 +53,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const [isSwitchHovered, setIsSwitchHovered] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
-  const handleAllServicesClick = () => {
-    onTabChange('booking');
-    setTimeout(() => {
-      const el = document.getElementById('services-grid');
-      el?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
-  };
-
   const navItems: NavItemConfig[] = [
-    { id: 'booking', label: t('nav.services', 'All Services'), icon: Wrench, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'], featureKey: 'customerModule', isAllServices: true },
+    { id: 'services', label: t('nav.services', 'All Services'), icon: Wrench, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
     { id: 'my-bookings', label: t('nav.my_bookings', 'My Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
     { id: 'worker-dashboard', label: t('nav.worker_dashboard', 'Worker Dashboard'), icon: Wrench, roles: ['Worker', 'Admin', 'SuperAdmin'], featureKey: 'workerModule' },
     { id: 'admin-dashboard', label: t('nav.admin_dashboard', 'Admin Portal'), icon: Shield, roles: ['Admin', 'SuperAdmin'], featureKey: 'adminModule' },
@@ -152,13 +143,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      if (item.isAllServices) {
-                        handleAllServicesClick();
-                      } else {
-                        onTabChange(item.id);
-                      }
-                    }}
+                    onClick={() => onTabChange(item.id)}
                     className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       isActive
                         ? 'bg-[var(--color-primary)] text-white shadow-xs'

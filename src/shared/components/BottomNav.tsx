@@ -22,7 +22,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
   const { currentRole, isSuperAdmin } = useAuth();
 
   const navItems: BottomNavItem[] = [
-    { id: 'booking', label: t('nav.services', 'Services'), icon: Wrench, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
+    { id: 'services', label: t('nav.services', 'Services'), icon: Wrench, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
     { id: 'my-bookings', label: t('nav.my_bookings', 'Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
     { id: 'worker-dashboard', label: t('roles.worker', 'Worker'), icon: Wrench, roles: ['Worker', 'Admin', 'SuperAdmin'], featureKey: 'workerModule' },
     { id: 'admin-dashboard', label: t('roles.admin', 'Admin'), icon: Shield, roles: ['Admin', 'SuperAdmin'], featureKey: 'adminModule' },
