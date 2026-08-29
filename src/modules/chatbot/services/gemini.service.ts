@@ -9,6 +9,12 @@ import { queryKnowledgeEngine } from './knowledgeEngine';
 class GeminiChatService {
   private getApiKey(): string | null {
     try {
+      if (typeof window !== 'undefined') {
+        const localKey = localStorage.getItem('sahyog_gemini_api_key');
+        if (localKey && localKey.trim().length > 10 && !localKey.includes('paste-your-key')) {
+          return localKey.trim();
+        }
+      }
       const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
       if (
         envKey &&
@@ -73,7 +79,7 @@ Platform Rules & Knowledge:
    - If asked how to book, guide them step-by-step to tap the 'Book Service' button on the relevant worker card.
    - Never claim you have directly booked or altered their database record.`;
 
-    const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-flash'];
+    const models = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-3.5-flash', 'gemini-3.7-flash'];
     const payload = {
       contents: [
         {
