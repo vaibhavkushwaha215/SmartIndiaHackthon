@@ -73,22 +73,24 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
     <>
       <header className="sticky top-0 z-40 bg-[var(--color-surface,white)]/95 backdrop-blur-md border-b border-[var(--color-border,#e2e8f0)] shadow-xs transition-colors duration-250">
         
-        {/* Top Announcement Ribbon - Hidden on small displays / PWA mobile screens */}
-        <div className="hidden md:block bg-[var(--color-primary-dark,#0b3b2c)] text-white text-xs py-1.5 px-4 border-b border-white/10 transition-colors duration-250">
-          <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-1 text-left">
-            <div className="flex items-center gap-2 font-medium">
-              <span>🛡️ 100% Background & Police Verified Local Professionals</span>
-              <span>•</span>
-              <span>Zero Advance Payment • Pay Cash / UPI After Service</span>
-            </div>
-            <div className="flex items-center gap-3 font-semibold">
-              <span className="text-emerald-300 flex items-center gap-1.5">
-                <PhoneCall className="w-3 h-3" />
-                Emergency 24x7: <strong>1800-SAHYOG</strong>
-              </span>
+        {/* Top Announcement Ribbon - ONLY on Homepage */}
+        {activeTab === 'booking' && (
+          <div className="hidden md:block bg-[var(--color-primary-dark,#0b3b2c)] text-white text-xs py-1.5 px-4 border-b border-white/10 transition-colors duration-250">
+            <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-1 text-left">
+              <div className="flex items-center gap-2 font-medium">
+                <span>🛡️ 100% Background & Police Verified Local Professionals</span>
+                <span>•</span>
+                <span>Zero Advance Payment • Pay Cash / UPI After Service</span>
+              </div>
+              <div className="flex items-center gap-3 font-semibold">
+                <span className="text-emerald-300 flex items-center gap-1.5">
+                  <PhoneCall className="w-3 h-3" />
+                  Emergency 24x7: <strong>1800-SAHYOG</strong>
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Main Navbar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
