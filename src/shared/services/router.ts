@@ -8,6 +8,7 @@
 
 export type AppRoute =
   | 'booking'
+  | 'services'
   | 'book-service'
   | 'booking-status'
   | 'login'
@@ -28,6 +29,7 @@ export type AppRoute =
 
 export const ROUTE_PATH_MAP: Record<Exclude<AppRoute, 'not-found' | 'book-service' | 'booking-status'>, string> = {
   'booking': '/',
+  'services': '/services',
   'login': '/login',
   'register': '/register',
   'apply-worker': '/apply-worker',
@@ -48,7 +50,7 @@ const PATH_ROUTE_MAP: Record<string, AppRoute> = {
   '': 'booking',
   '/': 'booking',
   'booking': 'booking',
-  'services': 'booking',
+  'services': 'services',
   'login': 'login',
   'signin': 'login',
   'sign-in': 'login',
@@ -183,12 +185,16 @@ export function navigate(pathOrRoute: string, replace = false): void {
   const targetPath = getPathForRoute(pathOrRoute);
   const currentFull = window.location.pathname + window.location.search;
 
-  if (currentFull !== targetPath) {
+  const isPathChange = currentFull !== targetPath;
+
+  if (isPathChange) {
     if (replace) {
       window.history.replaceState({}, '', targetPath);
     } else {
       window.history.pushState({}, '', targetPath);
     }
+    // Reset main viewport scroll on route change — centralized, no per-page logic needed
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
   }
 
   // Dispatch popstate event to trigger route state updates across components

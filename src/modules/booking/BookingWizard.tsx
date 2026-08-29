@@ -55,16 +55,39 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
 
   const [currentStep, setCurrentStep] = useState<number>(1);
 
-  // Tomorrow as default date string YYYY-MM-DD
+  // Helper to check if a slot has already started/passed
+  const isSlotInPast = (dateStr: string, slotStr: string): boolean => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dateStr < todayStr) return true;
+    if (dateStr > todayStr) return false;
+
+    const [startHourStr, startPeriod] = slotStr.split(' - ')[0].split(' ');
+    const [hStr, mStr] = (startHourStr || '9:00').split(':');
+    let h = parseInt(hStr, 10);
+    const m = parseInt(mStr || '0', 10);
+    if (startPeriod === 'PM' && h < 12) h += 12;
+    if (startPeriod === 'AM' && h === 12) h = 0;
+
+    const slotTime = new Date();
+    slotTime.setHours(h, m, 0, 0);
+
+    return slotTime.getTime() <= Date.now();
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const defaultDateStr = tomorrow.toISOString().split('T')[0];
 
+  const firstAvailableTodaySlot = AVAILABLE_SLOTS.find((s) => !isSlotInPast(todayStr, s));
+  const initialDate = firstAvailableTodaySlot ? todayStr : defaultDateStr;
+  const initialSlot = firstAvailableTodaySlot || AVAILABLE_SLOTS[0];
+
   // Wizard state
   const [selectedProblems, setSelectedProblems] = useState<string[]>([]);
   const [otherProblemDetails, setOtherProblemDetails] = useState<string>('');
-  const [date, setDate] = useState<string>(defaultDateStr);
-  const [timeSlot, setTimeSlot] = useState<string>(AVAILABLE_SLOTS[0]);
+  const [date, setDate] = useState<string>(initialDate);
+  const [timeSlot, setTimeSlot] = useState<string>(initialSlot);
   const [isLateBookingConfirmed, setIsLateBookingConfirmed] = useState<boolean>(false);
   const [lateConfirmedTimestamp, setLateConfirmedTimestamp] = useState<number | null>(null);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -133,7 +156,6 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
 
   // Check if chosen slot is late booking (< 1 hour away)
   const isLateBookingSlot = (): boolean => {
-    const todayStr = new Date().toISOString().split('T')[0];
     if (date !== todayStr) return false;
 
     const [startHourStr, startPeriod] = timeSlot.split(' - ')[0].split(' ');
@@ -440,8 +462,17 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
               <input
                 type="date"
                 value={date}
-                min={new Date().toISOString().split('T')[0]}
-                onChange={(e) => setDate(e.target.value)}
+                min={todayStr}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  setDate(newDate);
+                  setIsLateBookingConfirmed(false);
+                  setLateConfirmedTimestamp(null);
+                  if (isSlotInPast(newDate, timeSlot)) {
+                    const firstValid = AVAILABLE_SLOTS.find((s) => !isSlotInPast(newDate, s));
+                    if (firstValid) setTimeSlot(firstValid);
+                  }
+                }}
                 className="w-full p-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
@@ -451,21 +482,36 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                 Available Time Slot
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {AVAILABLE_SLOTS.map((slot) => (
-                  <button
-                    key={slot}
-                    type="button"
-                    onClick={() => setTimeSlot(slot)}
-                    className={`p-3 rounded-xl border text-xs font-bold transition flex items-center justify-between cursor-pointer ${
-                      timeSlot === slot
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-md'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span>{slot}</span>
-                    {timeSlot === slot && <Check className="w-4 h-4" />}
-                  </button>
-                ))}
+                {AVAILABLE_SLOTS.map((slot) => {
+                  const isPast = isSlotInPast(date, slot);
+                  const isSelected = timeSlot === slot;
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      disabled={isPast}
+                      onClick={() => {
+                        if (isPast) return;
+                        setTimeSlot(slot);
+                        setIsLateBookingConfirmed(false);
+                        setLateConfirmedTimestamp(null);
+                      }}
+                      className={`p-3 rounded-xl border text-xs font-bold transition flex items-center justify-between ${
+                        isPast
+                          ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400 border-slate-200 line-through'
+                          : isSelected
+                          ? 'bg-emerald-700 text-white border-emerald-700 shadow-md cursor-pointer'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 cursor-pointer'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span>{slot}</span>
+                        {isPast && <span className="text-[10px] no-underline font-normal text-slate-400">(Passed)</span>}
+                      </span>
+                      {isSelected && !isPast && <Check className="w-4 h-4" />}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

@@ -41,7 +41,6 @@ interface NavItemConfig {
   icon: any;
   roles: UserRole[];
   featureKey?: FeatureKey;
-  isAllServices?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
@@ -54,16 +53,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const [isSwitchHovered, setIsSwitchHovered] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
-  const handleAllServicesClick = () => {
-    onTabChange('booking');
-    setTimeout(() => {
-      const el = document.getElementById('services-grid');
-      el?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
-  };
-
   const navItems: NavItemConfig[] = [
-    { id: 'booking', label: t('nav.services', 'All Services'), icon: Wrench, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'], featureKey: 'customerModule', isAllServices: true },
+    { id: 'services', label: t('nav.services', 'All Services'), icon: Wrench, roles: ['Customer', 'Worker', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
     { id: 'my-bookings', label: t('nav.my_bookings', 'My Bookings'), icon: CalendarDays, roles: ['Customer', 'Admin', 'SuperAdmin'], featureKey: 'customerModule' },
     { id: 'worker-dashboard', label: t('nav.worker_dashboard', 'Worker Dashboard'), icon: Wrench, roles: ['Worker', 'Admin', 'SuperAdmin'], featureKey: 'workerModule' },
     { id: 'admin-dashboard', label: t('nav.admin_dashboard', 'Admin Portal'), icon: Shield, roles: ['Admin', 'SuperAdmin'], featureKey: 'adminModule' },
@@ -82,22 +73,24 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
     <>
       <header className="sticky top-0 z-40 bg-[var(--color-surface,white)]/95 backdrop-blur-md border-b border-[var(--color-border,#e2e8f0)] shadow-xs transition-colors duration-250">
         
-        {/* Top Announcement Ribbon - Hidden on small displays / PWA mobile screens */}
-        <div className="hidden md:block bg-[var(--color-primary-dark,#0b3b2c)] text-white text-xs py-1.5 px-4 border-b border-white/10 transition-colors duration-250">
-          <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-1 text-left">
-            <div className="flex items-center gap-2 font-medium">
-              <span>🛡️ 100% Background & Police Verified Local Professionals</span>
-              <span>•</span>
-              <span>Zero Advance Payment • Pay Cash / UPI After Service</span>
-            </div>
-            <div className="flex items-center gap-3 font-semibold">
-              <span className="text-emerald-300 flex items-center gap-1.5">
-                <PhoneCall className="w-3 h-3" />
-                Emergency 24x7: <strong>1800-SAHYOG</strong>
-              </span>
+        {/* Top Announcement Ribbon - ONLY on Homepage */}
+        {activeTab === 'booking' && (
+          <div className="hidden md:block bg-[var(--color-primary-dark,#0b3b2c)] text-white text-xs py-1.5 px-4 border-b border-white/10 transition-colors duration-250">
+            <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-1 text-left">
+              <div className="flex items-center gap-2 font-medium">
+                <span>🛡️ 100% Background & Police Verified Local Professionals</span>
+                <span>•</span>
+                <span>Zero Advance Payment • Pay Cash / UPI After Service</span>
+              </div>
+              <div className="flex items-center gap-3 font-semibold">
+                <span className="text-emerald-300 flex items-center gap-1.5">
+                  <PhoneCall className="w-3 h-3" />
+                  Emergency 24x7: <strong>1800-SAHYOG</strong>
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Main Navbar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -152,13 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      if (item.isAllServices) {
-                        handleAllServicesClick();
-                      } else {
-                        onTabChange(item.id);
-                      }
-                    }}
+                    onClick={() => onTabChange(item.id)}
                     className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       isActive
                         ? 'bg-[var(--color-primary)] text-white shadow-xs'
