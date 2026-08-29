@@ -73,7 +73,7 @@ Platform Rules & Knowledge:
    - If asked how to book, guide them step-by-step to tap the 'Book Service' button on the relevant worker card.
    - Never claim you have directly booked or altered their database record.`;
 
-    const models = ['gemini-3.6-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+    const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-flash'];
     const payload = {
       contents: [
         {
